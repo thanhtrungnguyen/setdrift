@@ -1,4 +1,4 @@
-"""Schema round-trip and validation tests."""
+﻿"""Schema round-trip and validation tests."""
 import json
 
 import pytest
@@ -84,3 +84,6 @@ def test_corpus_holds_multiple_prompts():
     serialized = corpus.model_dump_json()
     parsed = json.loads(serialized)
     assert len(parsed["prompts"]) == 2
+
+    restored = Corpus.model_validate_json(serialized)
+    assert restored == corpus

@@ -1,17 +1,20 @@
-"""Pydantic schemas for the public corpus.
+﻿"""Pydantic schemas for the public corpus.
 
 The SkillLabel taxonomy is fixed at eight values. Extending the taxonomy
 requires updating the labeler rules in labeler.py and bumping the corpus
 version string so downstream consumers know labels may have shifted.
 """
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class SkillLabel(str, Enum):
-    """Canonical skill labels. See docs/corpus.md for definitions."""
+    """Canonical skill labels.
+
+    Definitions live in docs/design/2026-05-20-falsifiable-claim.md §4 (until
+    docs/corpus.md is added in Task 9 of the plan).
+    """
 
     JPA_MIGRATION = "jpa-migration"
     SPRING_ANNOTATION_FIX = "spring-annotation-fix"
@@ -20,6 +23,9 @@ class SkillLabel(str, Enum):
     TEST_FIXTURE_FIX = "test-fixture-fix"
     CONFIG_PROPERTY = "config-property"
     IMPORT_FIX = "import-fix"
+    # NONE means: a labeler explicitly inspected the diff and found no rule
+    # applies. It is distinct from an empty list (labeling not attempted) and
+    # from ground_truth_skills=None (not yet manually verified).
     NONE = "none"
 
 
@@ -44,12 +50,15 @@ class LabeledPrompt(BaseModel):
     predicted_skills: list[SkillLabel] = Field(
         description="Labels assigned by the heuristic labeler"
     )
-    ground_truth_skills: Optional[list[SkillLabel]] = Field(
+    ground_truth_skills: list[SkillLabel] | None = Field(
         default=None,
         description="Labels assigned by a human verifier; None until verified",
     )
     source: BugSource
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, str] = Field(
+        default_factory=dict,
+        description="Freeform string-keyed metadata (e.g. language, framework). Not part of the labeling spine.",
+    )
 
 
 class Corpus(BaseModel):
