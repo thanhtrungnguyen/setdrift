@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sica-eval"
+version = "0.0.1"
+description = "Evaluation harness for the SICA self-improving Claude Code plugin"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Nguyen Thanh Trung" }]
+license = { text = "MIT" }
+dependencies = [
+  "anthropic>=0.40",
+  "pydantic>=2",
+  "rich>=13",
+]
+
+[project.optional-dependencies]
+optimize = ["dspy-ai>=2.5", "gepa"]   # skill-trigger optimizer backends
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
+
+[project.scripts]
+sica-eval = "sica_eval.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sica_eval*"]

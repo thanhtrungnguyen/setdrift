@@ -1,0 +1,49 @@
+# ---- THE DATA WALL: proprietary / captured data never enters git ----
+# Everything under data/ is ignored EXCEPT the explanatory README.
+data/**
+!data/README.md
+# Any captured telemetry, logs, replays, mined repos
+**/telemetry/**
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+mined_repos/
+replays/
+parking_src/
+*.parking.*
+
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.yaml
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---- Node (plugin tooling, if any) ----
+node_modules/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

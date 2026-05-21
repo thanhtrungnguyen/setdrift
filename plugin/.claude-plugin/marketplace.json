@@ -1,0 +1,15 @@
+{
+  "name": "sica-marketplace",
+  "owner": { "name": "Nguyen Thanh Trung" },
+  "metadata": {
+    "description": "Self-improving configuration plugin for Claude Code.",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "sica",
+      "source": "./",
+      "description": "Observe-diagnose-patch-verify loop over Claude Code configuration."
+    }
+  ]
+}
