@@ -1,4 +1,4 @@
-﻿"""Heuristic labeler unit tests."""
+"""Heuristic labeler unit tests."""
 from sica_eval.corpus.fetcher import BugRecord
 from sica_eval.corpus.labeler import label_bug
 from sica_eval.corpus.schemas import SkillLabel

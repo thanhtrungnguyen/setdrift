@@ -1,4 +1,4 @@
-﻿"""Rule-based heuristic labeler.
+"""Rule-based heuristic labeler.
 
 Each rule inspects the diff (and optionally the commit message) and contributes
 zero or more SkillLabel values. The catch-all SkillLabel.NONE is appended only
