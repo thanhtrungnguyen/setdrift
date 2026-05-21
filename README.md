@@ -1,4 +1,4 @@
-# sica-plugin
+﻿# sica-plugin
 
 **A self-improving Claude Code plugin** that treats AI-coding-agent configuration
 (CLAUDE.md, skills, hooks, sub-agents, MCP wiring) as a continuously optimizable
@@ -53,6 +53,11 @@ pip install -e ./eval         # install the harness (editable)
 Install the plugin into Claude Code by adding this repo as a marketplace
 (`plugin/.claude-plugin/marketplace.json`). Verify the hook + skill load, then
 run the harness against the benchmark in `eval/`.
+
+## Building the public corpus
+
+The skill-trigger F1 measurement runs on a labeled prompt corpus mined from
+GitBug-Java. See `docs/corpus.md` for the build and verification recipe.
 
 ## Status
 
