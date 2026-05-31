@@ -5,9 +5,18 @@
 parameter — observed, diagnosed, patched, and verified in a closed loop.
 Validated on a production Java / Spring Boot microservice platform.
 
-> ⚠️ **Name note:** "SICA" is also a 2025 paper (Robeyns et al., *Self-Improving
-> Coding Agent*). This project is distinct: it optimizes *configuration*, not the
-> agent's own source code. See `docs/` for the differential.
+> ⚠️ **Name note.** **SICA** in this repository names a Claude Code plugin
+> that treats AI-coding-agent *configuration* — skills, hooks, CLAUDE.md,
+> sub-agents, MCP wiring — as a continuously optimizable parameter, and
+> defends the falsifiable claim that an automated observe→diagnose→patch→verify
+> loop sustains skill-trigger F1 above a frozen hand-written configuration
+> as the codebase and model drift. **SICA** is also the name of Robeyns
+> et al. 2025, *Self-Improving Coding Agent*, which targets a different
+> layer: the agent edits its **own source code** to improve itself. The
+> name collision is acknowledged; this project is related but distinct
+> work — configuration-optimization, not source-code-self-improvement —
+> and a 5-axis differential against Robeyns 2025 lands in dissertation
+> Chapter 2 (background and related work).
 
 ## The falsifiable claim
 

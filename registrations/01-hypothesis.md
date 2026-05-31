@@ -54,3 +54,5 @@ See `docs/design/2026-05-20-falsifiable-claim.md` §8 for the full risk register
 - If F1 is too noisy on either corpus → increase sample size; do not weaken the significance criterion.
 
 _Registered: 2026-05-20_
+
+Threat list extended on 2026-05-31; see docs/design/2026-05-20-falsifiable-claim.md Change Log entry of that date.

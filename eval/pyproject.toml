@@ -18,7 +18,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-optimize = ["dspy-ai>=2.5", "gepa"]
+# dspy 3.2.x hard-depends on gepa[dspy]==0.0.27 and exposes dspy.GEPA; do NOT
+# add a standalone gepa pin (the research-suggested gepa>=0.1.1 is incompatible
+# with dspy>=3.2 — verified unsatisfiable 2026-05-31, see
+# .planning/codebase/dspy-rename-smoke-test.md). dspy owns the gepa version.
+optimize = ["dspy>=3.2,<4.0"]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.pytest.ini_options]

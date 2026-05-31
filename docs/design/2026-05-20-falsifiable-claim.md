@@ -108,4 +108,46 @@ These are not post-hoc rationalizations. They are committed *now* so a mid-proje
 
 ## Change Log
 
-(none yet)
+### 2026-05-31 — Methodology amendment batch (REQ-DESIGN-01)
+
+Sources: `.planning/research/SUMMARY.md § (b)` (Pitfalls researcher synthesis, 2026-05-22). This batch follows D-08 (single-entry-with-three-subsections), D-09 (back-references use original §7-N / §8-N IDs), D-11 (Change Log only; original §7/§8 tables not edited in place).
+
+#### NEW §7 threats (8 items)
+
+1. **Telemetry completeness threat (hook timeouts + JSONL fragility)** — Claude Code's 60s hook limit silently drops events on slow scrubbing of large tool payloads; concurrent appends can interleave malformed JSON.
+   *Mitigation:* deferred-batch hook architecture, per-session JSONL files, fail-loud parser, `_hook_runtime_ms` self-report, per-session event-count sanity check.
+
+2. **Confounding of model capability with config quality** — A frozen-config baseline tested under a newer model measures model-portability, not config-quality.
+   *Mitigation:* yoked A/B runs within same wall-clock minute under same model version; paired-difference reporting; never average F1 across non-paired model versions.
+
+3. **Optimizer reward hacking on skill-trigger metric** — Cheapest path to maximize recall is firing every skill on every prompt.
+   *Mitigation:* strict-match F1 (set equality), cardinality penalty, ≥50 adversarial negative prompts, GEPA `side_info` anti-overfit constraint pinned as default.
+
+4. **Skill-description over-fits to training corpus** — Reflection LMs copy verbatim phrases, customer names, ticket IDs, code symbols (GEPA-documented).
+   *Mitigation:* GEPA anti-overfit `Constraint` literal-string injection; post-optimization linter rejecting CamelCase/snake_case/proper-noun tokens not in allowlist; hard train/val split with split-hash logged.
+
+5. **Mined-corpus survivorship bias** — GitBug-Java samples only fixed-and-merged bugs; F1 measured on it is conditional on fix-commit-generation, not population F1.
+   *Mitigation:* stratified reporting (commit-generating vs not); ≥20% negative-labeled prompts in manual batch; explicit ecological-validity limitation in Chapter 6.
+
+6. **Hawthorne effect in enterprise capture** — Parking engineers know they are being studied; behavior shifts.
+   *Mitigation:* 4-week acclimation window not used in F1 corpus; prompt-length distribution compared to unobtrusive baseline (SWE-bench/GitBug-Java prompts); briefing-then-leave-alone; documented threat in Chapter 6.
+
+7. **Goodhart's law on skill-trigger F1** — F1 is both optimizer's target and evaluator's metric; conflates training fit with capability.
+   *Mitigation:* hard train/test partition (optimizer code path cannot touch test partition); triangulation with secondary metrics (pass-rate, token cost); pre-registered "F1 ↑ X ⇒ pass-rate Δ Y" prediction — if it fails, that is a *finding*.
+
+8. **Inter-corpus comparability (apples-to-oranges)** — Two corpora labeled by different processes from disjoint distributions are not measuring the same F1.
+   *Mitigation:* per-corpus distribution characterization document; per-corpus independent reporting; skill-set normalization within each arm comparison.
+
+#### EXTEND existing §7 rows (3 items)
+
+9. **§7-1 extends: "Model version drift" → "Replay non-determinism (model + filesystem + RNG + deprecation)"** — version-string pin necessary but insufficient; also temperature 0 for replay; `--network=none` except LLM proxy; content-addressed filesystem snapshot; seed pinning. Add deprecation contingency: bank transcripts pre-emptively; promote `claude-haiku-4-5` to primary; report old + new separately.
+
+10. **§7-2 extends: "LLM-as-judge bias"** — extend with five named bias modes (verbosity, position, self-preference, authority, recency); cross-family sensitivity check (Claude vs GPT-4-class/Gemini-class on 100 prompts); blind randomized presentation; Cohen's κ floor 0.6 escalates to panel-of-3.
+
+11. **§7-3 extends: "Insufficient drift"** — extend with closed-loop divergence/collapse/oscillation prevention: GEPA `NoImprovementStopper(patience=10)`; hard train/val/test partition with light val rotation; Pareto-diversity floor ≥5 distinct candidates; archive rollback on val-F1 regression beyond noise band.
+
+#### EXTEND §8 fallbacks (2 items)
+
+12. **§8-1 concretizes: GitBug-Java fallback trigger** — change from "if GitBug-Java does not yield" to "if projected to miss 500 by mid-June extrapolation" (earlier activation = cheaper).
+
+13. **§8-3 concretizes: Sample-size escalation** — concretize generic "increase sample size" to "if A−B difference < 1.5× noise band, automatically schedule +5 more runs before declaring." Also amends §8-3 to set the default F1 noise band to **5 repeats** (was 3) — propagating to REQ-MEASURE-01 acceptance.
