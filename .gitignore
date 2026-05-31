@@ -2,6 +2,10 @@
 # Everything under data/ is ignored EXCEPT the explanatory README.
 data/**
 !data/README.md
+# The eval harness writes mined corpus + raw captures under eval/data/ (a
+# nested location, NOT top-level data/). Same wall, anchored to eval/.
+eval/data/**
+!eval/data/README.md
 # Any captured telemetry, logs, replays, mined repos
 **/telemetry/**
 *.jsonl
