@@ -7,7 +7,7 @@ name = "sica-eval"
 version = "0.0.1"
 description = "Evaluation harness for the SICA self-improving Claude Code plugin"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 authors = [{ name = "Nguyen Thanh Trung" }]
 license = { text = "MIT" }
 dependencies = [
