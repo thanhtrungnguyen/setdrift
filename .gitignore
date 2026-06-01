@@ -6,8 +6,12 @@ data/**
 # nested location, NOT top-level data/). Same wall, anchored to eval/.
 eval/data/**
 !eval/data/README.md
-# Any captured telemetry, logs, replays, mined repos
-**/telemetry/**
+# Any captured telemetry DATA, logs, replays, mined repos.
+# NOTE: scope to data dirs only — `**/telemetry/**` was too broad and also
+# excluded the SOURCE package eval/sica_eval/telemetry/ (scrubber/parser/query
+# code + tests). Telemetry DATA lives under data/ (covered by data/** above and
+# eval/data/** ); the source package must stay tracked.
+data/telemetry/**
 *.jsonl
 *.sqlite
 *.sqlite3
