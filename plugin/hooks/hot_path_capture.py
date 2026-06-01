@@ -52,6 +52,7 @@ def main() -> int:
         "_hook_event": payload.get("hook_event_name"),
         "_session": session_id,
         "_cwd": payload.get("cwd"),
+        "_transcript": payload.get("transcript_path"),
         "tool_name": payload.get("tool_name"),
         "tool_input": payload.get("tool_input"),
         "tool_result": payload.get("tool_result"),
