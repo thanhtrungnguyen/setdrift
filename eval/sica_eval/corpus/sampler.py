@@ -3,11 +3,17 @@
 Reads a JSONL corpus, samples 20% (rounded up, minimum 1), and writes a CSV
 with one row per sampled prompt. The CSV's verified_skills column is left
 blank for a human verifier to fill in; the notes column is free-form.
+
+With ``stratify_by_source=True`` (D-35), the sample is stratified by
+``source.dataset`` so every source is proportionally represented, with a
+``min_per_source`` floor (Pitfall 6) — preventing a large source from drowning
+out a small one in the manual batch.
 """
 import csv
 import json
 import math
 import random
+from collections import defaultdict
 from pathlib import Path
 
 DEFAULT_FRACTION = 0.20
@@ -18,6 +24,8 @@ def emit_verification_csv(
     output_path: Path,
     seed: int = 42,
     fraction: float = DEFAULT_FRACTION,
+    stratify_by_source: bool = False,
+    min_per_source: int = 20,
 ) -> None:
     corpus_path = Path(corpus_path)
     output_path = Path(output_path)
@@ -31,9 +39,19 @@ def emit_verification_csv(
                 continue
             rows.append(json.loads(line))
 
-    n = max(1, math.ceil(len(rows) * fraction)) if rows else 0
     rng = random.Random(seed)
-    sample = rng.sample(rows, k=n) if rows else []
+    if stratify_by_source:
+        groups: dict[str, list[dict]] = defaultdict(list)
+        for row in rows:
+            groups[row.get("source", {}).get("dataset", "unknown")].append(row)
+        sample: list[dict] = []
+        for source in sorted(groups):  # deterministic source order
+            src_rows = groups[source]
+            n_src = min(len(src_rows), max(min_per_source, math.ceil(len(src_rows) * fraction)))
+            sample.extend(rng.sample(src_rows, k=n_src))
+    else:
+        n = max(1, math.ceil(len(rows) * fraction)) if rows else 0
+        sample = rng.sample(rows, k=n) if rows else []
 
     with output_path.open("w", encoding="utf-8", newline="") as out:
         writer = csv.DictWriter(
