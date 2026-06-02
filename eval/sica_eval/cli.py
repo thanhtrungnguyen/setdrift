@@ -11,7 +11,15 @@ def main() -> int:
 
     sub.add_parser("benchmark", help="run the offline replay benchmark")
     sub.add_parser("optimize", help="run the skill-trigger optimizer")
-    sub.add_parser("health", help="compute config health metrics from telemetry")
+
+    health_p = sub.add_parser("health", help="compute skill-trigger macro-F1 for an arm")
+    health_p.add_argument("--corpus", choices=["public"], default="public")
+    health_p.add_argument("--arm", choices=["B", "C"], required=True)
+    health_p.add_argument("--seed", type=int, default=42)
+    health_p.add_argument("--corpus-path", type=Path, default=Path("data/corpora/public/public.jsonl"))
+    health_p.add_argument("--map", type=Path, default=Path("eval/sica_eval/corpus/intent_skill_map.yaml"))
+    health_p.add_argument("--skills-dir", type=Path, default=Path("plugin/skills"))
+    health_p.add_argument("--experiments-dir", type=Path, default=Path("experiments"))
 
     corpus_parser = sub.add_parser("corpus", help="build and verify the public prompt corpus")
     corpus_sub = corpus_parser.add_subparsers(dest="corpus_cmd")
@@ -64,6 +72,26 @@ def main() -> int:
             corpus_path=args.corpus, output_path=args.output, seed=args.seed
         )
         print(f"[sica-eval] verification CSV written -> {args.output}")
+        return 0
+
+    if args.cmd == "health":
+        from sica_eval.telemetry.scorer import run_health
+
+        result = run_health(
+            corpus_path=args.corpus_path,
+            arm=args.arm,
+            seed=args.seed,
+            map_path=args.map,
+            skills_dir=args.skills_dir,
+            experiments_dir=args.experiments_dir,
+        )
+        print(
+            f"[sica-eval] health corpus={args.corpus} arm={args.arm} "
+            f"macro_f1={result.macro_f1_mean:.4f} "
+            f"noise_band=[{result.noise_band_low:.4f},{result.noise_band_high:.4f}] "
+            f"bootstrap_ci=[{result.bootstrap_ci_low:.4f},{result.bootstrap_ci_high:.4f}] "
+            f"coverage={result.coverage_pct:.3f}"
+        )
         return 0
 
     print(f"[sica-eval] '{args.cmd or 'help'}' not yet implemented — scaffold.")
