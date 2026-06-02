@@ -21,8 +21,11 @@ dependencies = [
   "detect-secrets==1.5.0",
   "duckdb==1.5.3",
   "pyarrow>=20,<25",
-  # Measurement layer (Phase 2): intent_skill_map.yaml load + F1/bootstrap stack.
-  # (scikit-learn/scipy/numpy for the 02-05 scorer are added by plan 02-01.)
+  # Measurement layer (Phase 2): intent_skill_map.yaml load (pyyaml) + the
+  # F1 scorer / 5-run band / bootstrap-CI stack (REQ-MEASURE-01, plan 02-05).
+  "scikit-learn>=1.5,<2.0",
+  "scipy>=1.11,<2.0",
+  "numpy>=1.26,<3.0",
   "pyyaml>=6,<7",
 ]
 
