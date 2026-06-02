@@ -1,0 +1,32 @@
+# intent_skill_map.yaml — the single frozen skills→intents projection (D-30).
+#
+# FROZEN: its sha256 is logged in every experiment manifest (intent_map_sha256).
+# SYMMETRIC across arms A/B/C — the scorer reads ONLY this file; never edited
+# mid-evaluation (a change shows up as a different intent_map_sha256 in any
+# manifest diff — the anti-massage property).
+#
+# Keys = ALL 8 SkillLabel intent strings (corpus ground-truth space, D-29).
+# Each value is a LIST of Anthropic tool-names (SKILL.md `name:` with '-'→'_',
+# matching ^[a-zA-Z0-9_-]{1,64}$).
+# `[]` = OUT-OF-COVERAGE HOLDOUT (D-31) — excluded from the F1 denominator and
+# reported as coverage %; it does NOT mean "fires nothing" and is never null.
+# `none` is ALWAYS [] by definition (no skill maps to the negative class).
+#
+# Only intents the currently-installed skills genuinely cover are mapped. Today
+# the sole installed skill is `spring-boot-endpoint` (plugin/skills/), whose
+# SKILL.md authors @RestController/@GetMapping/@Valid REST endpoints → it covers
+# `spring-annotation-fix`. Everything else is holdout until the matching skill
+# ships (the holdout shrinks across Phase 3 = "the loop expanded coverage").
+# Phase 3 (REQ-LOOP-02) adds a Spring/Hibernate annotation skill; when it has a
+# SKILL.md, map it here (likely jpa-migration / spring-annotation-fix). Do NOT
+# map a skill that has no SKILL.md yet.
+
+jpa-migration: []
+spring-annotation-fix:
+  - spring_boot_endpoint
+dependency-bump: []
+null-check: []
+test-fixture-fix: []
+config-property: []
+import-fix: []
+none: []

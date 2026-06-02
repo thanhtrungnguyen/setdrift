@@ -78,3 +78,71 @@ def data_dir(tmp_path: Path) -> Path:
     d = tmp_path / "data" / "raw" / "gitbug-java"
     d.mkdir(parents=True)
     return d
+
+
+@pytest.fixture
+def mock_anthropic_client(monkeypatch):
+    """Offline mock of ``anthropic.Anthropic()`` (Plan 02-04).
+
+    Returns the list of recorded ``create(**kwargs)`` calls so tests can assert
+    the Arm C path omits BOTH ``tools`` and ``tool_choice``. The mock fires a
+    ``tool_use`` block (named after the first supplied tool) ONLY when a non-empty
+    toolset is passed (Arm B); with no tools (Arm C) it returns a plain text block
+    so ``run_arm_c`` observes zero ``tool_use`` blocks. No network, no API key.
+    """
+    calls: list[dict] = []
+
+    class _Block:
+        def __init__(self, block_type: str, name: str | None = None):
+            self.type = block_type
+            self.name = name
+
+        def model_dump(self) -> dict:
+            if self.type == "tool_use":
+                return {"type": "tool_use", "name": self.name, "input": {}}
+            return {"type": "text", "text": "No applicable skill."}
+
+    class _Usage:
+        input_tokens = 100
+        output_tokens = 10
+
+        def model_dump(self) -> dict:
+            return {"input_tokens": self.input_tokens, "output_tokens": self.output_tokens}
+
+    class _Response:
+        def __init__(self, blocks: list):
+            self.content = blocks
+            self.usage = _Usage()
+            self.stop_reason = (
+                "tool_use" if any(b.type == "tool_use" for b in blocks) else "end_turn"
+            )
+
+    class _Messages:
+        @staticmethod
+        def create(**kwargs):
+            calls.append(kwargs)
+            tools = kwargs.get("tools")
+            if tools:
+                return _Response([_Block("tool_use", tools[0]["name"])])
+            return _Response([_Block("text")])
+
+    class _FakeClient:
+        messages = _Messages()
+
+    monkeypatch.setattr("anthropic.Anthropic", lambda: _FakeClient())
+    return calls
+
+
+@pytest.fixture
+def sample_intent_skill_map() -> dict:
+    """A minimal frozen intent→skill projection mirroring the shipped YAML (D-30/D-31)."""
+    return {
+        "jpa-migration": [],
+        "spring-annotation-fix": ["spring_boot_endpoint"],
+        "dependency-bump": [],
+        "null-check": [],
+        "test-fixture-fix": [],
+        "config-property": [],
+        "import-fix": [],
+        "none": [],
+    }
