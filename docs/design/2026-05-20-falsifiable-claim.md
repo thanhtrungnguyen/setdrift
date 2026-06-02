@@ -151,3 +151,14 @@ Sources: `.planning/research/SUMMARY.md § (b)` (Pitfalls researcher synthesis, 
 12. **§8-1 concretizes: GitBug-Java fallback trigger** — change from "if GitBug-Java does not yield" to "if projected to miss 500 by mid-June extrapolation" (earlier activation = cheaper).
 
 13. **§8-3 concretizes: Sample-size escalation** — concretize generic "increase sample size" to "if A−B difference < 1.5× noise band, automatically schedule +5 more runs before declaring." Also amends §8-3 to set the default F1 noise band to **5 repeats** (was 3) — propagating to REQ-MEASURE-01 acceptance.
+
+### 2026-06-01 — §8-2 public-only fallback activated as Phase 2 default (REQ-CORPUS-02 / D-37)
+
+Per Phase 2 discussion decision **D-37** (`.planning/phases/02-measurement-foundation/02-CONTEXT.md`) and cut-order rank #1, the enterprise (parking) corpus **REQ-CORPUS-02 is NOT a default Phase 2 deliverable.** This entry activates the pre-registered **§8-2 "Option β"** contingency (the public-only degradation already in the §8 Risk Register, table row 2) as the dated default — recorded now, append-only, so the degradation is a planned graceful step rather than a retroactive reframing.
+
+- **(a) Default scope.** The headline skill-trigger F1 claim runs on the **public corpus alone** — GitBug-Java (~199) plus Defects4J V1.2 (≈357, promoted from the §8-1 fallback corpus list per the 2026-05-31 §8-1 concretization). Parking validation moves to an appendix unless the trigger below fires.
+- **(b) Activation trigger (hard date).** The enterprise path activates **only if** the VinSmart IP ruling (Jira `SICA-2`) clears by the hard **end-June 2026** trigger. If unresolved by then, the public-only claim stands and is the spine of the dissertation; no enterprise data is collected.
+- **(c) What activation would require (deferred branch, not built here).** ≥200 labeled parking prompts, a 20% second-rater spot-check, and a 4-week Hawthorne acclimation window (per §7-6), loading through the **existing source-agnostic corpus loader** at `data/corpora/enterprise/` with **zero architecture change** — `BugSource.dataset` is a free string and no code path keys on `dataset == "gitbug-java"` (locked by the `test_source_agnostic_loader.py` regression guard added in plan 02-06).
+- **(d) Back-reference.** This activates §8 Risk Register row 2 ("Parking IP ruling … blocks publication … Option β"); the §8 table itself is unmodified (D-11 append-only discipline). The 4-week-acclimation requirement traces to §7-6 (Hawthorne, 2026-05-31 amendment).
+
+**Cross-reference:** `registrations/01-hypothesis.md` may cite this entry as the dated invocation point of the pre-registered §8-2 public-only contingency.
