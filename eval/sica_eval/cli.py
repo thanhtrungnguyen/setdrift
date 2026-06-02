@@ -18,8 +18,13 @@ def main() -> int:
 
     build_p = corpus_sub.add_parser("build", help="build the labeled corpus JSONL")
     build_p.add_argument("--raw-dir", type=Path, default=Path("data/raw/gitbug-java"))
-    build_p.add_argument("--output", type=Path, default=Path("data/corpus/gitbug-java.jsonl"))
+    build_p.add_argument("--output", type=Path, default=Path("data/corpora/public/public.jsonl"))
     build_p.add_argument("--version", required=True, help="corpus version tag, e.g. 2026-05-22")
+    build_p.add_argument("--defects4j-dir", type=Path, default=None,
+                         help="Defects4J v1.2 framework checkout (adds ~395 bugs via .src.patch)")
+    build_p.add_argument("--constructed-negatives", type=Path, default=None,
+                         help="TSV of hand-authored near-miss negatives for the >=20%% top-up")
+    build_p.add_argument("--min-negative-fraction", type=float, default=0.20)
 
     verify_p = corpus_sub.add_parser("verify", help="emit a 20%% manual-verification CSV")
     verify_p.add_argument("--corpus", type=Path, required=True)
@@ -29,10 +34,25 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.cmd == "corpus" and args.corpus_cmd == "build":
+        from sica_eval.corpus.builder import freeze_split
+        from sica_eval.corpus.schemas import SkillLabel
+
         corpus = build_corpus(
-            raw_dir=args.raw_dir, output_path=args.output, corpus_version=args.version
+            raw_dir=args.raw_dir,
+            output_path=args.output,
+            corpus_version=args.version,
+            defects4j_dir=args.defects4j_dir,
+            min_negative_fraction=args.min_negative_fraction,
+            constructed_negatives_path=args.constructed_negatives,
         )
-        print(f"[sica-eval] built corpus with {len(corpus.prompts)} prompts -> {args.output}")
+        n = len(corpus.prompts)
+        neg = sum(1 for p in corpus.prompts if p.predicted_skills == [SkillLabel.NONE])
+        _, split_hash = freeze_split(corpus.prompts, Path(args.output).parent, rng_seed=42)
+        neg_pct = (100 * neg / n) if n else 0.0
+        print(
+            f"[sica-eval] built corpus: {n} prompts, {neg} negatives ({neg_pct:.1f}%), "
+            f"split_hash={split_hash} -> {args.output}"
+        )
         return 0
     if args.cmd == "corpus" and args.corpus_cmd == "verify":
         from sica_eval.corpus.sampler import emit_verification_csv

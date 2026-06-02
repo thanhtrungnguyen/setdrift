@@ -1,0 +1,30 @@
+# Hand-authored near-miss NEGATIVES (D-36, REQ-CORPUS-01 ≥20% floor).
+# Format: <id><TAB><developer prompt>.  Every row is a genuine "no skill should
+# fire" request: in-domain Java/dev phrasing that none of the 8 taxonomy intents
+# (and certainly the lone spring-boot-endpoint skill) should trigger on. These
+# are the ADVERSARIAL hard-negatives — phrased to look skill-adjacent without
+# being actionable by any installed skill. Provenance is tagged negative_source=constructed.
+rename01	Rename the local variable `tmp` to `buffer` in this method, nothing else.
+rename02	Rename the parameter `s` to `input` across this single function.
+fmt01	Reformat this file to 4-space indentation; do not change any logic.
+fmt02	Reflow these long lines to stay under 100 columns.
+fmt03	Sort the import statements alphabetically without adding or removing any.
+doc01	Add a Javadoc comment summarizing what this method returns.
+doc02	Write a one-line inline comment explaining this loop.
+doc03	Update the class-level Javadoc to mention the new author.
+comment01	Remove the commented-out dead code block at the bottom of this file.
+ws01	Strip the trailing whitespace from every line in this file.
+rename03	Rename this test method to follow the should_doX_whenY naming style.
+trivial01	Change this `for` loop to an enhanced for-each over the same list.
+trivial02	Extract this magic number 86400 into a named constant SECONDS_PER_DAY.
+trivial03	Inline this single-use local variable.
+log01	Add a debug log line at the start of this method.
+log02	Lower this log statement from INFO to DEBUG level.
+unrelated01	How do I configure the Gradle wrapper to use a newer Gradle version?
+unrelated02	What is the difference between `==` and `.equals()` for Strings in Java?
+unrelated03	How do I run a single JUnit test from the command line?
+unrelated04	Explain what the `transient` keyword does on a field.
+unrelated05	What's the idiomatic way to read a file into a String in Java 21?
+git01	Squash the last three commits on this branch into one.
+git02	Write a conventional-commits message for a pure formatting change.
+build01	Why is my Maven build downloading dependencies every time?
