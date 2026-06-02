@@ -48,6 +48,7 @@ def build_corpus(
     corpus_version: str,
     corpus_name: str = "gitbug-java",
     *,
+    gitbug_meta_dir: Path | None = None,
     defects4j_dir: Path | None = None,
     negatives: list[LabeledPrompt] | None = None,
     min_negative_fraction: float = 0.0,
@@ -75,6 +76,12 @@ def build_corpus(
 
     for record in iter_bug_records(Path(raw_dir)):
         _add(_record_to_prompt(record, corpus_name))
+
+    if gitbug_meta_dir is not None:
+        from sica_eval.corpus import gitbug_fetcher
+
+        for record in gitbug_fetcher.iter_bug_records(Path(gitbug_meta_dir)):
+            _add(_record_to_prompt(record, "gitbug-java"))
 
     if defects4j_dir is not None:
         from sica_eval.corpus import defects4j_fetcher

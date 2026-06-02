@@ -20,6 +20,8 @@ def main() -> int:
     build_p.add_argument("--raw-dir", type=Path, default=Path("data/raw/gitbug-java"))
     build_p.add_argument("--output", type=Path, default=Path("data/corpora/public/public.jsonl"))
     build_p.add_argument("--version", required=True, help="corpus version tag, e.g. 2026-05-22")
+    build_p.add_argument("--gitbug-meta-dir", type=Path, default=None,
+                         help="GitBug-Java metadata checkout (adds ~199 bugs via bundled bug_patch)")
     build_p.add_argument("--defects4j-dir", type=Path, default=None,
                          help="Defects4J v1.2 framework checkout (adds ~395 bugs via .src.patch)")
     build_p.add_argument("--constructed-negatives", type=Path, default=None,
@@ -41,6 +43,7 @@ def main() -> int:
             raw_dir=args.raw_dir,
             output_path=args.output,
             corpus_version=args.version,
+            gitbug_meta_dir=args.gitbug_meta_dir,
             defects4j_dir=args.defects4j_dir,
             min_negative_fraction=args.min_negative_fraction,
             constructed_negatives_path=args.constructed_negatives,
