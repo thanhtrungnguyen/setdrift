@@ -96,6 +96,34 @@ def main() -> int:
         help="path to the audit JSONL log (default: data/audit/audit.jsonl)",
     )
 
+    # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
+    deprecate_scan_p = sub.add_parser(
+        "deprecate-scan",
+        help="scan skills for idle-archive and rejection-quarantine decisions",
+    )
+    deprecate_scan_p.add_argument(
+        "--skills-dir", type=Path, default=Path("plugin/skills"),
+        help="path to the skills directory (default: plugin/skills)",
+    )
+    deprecate_scan_p.add_argument(
+        "--events", type=Path, default=Path("data/telemetry/events.jsonl"),
+        help="path to events.jsonl telemetry (default: data/telemetry/events.jsonl)",
+    )
+
+    # --- promote-skill subcommand (REQ-SAFETY-03 manual re-promotion from quarantine) ---
+    promote_skill_p = sub.add_parser(
+        "promote-skill",
+        help="re-promote a quarantined skill back into the load glob",
+    )
+    promote_skill_p.add_argument(
+        "--name", required=True,
+        help="skill name (kebab-case) to promote from quarantine",
+    )
+    promote_skill_p.add_argument(
+        "--skills-dir", type=Path, default=Path("plugin/skills"),
+        help="path to the skills directory (default: plugin/skills)",
+    )
+
     args = parser.parse_args()
 
     if args.cmd == "corpus" and args.corpus_cmd == "build":
@@ -235,6 +263,32 @@ def main() -> int:
         print(
             f"[sica-eval] rollback restored config_hash={target_hash} verified=True"
         )
+        return 0
+
+    if args.cmd == "deprecate-scan":
+        # Lazy import (project convention)
+        from sica_eval.optimizer.deprecator import scan, quarantine_skill
+
+        decisions = scan(args.skills_dir, args.events)
+        archived = 0
+        quarantined = 0
+        for decision in decisions:
+            if decision.decision == "archive":
+                archived += 1
+                print(f"[sica-eval] deprecate-scan archive skill={decision.skill_name} reason={decision.reason!r}")
+            elif decision.decision == "quarantine":
+                quarantine_skill(decision.skill_name, args.skills_dir)
+                quarantined += 1
+                print(f"[sica-eval] deprecate-scan quarantine skill={decision.skill_name} reason={decision.reason!r}")
+        print(f"[sica-eval] deprecate-scan archived={archived} quarantined={quarantined}")
+        return 0
+
+    if args.cmd == "promote-skill":
+        # Lazy import (project convention)
+        from sica_eval.optimizer.deprecator import promote_skill
+
+        decision = promote_skill(args.name, args.skills_dir)
+        print(f"[sica-eval] promote-skill name={args.name} restored=True reason={decision.reason!r}")
         return 0
 
     print(f"[sica-eval] '{args.cmd or 'help'}' not yet implemented — scaffold.")
