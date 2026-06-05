@@ -254,7 +254,7 @@ def render_table(rows: list[dict]) -> str:
     Column layout (RESEARCH §Proposed Discretion Answers 1):
     Component removed | Fired intents | F1 | Delta vs full-config
 
-    Root-cause rows are annotated with ← ROOT CAUSE.
+    Root-cause rows are annotated with <-- ROOT CAUSE.
     """
     _SEP = " | "
 
@@ -268,7 +268,7 @@ def render_table(rows: list[dict]) -> str:
         delta = r["delta_vs_full"]
         delta_str = "baseline" if delta == 0.0 else f"{delta:+.3f}"
         if r.get("root_cause"):
-            delta_str += " ← ROOT CAUSE"
+            delta_str += " <-- ROOT CAUSE"
         data_rows.append([r["component"], fired_str, f1_str, delta_str])
 
     # Compute column widths
