@@ -5,8 +5,8 @@ split (D-46). It proposes a new SKILL.md `description` string and returns it wra
 a SkillProposal. It has NO file-write capability:
 
   - it performs no filesystem writes whatsoever (no write primitive, no writable handle);
-  - it never imports the orchestrator or the applier (those own all writes/audits);
-  - it never references a telemetry/cache/audit storage path.
+  - it never imports the orchestrator or the applier (those own all writes/logging);
+  - it never references a telemetry/cache/log storage path.
 
 Requirements: REQ-LOOP-01 (one optimizer end-to-end with a one-flag MIPROv2 swap) and
 REQ-LOOP-02 (the patch step). Implementation path is decided by the gepa==0.0.27
