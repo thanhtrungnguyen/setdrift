@@ -96,6 +96,48 @@ def main() -> int:
         help="path to the audit JSONL log (default: data/audit/audit.jsonl)",
     )
 
+    # --- loop subcommand (REQ-LOOP-01/02 observe->diagnose->patch->verify cycle) ---
+    loop_p = sub.add_parser(
+        "loop",
+        help="run one observe->diagnose->patch->verify->promote|rollback cycle (D-43: dry-run by default)",
+    )
+    loop_p.add_argument(
+        "--skill", required=True,
+        help="kebab-case skill name to optimize (e.g. spring-boot-endpoint)",
+    )
+    loop_p.add_argument(
+        "--corpus-path", type=Path,
+        default=Path("data/corpora/public/public.jsonl"),
+        help="path to the corpus JSONL (split.json must be adjacent)",
+    )
+    loop_p.add_argument(
+        "--skills-dir", type=Path,
+        default=Path("plugin/skills"),
+        help="path to the skills directory (default: plugin/skills)",
+    )
+    loop_p.add_argument(
+        "--map", type=Path,
+        default=Path("eval/sica_eval/corpus/intent_skill_map.yaml"),
+        help="path to intent_skill_map.yaml",
+    )
+    loop_p.add_argument(
+        "--experiments-dir", type=Path,
+        default=Path("experiments"),
+        help="path to the experiments/ directory (default: experiments)",
+    )
+    loop_p.add_argument(
+        "--seed", type=int, default=42,
+        help="RNG seed for reproducibility (default: 42)",
+    )
+    loop_p.add_argument(
+        "--dry-run", action="store_true",
+        help="validate the cycle without writing to live plugin/ (default behavior; D-43)",
+    )
+    loop_p.add_argument(
+        "--approve", action="store_true",
+        help="apply a promoted candidate to live plugin/ (requires human approval, D-43)",
+    )
+
     # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
     deprecate_scan_p = sub.add_parser(
         "deprecate-scan",
@@ -262,6 +304,29 @@ def main() -> int:
 
         print(
             f"[sica-eval] rollback restored config_hash={target_hash} verified=True"
+        )
+        return 0
+
+    if args.cmd == "loop":
+        # Lazy import (project convention)
+        from sica_eval.optimizer.orchestrator import run_loop_cycle
+
+        result = run_loop_cycle(
+            skill_name=args.skill,
+            corpus_path=args.corpus_path,
+            skills_dir=args.skills_dir,
+            map_path=args.map,
+            experiments_dir=args.experiments_dir,
+            seed=args.seed,
+            dry_run=args.dry_run,
+            approve=args.approve,
+        )
+        staged = result.promotion_decision == "promoted"
+        print(
+            f"[sica-eval] loop cycle_id={result.cycle_id} "
+            f"decision={result.promotion_decision} "
+            f"f1_delta={result.f1_delta:+.4f} "
+            f"staged={staged}"
         )
         return 0
 

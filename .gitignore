@@ -13,6 +13,14 @@ eval/data/**
 # eval/data/** ); the source package must stay tracked.
 data/telemetry/**
 *.jsonl
+
+# ---- Data-wall-clean scrubbed genealogy trail (D-38) ----
+# experiments/audit-genealogy.jsonl is the ONE committed JSONL in the repo.
+# It is scrubbed (no hmac_sig, no prompt text) and is NOT a data-wall breach —
+# it is the designated publishable genealogy mirror (D-38, T-03-61).
+# The explicit allows MUST come AFTER the blanket *.jsonl rule (later rules win).
+!experiments/
+!experiments/audit-genealogy.jsonl
 *.sqlite
 *.sqlite3
 *.db
