@@ -112,8 +112,11 @@ def _append_audit(record: AuditRecord) -> None:
 # ---------------------------------------------------------------------------
 
 def _check_precision_gate(experiments_dir: Path) -> None:
-    """Raise OrchestratorError if the precision/kappa gate has not cleared."""
-    reports = sorted(Path(experiments_dir).glob("*-precision-gate.json"))
+    """Raise OrchestratorError if the precision/kappa gate has not cleared.
+
+    Looks for *-mining-precision.json (the file written by precision_gate_cli).
+    """
+    reports = sorted(Path(experiments_dir).glob("*-mining-precision.json"))
     if not reports:
         raise OrchestratorError(
             "precision/kappa gate has not cleared — run 02-03 precision_gate_cli first. "
@@ -289,6 +292,11 @@ def run_loop_cycle(
     # build_optimizer_trainset assembles the DSPy trainset with adversarial negatives
     # (module-level reference so tests can monkeypatch it without requiring >=50 negatives)
     dspy_trainset = _build_optimizer_trainset(train_examples)
+    # Configure DSPy LM so _SkillTriggerProgram.forward() can make API calls during GEPA
+    # optimization. Configured here (not in gepa_wrapper) so the orchestrator owns the
+    # LM pin (model is a loop-level setting, not an optimizer-level setting).
+    import dspy as _dspy
+    _dspy.configure(lm=_dspy.LM(f"anthropic/{_MODEL}", temperature=0.0, max_tokens=1024))
     proposal = _propose(skill_name, skill_path, dspy_trainset, frozen_map, cycle_id)
 
     candidate_config = {skill_name: proposal.new_content}
