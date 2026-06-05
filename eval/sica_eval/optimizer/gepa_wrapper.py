@@ -315,8 +315,25 @@ def _read_description(skill_path: Path) -> str:
     return str(description)
 
 
+class _SkillClassifier(dspy.Signature):
+    """Classify a developer prompt to determine if a skill should be triggered.
+
+    The skill description (the instruction) is the optimizable parameter.
+    GEPA iterates on this instruction to improve trigger precision.
+    """
+
+    prompt: str = dspy.InputField(desc="Developer prompt to classify")
+    fired_intents: list = dspy.OutputField(
+        desc="List of intents that should fire for this prompt (empty list if none)"
+    )
+
+
 class _SkillTriggerProgram(dspy.Module):
     """Minimal dspy program whose optimizable instruction IS the skill description.
+
+    Uses a dspy.Predict component (required by GEPA — it optimizes predictor
+    instructions via named_predictors()). The instruction is initialized to the
+    skill's current description; GEPA iterates on it to improve trigger precision.
 
     Integration-exercised live (with an API key) during the 03-06 dogfooding cycle; the
     Wave-1 unit tests monkeypatch `_run_optimizer`, so this class is constructed but not
@@ -326,10 +343,17 @@ class _SkillTriggerProgram(dspy.Module):
     def __init__(self, skill_name: str, description: str):
         super().__init__()
         self.skill_name = skill_name
-        self.description = description
+        # dspy.Predict with a signature whose instruction is the skill description.
+        # GEPA's seed_candidate = {name: pred.signature.instructions for named_predictors()}
+        # so this is what GEPA optimizes.
+        self.classify = dspy.Predict(
+            _SkillClassifier.with_instructions(description)
+        )
 
     def forward(self, prompt: str):  # pragma: no cover - integration path
-        return dspy.Prediction(fired_intents=set(), description=self.description)
+        result = self.classify(prompt=prompt)
+        fired = result.fired_intents if isinstance(result.fired_intents, list) else []
+        return dspy.Prediction(fired_intents=fired, description=self.classify.signature.instructions)
 
 
 def _enforce_pareto_floor(compiled) -> None:
@@ -352,9 +376,10 @@ def _run_optimizer(optimizer, seed_description: str, trainset, skill_name: str) 
     program = _SkillTriggerProgram(skill_name=skill_name, description=seed_description)
     compiled = optimizer.compile(program, trainset=trainset)
     _enforce_pareto_floor(compiled)
-    best = getattr(compiled, "description", None)
+    # The optimized description is the instruction of the compiled predictor
+    best = getattr(compiled.classify.signature, "instructions", None)
     if not best:
-        raise OptimizerError("optimizer returned no candidate description")
+        raise OptimizerError("optimizer returned no candidate description (empty instruction)")
     return str(best)
 
 
