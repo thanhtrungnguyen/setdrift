@@ -90,9 +90,10 @@ def precision_gate_report(experiments_dir):
     report = {
         "passed": True,
         "timestamp": "2026-06-06T00:00:00Z",
-        "precision_gate": {"passed": True},
+        "overall_precision": 0.92,
+        "overall_kappa": 0.75,
     }
-    (experiments_dir / "001-precision-gate.json").write_text(
+    (experiments_dir / "001-mining-precision.json").write_text(
         json.dumps(report), encoding="utf-8"
     )
     return experiments_dir
