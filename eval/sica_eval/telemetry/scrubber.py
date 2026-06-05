@@ -44,9 +44,23 @@ _SECRET_PATTERNS = [
 ]
 _SECRET_RECOGNIZER = PatternRecognizer(supported_entity="SECRET", patterns=_SECRET_PATTERNS)
 
+# Deterministic PII-shape regex (Exit Gate #5 hardening, 01-04). Presidio's NLP
+# recognizers VALIDATE (e.g. libphonenumber rejects 555-01xx fictional numbers; US_SSN
+# scoring is context-dependent), which leaks PII-SHAPED strings on a zero-tolerance
+# telemetry path. For telemetry we OVER-redact anything phone/SSN-shaped regardless of
+# validity. Evidence: tests/adversarial_pii.py (PHONE 0% / US_SSN 50% before this).
+_PII_PATTERNS = [
+    # 3-2-4 SSN.
+    Pattern(name="us_ssn_shape", regex=r"\b\d{3}-\d{2}-\d{4}\b", score=0.9),
+    # Phone: optional +country, 3-3-4 with at least separators between the trailing groups.
+    Pattern(name="phone_shape", regex=r"(?:\+\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}", score=0.85),
+]
+_PII_RECOGNIZER = PatternRecognizer(supported_entity="PII_SHAPE", patterns=_PII_PATTERNS)
+
 # Module-level singletons (cold start paid once per process).
 _ANALYZER = AnalyzerEngine()
 _ANALYZER.registry.add_recognizer(_SECRET_RECOGNIZER)
+_ANALYZER.registry.add_recognizer(_PII_RECOGNIZER)
 _ANONYMIZER = AnonymizerEngine()
 
 # Project deny-list (Layer 3) — empty in Phase 1, tuned in 01-04.
@@ -56,7 +70,7 @@ _DENY_ENTITY = "CUSTOM_DENY"
 # Fail-safe: a run of 20+ secret-ish chars on a detect-secrets-flagged line.
 _ENTROPY_TOKEN = re.compile(r"[A-Za-z0-9+/=_\-]{20,}")
 
-_LAYER_BY_ENTITY = {_DENY_ENTITY: "custom_deny", "SECRET": "secret_pattern"}
+_LAYER_BY_ENTITY = {_DENY_ENTITY: "custom_deny", "SECRET": "secret_pattern", "PII_SHAPE": "pii_shape"}
 
 
 @dataclass
