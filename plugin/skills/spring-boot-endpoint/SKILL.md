@@ -5,6 +5,7 @@ description: >-
   controller + service + DTO + validation + the project's standard error envelope.
   Triggers on requests like "add an endpoint", "expose a REST API for X",
   "new controller", or mentions of @RestController / @GetMapping in the parking services.
+  Applies to Spring annotation patterns in the parking services.
 ---
 
 # Spring Boot Endpoint (parking platform conventions)

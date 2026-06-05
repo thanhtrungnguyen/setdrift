@@ -14,12 +14,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-# Resolve paths relative to the repo root (tests are run from eval/ dir)
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_SKILLS_DIR = _REPO_ROOT / "plugin" / "skills"
+# Resolve paths relative to the sica-plugin root (parents[2] = sica-plugin/)
+# test file: eval/tests/test_*.py -> parents[0]=eval/tests, [1]=eval, [2]=sica-plugin
+_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
+_SKILLS_DIR = _PLUGIN_ROOT / "plugin" / "skills"
 _JPA_SKILL_MD = _SKILLS_DIR / "spring-jpa-entity" / "SKILL.md"
 _ENDPOINT_SKILL_MD = _SKILLS_DIR / "spring-boot-endpoint" / "SKILL.md"
-_INTENT_MAP_PATH = _REPO_ROOT / "eval" / "sica_eval" / "corpus" / "intent_skill_map.yaml"
+_INTENT_MAP_PATH = _PLUGIN_ROOT / "eval" / "sica_eval" / "corpus" / "intent_skill_map.yaml"
 
 OVERLAP_PHRASE = "Spring annotation patterns in the parking services"
 

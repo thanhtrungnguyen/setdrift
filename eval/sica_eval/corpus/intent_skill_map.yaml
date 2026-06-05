@@ -21,7 +21,8 @@
 # SKILL.md, map it here (likely jpa-migration / spring-annotation-fix). Do NOT
 # map a skill that has no SKILL.md yet.
 
-jpa-migration: []
+jpa-migration:
+  - spring_jpa_entity          # NEW Phase 3 (REQ-LOOP-02, D-44) — moves out of holdout
 spring-annotation-fix:
   - spring_boot_endpoint
 dependency-bump: []
