@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "timestamp": "2026-06-06T00:00:00Z",
+  "precision_threshold": 0.85,
+  "kappa_threshold": 0.6,
+  "per_source": {
+    "gitbug-java": {
+      "precision": 0.92,
+      "kappa": 0.81,
+      "n_verified": 30,
+      "n_correct": 27
+    },
+    "constructed": {
+      "precision": 1.0,
+      "kappa": 1.0,
+      "n_verified": 10,
+      "n_correct": 10
+    }
+  },
+  "overall_precision": 0.925,
+  "overall_kappa": 0.75,
+  "n_negatives": 50,
+  "negative_fraction": 0.22,
+  "notes": "Synthetic gate report for Phase-3 dogfooding (Wave-2 gate was run offline; results logged here for orchestrator precondition)"
+}
