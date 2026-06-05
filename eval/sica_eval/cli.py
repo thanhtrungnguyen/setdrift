@@ -20,7 +20,7 @@ def main() -> int:
 
     health_p = sub.add_parser("health", help="compute skill-trigger macro-F1 for an arm")
     health_p.add_argument("--corpus", choices=["public"], default="public")
-    health_p.add_argument("--arm", choices=["B", "C"], required=True)
+    health_p.add_argument("--arm", choices=["A", "B", "C"], required=True)
     health_p.add_argument("--seed", type=int, default=42)
     health_p.add_argument("--corpus-path", type=Path, default=Path("data/corpora/public/public.jsonl"))
     health_p.add_argument("--map", type=Path, default=Path("eval/sica_eval/corpus/intent_skill_map.yaml"))
@@ -46,6 +46,35 @@ def main() -> int:
     verify_p.add_argument("--corpus", type=Path, required=True)
     verify_p.add_argument("--output", type=Path, default=Path("data/corpus/verify.csv"))
     verify_p.add_argument("--seed", type=int, default=42)
+
+    # --- ablate subcommand (REQ-LOOP-03 leave-one-out failure attribution) ---
+    ablate_p = sub.add_parser(
+        "ablate",
+        help="per-component leave-one-out failure-attribution ablation table",
+    )
+    ablate_p.add_argument(
+        "--failure-id", required=True,
+        help="prompt_id of the failure prompt to ablate",
+    )
+    ablate_p.add_argument(
+        "--corpus-path", type=Path,
+        default=Path("data/corpora/public/public.jsonl"),
+        help="path to the corpus JSONL (default: data/corpora/public/public.jsonl)",
+    )
+    ablate_p.add_argument(
+        "--skills-dir", type=Path,
+        default=Path("plugin/skills"),
+        help="path to the skills directory (default: plugin/skills)",
+    )
+    ablate_p.add_argument(
+        "--map", type=Path,
+        default=Path("eval/sica_eval/corpus/intent_skill_map.yaml"),
+        help="path to intent_skill_map.yaml",
+    )
+    ablate_p.add_argument(
+        "--cache-dir", type=Path, default=None,
+        help="path to the response cache directory (optional)",
+    )
 
     # --- init-keys subcommand (REQ-SAFETY-02 key provisioning) ---
     sub.add_parser(
@@ -118,6 +147,23 @@ def main() -> int:
             f"bootstrap_ci=[{result.bootstrap_ci_low:.4f},{result.bootstrap_ci_high:.4f}] "
             f"coverage={result.coverage_pct:.3f}"
         )
+        return 0
+
+    if args.cmd == "ablate":
+        # Lazy import (project convention)
+        from sica_eval.optimizer.ablate import build_ablation_table, render_table
+
+        rows = build_ablation_table(
+            failure_id=args.failure_id,
+            corpus_path=args.corpus_path,
+            skills_dir=args.skills_dir,
+            map_path=args.map,
+            cache_dir=args.cache_dir,
+        )
+        root_cause_rows = [r for r in rows if r.get("root_cause")]
+        root_cause = root_cause_rows[0]["component"] if root_cause_rows else "unknown"
+        print(f"[sica-eval] ablate failure-id={args.failure_id} root_cause={root_cause}")
+        print(render_table(rows))
         return 0
 
     if args.cmd == "init-keys":
