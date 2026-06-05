@@ -165,7 +165,12 @@ def run_health(
     scored = scored_intents(mapping)
     labels = sorted(scored)
 
-    tools = arm_runner.load_skill_tools(skills_dir) if arm == "B" else []
+    # Controlled exception to frozen-instrument rule (03-03 Task 1, §Controlled Exception):
+    # arm in ("A","B") both load tools from skills_dir; arm C is the empty floor.
+    # NOTE: scorer.py sha256 is NOT pinned in ExperimentManifest (only intent_map_sha256
+    # + split_hash are pinned), so this arm-add does NOT invalidate any prior Phase-2
+    # manifests (RESEARCH Open Question 3).
+    tools = arm_runner.load_skill_tools(skills_dir) if arm in ("A", "B") else []
     y_true_sets: list[set] = []
     y_pred_sets: list[set] = []
     n_holdout = 0
@@ -177,7 +182,7 @@ def run_health(
             continue
         fired = (
             arm_runner.run_arm(p["prompt"], tools, model=model, cache_dir=cache_dir)
-            if arm == "B"
+            if arm in ("A", "B")
             else arm_runner.run_arm_c(p["prompt"], model=model, cache_dir=cache_dir)
         )
         y_true_sets.append(gt & scored)  # empty set = a scored negative ({none})
@@ -242,3 +247,23 @@ def run_health(
         bootstrap_ci_high=ci_high,
         coverage_pct=coverage_pct,
     )
+
+
+def val_only_prompts(corpus_path: Path) -> list[dict]:
+    """Return only split=='val' prompts from corpus_path — the verifier restriction helper.
+
+    The promotion gate (verifier.py, D-41) must evaluate on VAL only. This helper
+    enforces the Goodhart firewall (T-03-30): the verifier structurally never sees
+    test-split prompt IDs when computing its promotion decision.
+
+    Returns a list of prompt dicts whose prompt_id maps to 'val' in the adjacent
+    split.json. Never returns 'test' or 'train' rows.
+    """
+    corpus_path = Path(corpus_path)
+    prompts = [
+        json.loads(line)
+        for line in corpus_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    split = json.loads((corpus_path.parent / "split.json").read_text(encoding="utf-8"))
+    return [p for p in prompts if split.get(p["prompt_id"]) == "val"]
