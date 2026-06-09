@@ -5,20 +5,23 @@ tools) replays from disk with zero API calls, so all 5 noise-band runs after the
 first are free and replay is deterministic. Cache lives under data/cache/
 (gitignored — inside the data wall).
 
-Eval-side fail-loud: API errors propagate (no bare except). The tool_choice /
-empty-toolset decision lives ENTIRELY here — Arm B (tools present) sends
-tool_choice={"type":"auto"}; Arm C (empty toolset) omits BOTH tools and
-tool_choice, because the Anthropic API rejects tool_choice without >=1 tool.
+This module is a pluggable-transport delegate, NOT part of the Goodhart firewall.
+The frozen firewall files are scorer.py, experiment.py, and arm_runner.py.
+The tool_choice / max_tokens / temperature decision lives in llm_backend.py;
+response_cache.py is responsible only for key generation, cache lookup, and
+persistence. The actual model call is delegated to llm_backend.call_model so
+the backend (anthropic | openrouter) is transparent to this layer.
+
+Eval-side fail-loud: API errors propagate (no bare except).
 """
 import hashlib
 import json
 import os
 from pathlib import Path
 
-import anthropic
+from sica_eval.benchmark.llm_backend import call_model
 
 CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
-MAX_TOKENS = 256  # only tool selection matters; generated text is irrelevant
 
 
 def cache_key(model: str, prompt: str, tools: list[dict]) -> str:
@@ -46,26 +49,8 @@ def load_or_call(model: str, prompt: str, tools: list[dict], cache_dir: Path) ->
     if cached.exists():
         return json.loads(cached.read_text(encoding="utf-8"))
 
-    # Cache miss — call the API (fail-loud: let anthropic.APIError propagate).
-    client = anthropic.Anthropic()
-    kwargs: dict = {
-        "model": model,
-        "max_tokens": MAX_TOKENS,
-        "temperature": 0,
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    if tools:
-        kwargs["tools"] = tools
-        kwargs["tool_choice"] = {"type": "auto"}  # D-32 — only valid with >=1 tool
-    # else (Arm C): omit BOTH tools and tool_choice — passing tool_choice with an
-    # empty/absent toolset raises "tool_choice requires at least one tool".
-    response = client.messages.create(**kwargs)
-
-    data = {
-        "content": [b.model_dump() for b in response.content],
-        "usage": response.usage.model_dump(),
-        "stop_reason": response.stop_reason,
-    }
+    # Cache miss — delegate to the pluggable transport (fail-loud: API errors propagate).
+    data = call_model(model, prompt, tools)
     cache_dir.mkdir(parents=True, exist_ok=True)
     cached.write_text(json.dumps(data), encoding="utf-8")
     return data
