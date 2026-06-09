@@ -162,3 +162,15 @@ Per Phase 2 discussion decision **D-37** (`.planning/phases/02-measurement-found
 - **(d) Back-reference.** This activates §8 Risk Register row 2 ("Parking IP ruling … blocks publication … Option β"); the §8 table itself is unmodified (D-11 append-only discipline). The 4-week-acclimation requirement traces to §7-6 (Hawthorne, 2026-05-31 amendment).
 
 **Cross-reference:** `registrations/01-hypothesis.md` may cite this entry as the dated invocation point of the pre-registered §8-2 public-only contingency.
+
+### 2026-06-10 — Model-call layer made backend-pluggable (eval transport)
+
+Sources: `quick/260610-0o9` refactor task. This entry follows the append-only discipline (D-11). No changes to §1–§8 original text.
+
+**(a) Pluggable transport.** The eval model-call layer is now a pluggable transport implemented in `eval/sica_eval/benchmark/llm_backend.py` (`call_model(model, prompt, tools) -> dict`). The backend is selected by the `SICA_LLM_BACKEND` environment variable; the default value is `anthropic`, whose behavior is byte-identical to the inline call that existed at *t=0* in `response_cache.py`. No measurement semantics changed.
+
+**(b) Provider-lock requirement for OpenRouter runs.** Any experiment run using `SICA_LLM_BACKEND=openrouter` MUST be provider-locked to first-party Anthropic routing: `provider.order=["Anthropic"]`, `allow_fallbacks=false` (the implementation default). The model id MUST be declared in dot notation (`anthropic/claude-sonnet-4.6` for the primary arm; `anthropic/claude-haiku-4.5` for the sensitivity arm). These values MUST be declared per-run in the experiment record alongside the model version string, in the same way that `SICA_MODEL` is logged for direct-API runs.
+
+**(c) Frozen primary metric preserved.** This change does NOT alter the frozen primary metric. `scorer.py` is byte-unchanged. The response-cache key (sha256 of model + prompt + sorted tools) and the persisted dict shape (`content`, `usage`, `stop_reason`) are byte-identical to the *t=0* baseline, so the A/B comparison semantics are fully preserved. The `arm_runner.py` and `scorer.py` modules continue to operate without modification.
+
+**(d) Reclassification of response_cache.py.** `response_cache.py` is reclassified from a frozen-firewall file to a **pluggable-transport delegate**. It is now responsible only for cache-key generation, cache lookup, and persistence; it delegates the actual model call to `llm_backend.call_model`. The Goodhart firewall files — the modules whose byte-integrity is asserted in the Phase 4 drift-evaluation plans — are: **`scorer.py`, `experiment.py`, and `arm_runner.py`**. `response_cache.py` is explicitly removed from that frozen set.
