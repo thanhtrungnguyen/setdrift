@@ -17,6 +17,7 @@ import json
 import os
 
 import anthropic  # module-level so the test fixture can patch sica_eval.benchmark.llm_backend.anthropic.Anthropic
+import openai  # module-level so the test fixture can patch sica_eval.benchmark.llm_backend.openai.OpenAI
 
 MAX_TOKENS = 256  # only tool selection matters; generated text is irrelevant
 
@@ -92,8 +93,6 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict]) -> dict:
         SICA_OPENROUTER_PROVIDER      — JSON list of provider names; default '["Anthropic"]'.
         SICA_OPENROUTER_ALLOW_FALLBACKS — "true"/"false"; default "false" (no fallbacks).
     """
-    import openai  # lazy-import: avoids hard dep at import time when using anthropic backend
-
     client = openai.OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=os.environ["OPENROUTER_API_KEY"],  # KeyError propagates — fail-loud
