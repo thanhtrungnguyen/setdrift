@@ -7,16 +7,20 @@ import pytest
 # Helper
 # ---------------------------------------------------------------------------
 
-def _make_fake_tokenizer(tokens_per_word: int = 2):
-    """Return a minimal stub tokenizer that encodes text as a fixed-size token list.
+def _make_fake_tokenizer():
+    """Return a minimal stub tokenizer that maps characters to token IDs bijectively.
 
-    Each word yields `tokens_per_word` token IDs so token counts are predictable
-    without loading the real MiniLM weights — pure-math tests stay offline.
+    One character = one token ID (the character's ordinal value). The decode()
+    method reconstructs the original string exactly, so a chunk_code → decode →
+    re-encode round-trip is lossless. This lets pure-math tests verify the
+    MAX_TOKENS bound without loading the real MiniLM weights.
     """
     class FakeTok:
         def encode(self, text: str, add_special_tokens: bool = True) -> list[int]:
-            words = text.split()
-            return list(range(len(words) * tokens_per_word))
+            return [ord(c) for c in text]
+
+        def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:
+            return "".join(chr(i) for i in ids)
 
     return FakeTok()
 
@@ -29,9 +33,9 @@ def test_chunk_splits_long_text():
     """Test 1: chunk_code splits a >200-token string into chunks each <= MAX_TOKENS tokens."""
     from sica_eval.drift.embedder import chunk_code, MAX_TOKENS
 
-    tok = _make_fake_tokenizer(tokens_per_word=10)  # 1 word = 10 tokens
-    # 30 words = 300 tokens → should produce multiple chunks
-    long_text = " ".join([f"word{i}" for i in range(30)])
+    tok = _make_fake_tokenizer()  # 1 char = 1 token
+    # 300 'a' chars = 300 tokens → should produce multiple chunks
+    long_text = "a" * 300
     chunks = chunk_code(long_text, tok)
     assert len(chunks) > 1, "Expected multiple chunks for >MAX_TOKENS input"
     for chunk in chunks:
@@ -45,7 +49,7 @@ def test_chunk_empty_returns_empty():
     """Test 2: chunk_code on empty string returns []."""
     from sica_eval.drift.embedder import chunk_code
 
-    tok = _make_fake_tokenizer()
+    tok = _make_fake_tokenizer()  # 1 char = 1 token
     result = chunk_code("", tok)
     assert result == []
 
