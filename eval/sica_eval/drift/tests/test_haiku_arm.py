@@ -121,7 +121,7 @@ def test_test_partition_filter_excludes_val(tmp_path: Path) -> None:
 
     with (
         patch("sica_eval.drift.haiku_arm.run_arm", side_effect=_fake_run_arm),
-        patch("sica_eval.benchmark.response_cache.load_or_call", side_effect=_fake_load_or_call),
+        patch("sica_eval.drift.haiku_arm.load_or_call", side_effect=_fake_load_or_call),
     ):
         report = haiku_arm.run_haiku_sensitivity(
             corpus_path=corpus_path,
@@ -175,7 +175,7 @@ def test_run_haiku_sensitivity_uses_full_versioned_model(tmp_path: Path) -> None
 
     with (
         patch("sica_eval.drift.haiku_arm.run_arm", side_effect=_fake_run_arm),
-        patch("sica_eval.benchmark.response_cache.load_or_call", side_effect=_fake_load_or_call),
+        patch("sica_eval.drift.haiku_arm.load_or_call", side_effect=_fake_load_or_call),
     ):
         haiku_arm.run_haiku_sensitivity(
             corpus_path=corpus_path,
@@ -217,7 +217,7 @@ def test_report_contains_5run_band_per_arm(tmp_path: Path) -> None:
 
     with (
         patch("sica_eval.drift.haiku_arm.run_arm", side_effect=_fake_run_arm),
-        patch("sica_eval.benchmark.response_cache.load_or_call", side_effect=_fake_load_or_call),
+        patch("sica_eval.drift.haiku_arm.load_or_call", side_effect=_fake_load_or_call),
     ):
         report = haiku_arm.run_haiku_sensitivity(
             corpus_path=corpus_path,
@@ -278,7 +278,7 @@ def test_cost_usd_populated_from_usage(tmp_path: Path) -> None:
 
     with (
         patch("sica_eval.drift.haiku_arm.run_arm", side_effect=_fake_run_arm),
-        patch("sica_eval.benchmark.response_cache.load_or_call", side_effect=_fake_load_or_call),
+        patch("sica_eval.drift.haiku_arm.load_or_call", side_effect=_fake_load_or_call),
     ):
         report = haiku_arm.run_haiku_sensitivity(
             corpus_path=corpus_path,
@@ -322,7 +322,7 @@ def test_manifest_note_records_d59_rationale(tmp_path: Path) -> None:
 
     with (
         patch("sica_eval.drift.haiku_arm.run_arm", side_effect=_fake_run_arm),
-        patch("sica_eval.benchmark.response_cache.load_or_call", side_effect=_fake_load_or_call),
+        patch("sica_eval.drift.haiku_arm.load_or_call", side_effect=_fake_load_or_call),
     ):
         report = haiku_arm.run_haiku_sensitivity(
             corpus_path=corpus_path,
