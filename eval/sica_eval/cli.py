@@ -138,6 +138,36 @@ def main() -> int:
         help="apply a promoted candidate to live plugin/ (requires human approval, D-43)",
     )
 
+    # --- drift subcommand (REQ-DRIFT-03 grid run + paired-difference report) ---
+    drift_p = sub.add_parser(
+        "drift",
+        help="run the yoked drift grid and emit a per-model paired-difference report (REQ-DRIFT-03)",
+    )
+    drift_p.add_argument(
+        "--mode", choices=["real", "synthetic"], default="synthetic",
+        help="evaluation mode: 'synthetic' (default) or 'real' GitBug-Java corpus",
+    )
+    drift_p.add_argument(
+        "--gitbug-repo", type=Path, default=None,
+        help="path to the GitBug-Java repository for real-mode snapshotting",
+    )
+    drift_p.add_argument(
+        "--corpus", type=Path, default=Path("data/corpora/public/public.jsonl"),
+        help="path to corpus JSONL (default: data/corpora/public/public.jsonl)",
+    )
+    drift_p.add_argument(
+        "--map", type=Path, default=Path("eval/sica_eval/corpus/intent_skill_map.yaml"),
+        help="path to intent_skill_map.yaml (default: eval/sica_eval/corpus/intent_skill_map.yaml)",
+    )
+    drift_p.add_argument(
+        "--cache-dir", type=Path, default=Path("data/cache"),
+        help="path to LLM response cache directory (default: data/cache)",
+    )
+    drift_p.add_argument(
+        "--haiku", action="store_true",
+        help="also run the Haiku TEST-partition A/B sensitivity arm (REQ-DRIFT-03, D-59)",
+    )
+
     # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
     deprecate_scan_p = sub.add_parser(
         "deprecate-scan",
@@ -328,6 +358,74 @@ def main() -> int:
             f"f1_delta={result.f1_delta:+.4f} "
             f"staged={staged}"
         )
+        return 0
+
+    if args.cmd == "drift":
+        # Lazy imports — [drift] extra not required at sica-eval load time
+        from sica_eval.drift.grid_runner import run_grid
+        from sica_eval.drift.paired_stats import paired_difference_report
+        from sica_eval.drift.db import connect
+
+        con = connect()
+
+        # Run the main Sonnet grid
+        arm_configs = {
+            "A": Path("plugin/skills"),
+            "B": Path("plugin/skills"),
+        }
+        revision_shas = {
+            "early": "HEAD~10",
+            "mid": "HEAD~5",
+            "late": "HEAD",
+        }
+        gitbug_repo = args.gitbug_repo or Path("data/raw/gitbug-java")
+
+        run_grid(
+            gitbug_repo=gitbug_repo,
+            arm_configs=arm_configs,
+            corpus_path=args.corpus,
+            map_path=args.map,
+            revision_shas=revision_shas,
+            cache_dir=args.cache_dir,
+        )
+
+        # Paired-difference report for Sonnet
+        sonnet_results = paired_difference_report(con, model="claude-sonnet-4-6")
+        for revision, r in sorted(sonnet_results.items()):
+            print(
+                f"[sica-eval] drift model=claude-sonnet-4-6 revision={revision} "
+                f"arm_A_mean={r.mean_A:.4f} arm_B_mean={r.mean_B:.4f} "
+                f"paired_diff={r.paired_diff:+.4f} p={r.p_value:.4f} "
+                f"exceeds_b_band={r.exceeds_b_upper_band}"
+            )
+
+        # Optionally run the Haiku TEST-partition sensitivity arm (--haiku flag)
+        if args.haiku:
+            from sica_eval.drift.haiku_arm import run_haiku_sensitivity
+            haiku_report = run_haiku_sensitivity(
+                corpus_path=args.corpus,
+                arm_configs=arm_configs,
+                map_path=args.map,
+                cache_dir=args.cache_dir,
+                con=con,
+            )
+            haiku_results = paired_difference_report(
+                con, model="claude-haiku-4-5-20251001"
+            )
+            for revision, r in sorted(haiku_results.items()):
+                print(
+                    f"[sica-eval] drift model=claude-haiku-4-5-20251001 revision={revision} "
+                    f"arm_A_mean={r.mean_A:.4f} arm_B_mean={r.mean_B:.4f} "
+                    f"paired_diff={r.paired_diff:+.4f} p={r.p_value:.4f} "
+                    f"exceeds_b_band={r.exceeds_b_upper_band}"
+                )
+            # Print Haiku cost summary (D-60)
+            print(
+                f"[sica-eval] drift haiku cost_usd={haiku_report['cost_usd']:.6f} "
+                f"n_test_prompts={haiku_report['n_prompts_scored']}"
+            )
+
+        con.close()
         return 0
 
     if args.cmd == "deprecate-scan":

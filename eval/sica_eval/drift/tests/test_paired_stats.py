@@ -153,8 +153,10 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
     from sica_eval.drift.paired_stats import paired_difference_report
 
     model = "claude-sonnet-4-6"
-    f1_a = {"only": [0.70, 0.72, 0.71, 0.73, 0.70]}
-    f1_b = {"only": [0.65, 0.67, 0.66, 0.68, 0.65]}
+    # Use values with non-constant paired differences to avoid catastrophic
+    # cancellation in ttest_rel (which returns inf when all diffs are identical).
+    f1_a = {"only": [0.70, 0.74, 0.68, 0.73, 0.72]}
+    f1_b = {"only": [0.65, 0.61, 0.66, 0.60, 0.63]}
 
     con = duckdb.connect(str(tmp_path / "test.ddb"))
     con.execute(DDL)
