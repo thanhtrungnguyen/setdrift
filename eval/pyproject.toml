@@ -37,10 +37,15 @@ dependencies = [
 # with dspy>=3.2 — verified unsatisfiable 2026-05-31, see
 # .planning/codebase/dspy-rename-smoke-test.md). dspy owns the gepa version.
 optimize = ["dspy>=3.2,<4.0"]
+# duckdb, scipy, numpy are already in core dependencies — not repeated here.
+drift = [
+    "inspect-ai>=0.3.220,<0.4",
+    "sentence-transformers==5.5.1",
+]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "sica_eval"]
 addopts = "-ra -q"
 
 [project.scripts]
