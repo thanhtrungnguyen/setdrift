@@ -1,0 +1,25 @@
+# drift_compose.yaml — Docker sandbox for Inspect-AI drift evaluation cells.
+#
+# Source: inspect.aisi.org.uk/sandboxing.html + RESEARCH.md Pattern 2 + spike.
+#
+# network_mode: none enforces the yoking-discipline exit gate: the sandbox
+# container has NO network access. LLM API calls run on the HOST process via
+# Inspect-AI's model provider abstraction (not inside the container), so
+# network_mode: none does NOT block LLM traffic.
+#
+# Image is pinned by digest to prevent tag-swap tampering (T-04-05).
+# cpus + mem_limit bound the container for DoS protection (T-04-05).
+#
+# NOTE: No volume mounts — snapshot content is read host-side by the SICA
+# harness (arm_runner.run_arm + response_cache.load_or_call). The solver
+# reads from the host-side SICA cache; no filesystem injection into the
+# container is needed, which avoids the Docker Compose V2 Windows
+# relative-path resolution pitfall (RESEARCH.md Pitfall 4).
+services:
+  default:
+    image: python:3.12-slim@sha256:090ba77e2958f6af52a5341f788b50b032dd4ca28377d2893dcf1ecbdfdfe203
+    init: true
+    command: ["tail", "-f", "/dev/null"]
+    network_mode: none
+    cpus: 1.0
+    mem_limit: 1gb
