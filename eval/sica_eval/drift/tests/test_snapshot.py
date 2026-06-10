@@ -16,7 +16,7 @@ def _make_java_tree(tmp_path, files: dict[str, str]):
         Path to the directory containing the Java files.
     """
     repo_dir = tmp_path / "fake_repo"
-    repo_dir.mkdir()
+    repo_dir.mkdir(parents=True, exist_ok=True)
     for rel_path, content in files.items():
         target = repo_dir / rel_path
         target.parent.mkdir(parents=True, exist_ok=True)
