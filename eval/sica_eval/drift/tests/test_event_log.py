@@ -141,7 +141,9 @@ def test_bank_transcripts_produces_cache_hit(tmp_path, monkeypatch):
     # bank_transcripts.py is at eval/scripts/bank_transcripts.py; import it directly
     import importlib.util
     import pathlib
-    script_path = pathlib.Path(__file__).parents[5] / "scripts" / "bank_transcripts.py"
+    # test_event_log.py is at eval/sica_eval/drift/tests/test_event_log.py
+    # parents[3] = eval/ directory (the package root where scripts/ lives)
+    script_path = pathlib.Path(__file__).parents[3] / "scripts" / "bank_transcripts.py"
     if not script_path.exists():
         pytest.skip(f"bank_transcripts.py not yet created at {script_path}")
 
