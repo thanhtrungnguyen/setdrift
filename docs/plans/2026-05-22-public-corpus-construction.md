@@ -4,9 +4,9 @@
 
 **Goal:** Build a reproducible mining pipeline that turns the 199 reproducible Java bugs in GitBug-Java into a labeled developer-prompt corpus (`data/corpus/gitbug-java.jsonl`) suitable for measuring skill-trigger F1 under conditions A/B/C of the falsifiable claim (see `docs/design/2026-05-20-falsifiable-claim.md`).
 
-**Architecture:** A new Python subpackage `eval/sica_eval/corpus/` containing a fetcher (clones the GitBug-Java GitHub repo into `data/raw/gitbug-java/`), a heuristic labeler (rule-based diff → `SkillLabel` mapper over a fixed 8-label taxonomy), a prompt synthesizer (issue+commit → developer-prompt string), a corpus builder pipeline that combines them and writes JSONL, a `sica-eval corpus build` CLI subcommand, and a verification sampler that emits a CSV for manual labeling of a 20% random sample. All code is Python 3.10+, schemas are Pydantic v2, tests use pytest. Output ≈199 labeled prompts; reaching the ≥500 target requires a follow-up Defects4J plan (out of scope here).
+**Architecture:** A new Python subpackage `eval/sica_eval/corpus/` containing a fetcher (clones the GitBug-Java GitHub repo into `data/raw/gitbug-java/`), a heuristic labeler (rule-based diff → `SkillLabel` mapper over a fixed 8-label taxonomy), a prompt synthesizer (issue+commit → developer-prompt string), a corpus builder pipeline that combines them and writes JSONL, a `sica-eval corpus build` CLI subcommand, and a verification sampler that emits a CSV for manual labeling of a 20% random sample. All code is Python 3.14+, schemas are Pydantic v2, tests use pytest. Output ≈199 labeled prompts; reaching the ≥500 target requires a follow-up Defects4J plan (out of scope here).
 
-**Tech Stack:** Python 3.10+, Pydantic 2.x, pytest 8.x, GitPython 3.x (for diff parsing), subprocess (for `git clone`). Existing `eval/pyproject.toml` already declares Pydantic and Anthropic; this plan adds `gitpython` and bumps `pytest` from optional `dev` extra to a runtime test dependency declared the standard way.
+**Tech Stack:** Python 3.14+, Pydantic 2.x, pytest 8.x, GitPython 3.x (for diff parsing), subprocess (for `git clone`). Existing `eval/pyproject.toml` already declares Pydantic and Anthropic; this plan adds `gitpython` and bumps `pytest` from optional `dev` extra to a runtime test dependency declared the standard way.
 
 ---
 
@@ -52,7 +52,7 @@ name = "sica-eval"
 version = "0.0.1"
 description = "Evaluation harness for the SICA self-improving Claude Code plugin"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 authors = [{ name = "Nguyen Thanh Trung" }]
 license = { text = "MIT" }
 dependencies = [
