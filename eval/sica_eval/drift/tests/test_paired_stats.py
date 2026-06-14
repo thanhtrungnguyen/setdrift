@@ -444,3 +444,43 @@ def test_exceeds_b_upper_band_logic(tmp_path: Path) -> None:
     assert r.exceeds_b_upper_band is True, (
         "With f1_A~0.91 and f1_B~0.61, exceeds_b_upper_band must be True"
     )
+
+
+def test_zero_within_pair_variance_is_handled(tmp_path: Path, recwarn) -> None:
+    """CR-02 guard: deterministic replay (5 identical runs per arm) gives paired
+    diffs with exactly zero variance. ttest_rel would divide by a zero standard
+    error and emit nan/inf with a RuntimeWarning. The reporter must instead report
+    nan t/p with an explicit deterministic reason — and must NOT raise or warn.
+
+    This mirrors the frozen ruler's own band generation
+    (run_health: ``[macro_f1(yt, yp) for _ in range(5)]`` → identical values),
+    so zero variance is the EXPECTED project condition, not an error (CR-02
+    DISPUTED: the band is deterministic by design; uncertainty comes from
+    bootstrap_ci, not run-to-run variance).
+    """
+    from sica_eval.drift.paired_stats import paired_difference_report
+
+    # Arm A: five identical 0.80; Arm B: five identical 0.70 → diffs all +0.10,
+    # variance exactly 0.
+    con = _make_seeded_db(
+        tmp_path,
+        model="claude-sonnet-4-6",
+        revisions=["mid"],
+        f1_a_by_revision={"mid": [0.80, 0.80, 0.80, 0.80, 0.80]},
+        f1_b_by_revision={"mid": [0.70, 0.70, 0.70, 0.70, 0.70]},
+    )
+
+    results = paired_difference_report(con, model="claude-sonnet-4-6")
+    r = results["mid"]
+
+    # paired_diff is exact and correct even though significance is undefined.
+    assert math.isclose(r.paired_diff, 0.10, abs_tol=1e-9)
+    # t/p are nan (not inf, not a spurious finite value) under zero variance.
+    assert math.isnan(r.t_stat), f"expected nan t_stat under zero variance, got {r.t_stat}"
+    assert math.isnan(r.p_value), f"expected nan p_value under zero variance, got {r.p_value}"
+    # Reason explains the deterministic case so a reader is never misled.
+    assert "zero within-pair variance" in r.reason
+    # No scipy precision-loss / divide-by-zero RuntimeWarning escaped.
+    assert not [w for w in recwarn.list if issubclass(w.category, RuntimeWarning)], (
+        "zero-variance pairs must be short-circuited before ttest_rel — no RuntimeWarning"
+    )

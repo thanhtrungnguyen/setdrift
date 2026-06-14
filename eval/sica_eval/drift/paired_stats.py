@@ -165,13 +165,22 @@ def paired_difference_report(
         band_a = noise_band(a_runs)  # FROZEN RULER
         band_b = noise_band(b_runs)  # FROZEN RULER
 
-        # nan-guard: ttest_rel requires at least 2 paired samples
-        if n >= 2:
+        # nan-guard + zero-variance guard (CR-02): ttest_rel requires >=2 paired
+        # samples AND nonzero within-pair variance. Under the project's frozen-ruler
+        # design the 5-run band is deterministic — run_health computes
+        # [macro_f1(yt, yp) for _ in range(5)] → identical values — so paired diffs
+        # routinely have exactly zero variance. Feeding that to ttest_rel divides by
+        # a zero standard error and yields nan/inf with a RuntimeWarning. Report the
+        # deterministic case honestly instead of emitting a misleading statistic.
+        diffs = [a - b for a, b in zip(a_runs, b_runs)]
+        zero_variance = n >= 2 and statistics.pstdev(diffs) == 0.0
+        if n >= 2 and not zero_variance:
             stat_result = ttest_rel(a_runs, b_runs)
             t_stat = float(stat_result.statistic)
             p_value = float(stat_result.pvalue)
         else:
-            # Degenerate band: n < 2 makes t-test undefined
+            # n < 2 (t-test undefined) OR zero within-pair variance (deterministic
+            # replay): no sampling distribution exists, so t/p are not applicable.
             t_stat = float("nan")
             p_value = float("nan")
 
@@ -179,6 +188,13 @@ def paired_difference_report(
         exceeds_b_upper_band = mean_a > band_b[1]
 
         # Reason always populated (D-41 never-silent)
+        det_note = (
+            " [zero within-pair variance — deterministic replay per frozen-ruler "
+            "design; t-test not applicable, significance undefined; rely on "
+            "bootstrap_ci for uncertainty]"
+            if zero_variance
+            else ""
+        )
         if n < 2:
             reason = (
                 f"degenerate: n_runs={n} < 2; t-test undefined; "
@@ -189,12 +205,14 @@ def paired_difference_report(
                 f"arm A mean {mean_a:.4f} exceeds arm B upper band edge {band_b[1]:.4f} "
                 f"(paired_diff={paired_diff:+.4f} p={p_value:.4f} t={t_stat:.4f} n={n}); "
                 f"methodology-generalization claim survives for model={model} revision={revision}"
+                f"{det_note}"
             )
         else:
             reason = (
                 f"arm A mean {mean_a:.4f} does not exceed arm B upper band edge {band_b[1]:.4f} "
                 f"(paired_diff={paired_diff:+.4f} p={p_value:.4f} t={t_stat:.4f} n={n}); "
                 f"claim does not survive for model={model} revision={revision} — null result"
+                f"{det_note}"
             )
 
         results[revision] = PairedDiffResult(
