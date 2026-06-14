@@ -64,18 +64,40 @@ from inspect_ai.dataset import Dataset, Sample
 from inspect_ai.scorer import Score, Scorer, Target, accuracy, scorer
 from inspect_ai.solver import Solver, TaskState, generate, solver
 
+from inspect_ai.model import get_model
+
 from sica_eval.benchmark.arm_runner import load_skill_tools, run_arm
 
 # ---------------------------------------------------------------------------
-# Arm config paths — env-var overridable so tests can inject fixtures.
+# Arm config resolution (CR-01) — resolved lazily at solve time, not import,
+# so importing this module never requires the env vars to be set.
 # ---------------------------------------------------------------------------
 
-_ARM_A_SKILLS = Path(
-    os.environ.get("SICA_ARM_A_SKILLS", "plugin/skills")
-)
-_ARM_B_SKILLS = Path(
-    os.environ.get("SICA_ARM_B_SKILLS", "plugin/skills")
-)
+
+def _resolve_arm_skills(arm: str) -> Path:
+    """Resolve the skills directory for an arm.
+
+    Arm B is the frozen hand-written baseline (default ``plugin/skills``).
+    Arm A is the SICA-managed/optimized config and has NO safe default:
+    promotion happens in-place, so there is no static "promoted" dir. It MUST
+    be supplied via ``SICA_ARM_A_SKILLS``. Silently defaulting arm A to
+    ``plugin/skills`` would make arm A == arm B and null the A/B paired
+    comparison the falsifiable claim depends on (CR-01).
+    """
+    if arm == "A":
+        v = os.environ.get("SICA_ARM_A_SKILLS")
+        if not v:
+            raise RuntimeError(
+                "SICA_ARM_A_SKILLS is not set — arm A (SICA-managed config) has no "
+                "safe default. Point it at the Phase-3 promoted/optimized skills dir. "
+                "Falling back to plugin/skills would make arm A == arm B and null the "
+                "A/B comparison the falsifiable claim depends on (CR-01)."
+            )
+        return Path(v)
+    # Arm B = frozen hand-written baseline.
+    return Path(os.environ.get("SICA_ARM_B_SKILLS", "plugin/skills"))
+
+
 _CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
 
 # ---------------------------------------------------------------------------
@@ -200,13 +222,15 @@ def _sica_skill_solver(arm: str) -> Solver:
     def sica_solver() -> Solver:
         async def solve(state: TaskState, generate_fn) -> TaskState:  # type: ignore[override]
             prompt = state.input_text
-            if arm == "A":
-                skills_dir = _ARM_A_SKILLS
-            else:
-                skills_dir = _ARM_B_SKILLS
+            skills_dir = _resolve_arm_skills(arm)
 
             tools = load_skill_tools(skills_dir)
-            fired = run_arm(prompt, tools, cache_dir=_CACHE_DIR)
+            # CR-05: honor Inspect's active --model instead of silently using
+            # arm_runner's SICA_MODEL default. get_model().name is the model id
+            # without the provider prefix (e.g. "claude-sonnet-4-6"), which is
+            # what run_arm forwards to the SICA backend.
+            model_name = get_model().name
+            fired = run_arm(prompt, tools, model=model_name, cache_dir=_CACHE_DIR)
             state.metadata["fired_skills"] = list(fired)
             # Set a placeholder output so Inspect sees a completed solve step.
             state.output.completion = f"fired={sorted(fired)}"
