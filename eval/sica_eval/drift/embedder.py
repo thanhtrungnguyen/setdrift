@@ -207,18 +207,25 @@ def embedder_checksum() -> str:
                 pass
 
     if config_path is None or not config_path.exists():
-        # Fallback: search the huggingface cache for the model config
+        # Fallback: locate the model config in the huggingface cache.
         import huggingface_hub  # type: ignore[import]
-        try:
-            local_dir = huggingface_hub.snapshot_download(
-                MODEL_NAME.replace("sentence-transformers/", "sentence-transformers/"),
-                local_files_only=True,
-            )
-            config_path = Path(local_dir) / "config.json"
-        except Exception:
-            # Last resort: compute checksum from the model's name to at least return
-            # a stable non-empty string (architecture is fixed by MODEL_NAME pin)
-            fallback = f"model:{MODEL_NAME}".encode("utf-8")
-            return hashlib.sha256(fallback).hexdigest()
+
+        local_dir = huggingface_hub.snapshot_download(
+            MODEL_NAME,
+            local_files_only=True,
+        )
+        config_path = Path(local_dir) / "config.json"
+
+    if config_path is None or not config_path.exists():
+        # Fail loud (eval-side): REQ-MEASURE-03 requires a genuine, tamper-evident
+        # checksum of the real model config. Never return a synthetic hash derived
+        # from MODEL_NAME — that would look valid while proving nothing about the
+        # weights actually loaded, defeating reproducibility/tamper evidence.
+        raise RuntimeError(
+            "embedder_checksum: could not locate config.json for the pinned model "
+            f"'{MODEL_NAME}'. Ensure sentence-transformers cached it (run the embedder "
+            "once with network access). Refusing to emit a synthetic checksum "
+            "(REQ-MEASURE-03 requires a real tamper-evident digest)."
+        )
 
     return hashlib.sha256(config_path.read_bytes()).hexdigest()

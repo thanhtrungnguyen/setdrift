@@ -190,12 +190,12 @@ def run_grid(
     # --- Open DuckDB connection ---
     con = connect()
 
-    # --- Try to load embedder checksum (lazy; returns empty string if unavailable) ---
-    try:
-        from sica_eval.drift.embedder import embedder_checksum  # lazy: [drift] extra
-        emb_checksum = embedder_checksum()
-    except Exception:
-        emb_checksum = ""
+    # --- Load embedder checksum (fail-loud, eval-side) ---
+    # REQ-MEASURE-03 requires the embedder checksum to be logged into every
+    # DriftManifest. Silently substituting "" on failure would write
+    # reproducibility-blind manifests; let the error propagate instead.
+    from sica_eval.drift.embedder import embedder_checksum  # lazy: [drift] extra
+    emb_checksum = embedder_checksum()
 
     # --- Outer loops: model × revision (yoking boundary) ---
     for model in MODELS:
