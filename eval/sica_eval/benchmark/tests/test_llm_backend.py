@@ -168,3 +168,19 @@ def test_provider_lock_in_extra_body(monkeypatch):
         "provider": {"order": ["Anthropic"], "allow_fallbacks": False}
     }
     assert "tool_choice" not in kwargs2
+
+
+def test_call_model_accepts_per_call_max_tokens(monkeypatch):
+    """D-13a: max_tokens param overrides default; existing callers without it are unaffected."""
+    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test")
+    fake_openai, recorded = _make_fake_openai([_make_tool_call("spring_boot_endpoint")])
+    monkeypatch.setattr(lb, "openai", fake_openai)
+
+    lb.call_model("anthropic/claude-sonnet-4.6", "add endpoint", _TOOLS, max_tokens=512)
+    assert recorded[0]["max_tokens"] == 512
+
+    fake_openai2, recorded2 = _make_fake_openai([_make_tool_call("spring_boot_endpoint")])
+    monkeypatch.setattr(lb, "openai", fake_openai2)
+    lb.call_model("anthropic/claude-sonnet-4.6", "add endpoint", _TOOLS)  # default
+    assert recorded2[0]["max_tokens"] == 256  # lb.MAX_TOKENS unchanged
