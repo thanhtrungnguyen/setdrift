@@ -184,3 +184,27 @@ def test_call_model_accepts_per_call_max_tokens(monkeypatch):
     monkeypatch.setattr(lb, "openai", fake_openai2)
     lb.call_model("anthropic/claude-sonnet-4.6", "add endpoint", _TOOLS)  # default
     assert recorded2[0]["max_tokens"] == 256  # lb.MAX_TOKENS unchanged
+
+
+def test_call_openrouter_fail_loud_on_empty_choices(monkeypatch):
+    """D-13b: _call_openrouter raises RuntimeError (not TypeError) on empty choices."""
+    import pytest
+    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test")
+
+    fake_response = types.SimpleNamespace(choices=[], usage=_make_usage(),
+                                          model_extra={})
+
+    class _Completions:
+        @staticmethod
+        def create(**kwargs): return fake_response
+    class _Chat:
+        completions = _Completions()
+    class _Client:
+        chat = _Chat()
+
+    fake_module = types.SimpleNamespace(OpenAI=lambda **kw: _Client())
+    monkeypatch.setattr(lb, "openai", fake_module)
+
+    with pytest.raises(RuntimeError, match="OpenRouter returned no choices"):
+        lb.call_model("openai/gpt-4o", "judge this", [], max_tokens=512)
