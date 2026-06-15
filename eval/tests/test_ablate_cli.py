@@ -1,11 +1,11 @@
-"""ablate.py + sica-eval ablate CLI tests (Plan 03-03 Task 3). Offline, no API.
+"""ablate.py + setdrift-eval ablate CLI tests (Plan 03-03 Task 3). Offline, no API.
 
 Tests:
 - build_ablation_table returns one row per 6 configs (full + 5 ablations)
 - Each row has an F1 + delta vs full-config
 - The largest-negative-delta row is flagged ROOT CAUSE
 - render_table output contains required header columns
-- sica-eval ablate --help exits 0 and shows --failure-id
+- setdrift-eval ablate --help exits 0 and shows --failure-id
 - health --arm choices includes A
 """
 import json
@@ -91,8 +91,8 @@ def test_build_ablation_table_returns_six_rows(tmp_path, monkeypatch):
     """build_ablation_table returns one row per 6 configurations:
     full SICA config, 4 leave-one-out ablations, and arm-C floor.
     """
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.optimizer.ablate import build_ablation_table
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.optimizer.ablate import build_ablation_table
 
     sd = _make_skills_dir(tmp_path)
     cp = _make_corpus(tmp_path)
@@ -125,8 +125,8 @@ def test_build_ablation_table_returns_six_rows(tmp_path, monkeypatch):
 
 def test_build_ablation_table_row_has_f1_and_delta(tmp_path, monkeypatch):
     """Each row must have 'f1', 'delta_vs_full', and 'component' fields."""
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.optimizer.ablate import build_ablation_table
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.optimizer.ablate import build_ablation_table
 
     sd = _make_skills_dir(tmp_path)
     cp = _make_corpus(tmp_path)
@@ -158,8 +158,8 @@ def test_build_ablation_table_row_has_f1_and_delta(tmp_path, monkeypatch):
 
 def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
     """The row with the largest negative delta_vs_full is flagged as ROOT CAUSE."""
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.optimizer.ablate import build_ablation_table
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.optimizer.ablate import build_ablation_table
 
     sd = _make_skills_dir(tmp_path)
     cp = _make_corpus(tmp_path)
@@ -207,7 +207,7 @@ def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
 
 def test_render_table_contains_required_columns():
     """render_table output must contain the header columns from RESEARCH §Discretion 1."""
-    from sica_eval.optimizer.ablate import render_table
+    from setdrift_eval.optimizer.ablate import render_table
 
     rows = [
         {
@@ -234,16 +234,16 @@ def test_render_table_contains_required_columns():
 
 
 # ---------------------------------------------------------------------------
-# Test 5: sica-eval ablate --help exits 0 and shows --failure-id
+# Test 5: setdrift-eval ablate --help exits 0 and shows --failure-id
 # ---------------------------------------------------------------------------
 
 def test_ablate_cli_help_exits_zero_and_shows_failure_id(capsys):
-    """sica-eval ablate --help exits 0 and shows --failure-id."""
+    """setdrift-eval ablate --help exits 0 and shows --failure-id."""
     import sys
-    from sica_eval.cli import main
+    from setdrift_eval.cli import main
 
     with pytest.raises(SystemExit) as exc_info:
-        sys.argv = ["sica-eval", "ablate", "--help"]
+        sys.argv = ["setdrift-eval", "ablate", "--help"]
         main()
 
     assert exc_info.value.code == 0
@@ -258,10 +258,10 @@ def test_ablate_cli_help_exits_zero_and_shows_failure_id(capsys):
 def test_health_arm_choices_includes_a(capsys):
     """health --arm must accept A (choices=["A","B","C"])."""
     import sys
-    from sica_eval.cli import main
+    from setdrift_eval.cli import main
 
     with pytest.raises(SystemExit) as exc_info:
-        sys.argv = ["sica-eval", "health", "--help"]
+        sys.argv = ["setdrift-eval", "health", "--help"]
         main()
 
     assert exc_info.value.code == 0
@@ -275,8 +275,8 @@ def test_health_arm_choices_includes_a(capsys):
 
 def test_full_config_row_has_zero_delta(tmp_path, monkeypatch):
     """The 'None (full SICA config)' row must have delta_vs_full == 0.0 (it's the baseline)."""
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.optimizer.ablate import build_ablation_table
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.optimizer.ablate import build_ablation_table
 
     sd = _make_skills_dir(tmp_path)
     cp = _make_corpus(tmp_path)

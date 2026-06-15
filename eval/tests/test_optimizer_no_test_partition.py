@@ -16,7 +16,7 @@ from unittest.mock import MagicMock
 import pytest
 
 _SICA_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
-_GEPA_WRAPPER_SRC = _SICA_PLUGIN_ROOT / "eval" / "sica_eval" / "optimizer" / "gepa_wrapper.py"
+_GEPA_WRAPPER_SRC = _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "optimizer" / "gepa_wrapper.py"
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ def skills_dir(tmp_path):
 
 @pytest.fixture()
 def map_path():
-    return _SICA_PLUGIN_ROOT / "eval" / "sica_eval" / "corpus" / "intent_skill_map.yaml"
+    return _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
 
 
 @pytest.fixture()
@@ -106,8 +106,8 @@ def test_only_train_examples_reach_propose(
     mixed_corpus, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch, tmp_path
 ):
     """Spy on _propose: assert ALL examples have split=='train'."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
-    from sica_eval.optimizer import gepa_wrapper as gw
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer import gepa_wrapper as gw
 
     corpus_file, split = mixed_corpus
 
@@ -145,7 +145,7 @@ def test_only_train_examples_reach_propose(
             cycle_id=cycle_id,
         )
 
-    from sica_eval.optimizer.verifier import VerifyResult
+    from setdrift_eval.optimizer.verifier import VerifyResult
 
     def fake_verify(*a, **k):
         return VerifyResult(
@@ -156,10 +156,10 @@ def test_only_train_examples_reach_propose(
             reason="rejected: 0.5000 <= 0.7500",
         )
 
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._propose", spy_propose)
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._verify_candidate", fake_verify)
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._propose", spy_propose)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._verify_candidate", fake_verify)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -245,7 +245,7 @@ def test_gepa_wrapper_has_no_split_json_read():
 
 def test_load_trainset_filters_to_train_only(mixed_corpus, map_path, tmp_path):
     """_load_trainset returns only split=='train' examples."""
-    from sica_eval.optimizer.orchestrator import _load_trainset
+    from setdrift_eval.optimizer.orchestrator import _load_trainset
 
     corpus_file, split = mixed_corpus
     train_examples, frozen_map = _load_trainset(corpus_file, map_path)

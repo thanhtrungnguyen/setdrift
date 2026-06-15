@@ -20,14 +20,14 @@ _PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 _SKILLS_DIR = _PLUGIN_ROOT / "plugin" / "skills"
 _JPA_SKILL_MD = _SKILLS_DIR / "spring-jpa-entity" / "SKILL.md"
 _ENDPOINT_SKILL_MD = _SKILLS_DIR / "spring-boot-endpoint" / "SKILL.md"
-_INTENT_MAP_PATH = _PLUGIN_ROOT / "eval" / "sica_eval" / "corpus" / "intent_skill_map.yaml"
+_INTENT_MAP_PATH = _PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
 
 OVERLAP_PHRASE = "Spring annotation patterns in the parking services"
 
 
 def test_spring_jpa_entity_tool_is_loaded():
     """load_skill_tools(plugin/skills) returns a tool named 'spring_jpa_entity'."""
-    from sica_eval.benchmark.arm_runner import load_skill_tools
+    from setdrift_eval.benchmark.arm_runner import load_skill_tools
 
     tools = load_skill_tools(_SKILLS_DIR)
     names = [t["name"] for t in tools]
@@ -66,7 +66,7 @@ def test_intent_map_includes_jpa_migration_skill():
 
 def test_jpa_migration_no_longer_holdout():
     """After the map update, scored_intents() must include 'jpa-migration'."""
-    from sica_eval.telemetry.scorer import load_intent_map, scored_intents
+    from setdrift_eval.telemetry.scorer import load_intent_map, scored_intents
 
     mapping, _ = load_intent_map(_INTENT_MAP_PATH)
     scored = scored_intents(mapping)

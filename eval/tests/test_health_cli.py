@@ -1,11 +1,11 @@
-"""run_health + `sica-eval health` tests (Plan 02-05 Task 2). Offline, no API."""
+"""run_health + `setdrift-eval health` tests (Plan 02-05 Task 2). Offline, no API."""
 import json
 
 import pytest
 import yaml
 
-from sica_eval.telemetry import scorer
-from sica_eval.telemetry.scorer import ScorerError, run_health
+from setdrift_eval.telemetry import scorer
+from setdrift_eval.telemetry.scorer import ScorerError, run_health
 
 _FULL_MAP = {
     "spring-annotation-fix": ["spring_boot_endpoint"],
@@ -33,7 +33,7 @@ def _stage(tmp_path, monkeypatch, *, corpus_rows, splits, passed=True, per_sourc
     }
     (exp / "001-mining-precision.json").write_text(json.dumps(report), encoding="utf-8")
 
-    from sica_eval.benchmark import arm_runner
+    from setdrift_eval.benchmark import arm_runner
 
     monkeypatch.setattr(
         arm_runner, "load_skill_tools",
@@ -132,7 +132,7 @@ def test_arm_c_floor_and_results_fields(tmp_path, monkeypatch):
 def test_cli_arm_required_and_prints(tmp_path, monkeypatch, capsys):
     import sys
 
-    from sica_eval.cli import main
+    from setdrift_eval.cli import main
 
     cp, mp, exp, _ = _stage(
         tmp_path, monkeypatch,
@@ -141,11 +141,11 @@ def test_cli_arm_required_and_prints(tmp_path, monkeypatch, capsys):
     )
     # --arm is required
     with pytest.raises(SystemExit):
-        monkeypatch.setattr(sys, "argv", ["sica-eval", "health", "--corpus", "public"])
+        monkeypatch.setattr(sys, "argv", ["setdrift-eval", "health", "--corpus", "public"])
         main()
     # full invocation prints the headline line
     monkeypatch.setattr(sys, "argv", [
-        "sica-eval", "health", "--corpus", "public", "--arm", "B",
+        "setdrift-eval", "health", "--corpus", "public", "--arm", "B",
         "--corpus-path", str(cp), "--map", str(mp),
         "--skills-dir", str(tmp_path), "--experiments-dir", str(exp),
     ])

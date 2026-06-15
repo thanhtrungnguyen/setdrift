@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from sica_eval.optimizer.deprecator import (
+from setdrift_eval.optimizer.deprecator import (
     ARCHIVE_AFTER_N,
     QUARANTINE_WINDOW,
     QUARANTINE_REJECTION_RATE,
@@ -26,7 +26,7 @@ from sica_eval.optimizer.deprecator import (
     rejection_rate,
     scan,
 )
-from sica_eval.benchmark.arm_runner import load_skill_tools
+from setdrift_eval.benchmark.arm_runner import load_skill_tools
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ def test_count_idle_sessions_at_N(tmp_path, monkeypatch):
     """Skill with exactly N distinct session_ids and no firing is flagged (count == N)."""
     monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     events_path = tmp_path / "events.jsonl"
@@ -451,7 +451,7 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     """scan flags a skill for archive when it has >= ARCHIVE_AFTER_N idle sessions."""
     monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -482,7 +482,7 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     """scan does NOT flag a skill that fired in the last N sessions."""
     monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -532,7 +532,7 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
 
     monkeypatch.setenv("SICA_DEPRECATION_DIR", str(dep_dir))
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)

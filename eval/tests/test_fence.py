@@ -10,12 +10,12 @@ no-drift guarantee (D-48): the test cannot pass against a stale or forked allowl
 """
 import pytest
 
-from sica_eval.optimizer.fence import ALLOWED_PREFIXES, FenceViolation, check_allowlist
+from setdrift_eval.optimizer.fence import ALLOWED_PREFIXES, FenceViolation, check_allowlist
 
 
 def test_eval_target_rejected():
     with pytest.raises(FenceViolation):
-        check_allowlist("eval/sica_eval/telemetry/scorer.py")
+        check_allowlist("eval/setdrift_eval/telemetry/scorer.py")
 
 
 def test_experiments_target_rejected():

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from sica_eval.optimizer.signer import generate_key
+from setdrift_eval.optimizer.signer import generate_key
 
 
 # ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ def tmp_env(tmp_path, monkeypatch):
 
     monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
 
-    import sica_eval.optimizer.signer as signer_mod
+    import setdrift_eval.optimizer.signer as signer_mod
     signer_mod._KEY_PATH = key_file
 
     return {
@@ -78,8 +78,8 @@ def test_init_keys_generates_key_when_absent(tmp_env, monkeypatch, capsys):
     key_file = tmp_env["key_file"]
     assert not key_file.exists()
 
-    monkeypatch.setattr(sys, "argv", ["sica-eval", "init-keys"])
-    from sica_eval.cli import main
+    monkeypatch.setattr(sys, "argv", ["setdrift-eval", "init-keys"])
+    from setdrift_eval.cli import main
     exit_code = main()
 
     assert exit_code == 0
@@ -87,7 +87,7 @@ def test_init_keys_generates_key_when_absent(tmp_env, monkeypatch, capsys):
     content = key_file.read_text(encoding="utf-8").strip()
     assert len(content) == 64  # 32 bytes as hex
     captured = capsys.readouterr()
-    assert "[sica-eval]" in captured.out
+    assert "[setdrift-eval]" in captured.out
     assert "init-keys" in captured.out
 
 
@@ -96,15 +96,15 @@ def test_init_keys_refuses_to_overwrite_existing_key(tmp_env, monkeypatch, capsy
     key_file = tmp_env["key_file"]
     original = _write_key(key_file)
 
-    monkeypatch.setattr(sys, "argv", ["sica-eval", "init-keys"])
-    from sica_eval.cli import main
+    monkeypatch.setattr(sys, "argv", ["setdrift-eval", "init-keys"])
+    from setdrift_eval.cli import main
     exit_code = main()
 
     # Key must be unchanged
     assert key_file.read_text(encoding="utf-8").strip() == original
     captured = capsys.readouterr()
     # Should print something about already existing / refused
-    assert "[sica-eval]" in captured.out
+    assert "[setdrift-eval]" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -113,8 +113,8 @@ def test_init_keys_refuses_to_overwrite_existing_key(tmp_env, monkeypatch, capsy
 
 def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, capsys):
     """rollback with a valid hash restores and prints verified=True."""
-    from sica_eval.optimizer.signer import sign_config
-    import sica_eval.optimizer.signer as signer_mod
+    from setdrift_eval.optimizer.signer import sign_config
+    import setdrift_eval.optimizer.signer as signer_mod
 
     key_file = tmp_env["key_file"]
     audit_log = tmp_env["audit_log"]
@@ -142,23 +142,23 @@ def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, c
     original_restore = None
 
     def patched_restore(skill_descriptions, expected_sig, targets):
-        import sica_eval.optimizer.applier as applier_mod
+        import setdrift_eval.optimizer.applier as applier_mod
         # Replace targets with our tmp skill_file
         real_targets = {k: skill_file for k in skill_descriptions}
         # Import the real restore_config
-        from sica_eval.optimizer.applier import restore_config as _real_restore
+        from setdrift_eval.optimizer.applier import restore_config as _real_restore
         _real_restore(skill_descriptions, expected_sig, real_targets)
 
-    monkeypatch.setattr("sica_eval.cli._rollback_restore", patched_restore, raising=False)
+    monkeypatch.setattr("setdrift_eval.cli._rollback_restore", patched_restore, raising=False)
 
     monkeypatch.setattr(sys, "argv", [
-        "sica-eval", "rollback",
+        "setdrift-eval", "rollback",
         "--to", config_hash,
         "--audit-log", str(audit_log),
     ])
 
     from importlib import reload
-    import sica_eval.cli as cli_mod
+    import setdrift_eval.cli as cli_mod
     # Don't reload — just call main() with patched argv
     exit_code = cli_mod.main()
 
@@ -170,8 +170,8 @@ def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, c
 
 def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch, capsys):
     """rollback against a tampered audit entry fails loud (no write)."""
-    from sica_eval.optimizer.signer import sign_config
-    import sica_eval.optimizer.signer as signer_mod
+    from setdrift_eval.optimizer.signer import sign_config
+    import setdrift_eval.optimizer.signer as signer_mod
 
     key_file = tmp_env["key_file"]
     audit_log = tmp_env["audit_log"]
@@ -191,18 +191,18 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
 
     def patched_restore(skill_descriptions, expected_sig, targets):
         real_targets = {k: skill_file for k in skill_descriptions}
-        from sica_eval.optimizer.applier import restore_config as _real_restore
+        from setdrift_eval.optimizer.applier import restore_config as _real_restore
         _real_restore(skill_descriptions, expected_sig, real_targets)
 
-    monkeypatch.setattr("sica_eval.cli._rollback_restore", patched_restore, raising=False)
+    monkeypatch.setattr("setdrift_eval.cli._rollback_restore", patched_restore, raising=False)
 
     monkeypatch.setattr(sys, "argv", [
-        "sica-eval", "rollback",
+        "setdrift-eval", "rollback",
         "--to", config_hash,
         "--audit-log", str(audit_log),
     ])
 
-    import sica_eval.cli as cli_mod
+    import setdrift_eval.cli as cli_mod
     # Should raise or return non-zero (bad sig)
     try:
         exit_code = cli_mod.main()
@@ -220,6 +220,6 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
 def test_health_dispatch_still_present():
     """health dispatch is backward-compatible (grep for args.cmd == 'health')."""
     import inspect
-    import sica_eval.cli as cli_mod
+    import setdrift_eval.cli as cli_mod
     src = inspect.getsource(cli_mod)
     assert 'args.cmd == "health"' in src

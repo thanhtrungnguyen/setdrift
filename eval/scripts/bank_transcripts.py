@@ -13,7 +13,7 @@ What this script does:
   - For each prompt, calls response_cache.load_or_call(model, prompt, tools, cache_dir)
     with the arm A toolset and the arm B (no-tools) toolset.
   - Pre-populates the content-addressed cache at data/cache/ so replay runs are cache hits.
-  - Prints [sica-eval] progress lines per the project print convention.
+  - Prints [setdrift-eval] progress lines per the project print convention.
 
 What this script does NOT do:
   - Never runs automatically as part of eval pipeline (standby only).
@@ -39,12 +39,12 @@ import os
 import sys
 from pathlib import Path
 
-# Add eval/ to sys.path so sica_eval imports work when run as a script
+# Add eval/ to sys.path so setdrift_eval imports work when run as a script
 _EVAL_DIR = Path(__file__).parent.parent
 if str(_EVAL_DIR) not in sys.path:
     sys.path.insert(0, str(_EVAL_DIR))
 
-from sica_eval.benchmark.response_cache import load_or_call, CACHE_DIR
+from setdrift_eval.benchmark.response_cache import load_or_call, CACHE_DIR
 
 _DEFAULT_MODEL = os.environ.get("SICA_MODEL", "claude-sonnet-4-6")
 _DEFAULT_CORPUS = Path("data/corpora/public/corpus.jsonl")
@@ -103,7 +103,7 @@ def bank_all(
     cache_dir = Path(cache_dir)
 
     if not corpus_path.exists():
-        print(f"[sica-eval] bank_transcripts: corpus not found at {corpus_path} — nothing to bank")
+        print(f"[setdrift-eval] bank_transcripts: corpus not found at {corpus_path} — nothing to bank")
         return 0
 
     arm_a_tools = _load_arm_tools(skills_dir)
@@ -127,11 +127,11 @@ def bank_all(
 
         if (i + 1) % 10 == 0 or (i + 1) == len(prompts):
             print(
-                f"[sica-eval] bank_transcripts: {i + 1}/{len(prompts)} prompts banked "
+                f"[setdrift-eval] bank_transcripts: {i + 1}/{len(prompts)} prompts banked "
                 f"model={model} cache={cache_dir}"
             )
 
-    print(f"[sica-eval] bank_transcripts: complete — {banked} (prompt, arm) pairs banked into {cache_dir}")
+    print(f"[setdrift-eval] bank_transcripts: complete — {banked} (prompt, arm) pairs banked into {cache_dir}")
     return banked
 
 

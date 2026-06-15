@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sica-eval"
+name = "setdrift-eval"
 version = "0.0.1"
 description = "Evaluation harness for the SICA self-improving Claude Code plugin"
 readme = "README.md"
@@ -45,12 +45,12 @@ drift = [
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "sica_eval"]
+testpaths = ["tests", "setdrift_eval"]
 addopts = "-ra -q"
 
 [project.scripts]
-sica-eval = "sica_eval.cli:main"
+setdrift-eval = "setdrift_eval.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["sica_eval*"]
+include = ["setdrift_eval*"]

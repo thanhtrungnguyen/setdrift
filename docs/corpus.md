@@ -9,13 +9,13 @@ cd eval
 pip install -e ".[dev]"
 
 # 1. Fetch the upstream dataset (idempotent; clones or pulls).
-python -c "from sica_eval.corpus.fetcher import clone_or_update; clone_or_update()"
+python -c "from setdrift_eval.corpus.fetcher import clone_or_update; clone_or_update()"
 
 # 2. Build the labeled corpus.
-sica-eval corpus build --version 2026-05-22
+setdrift-eval corpus build --version 2026-05-22
 
 # 3. Emit a 20% manual-verification sample.
-sica-eval corpus verify --corpus data/corpus/gitbug-java.jsonl
+setdrift-eval corpus verify --corpus data/corpus/gitbug-java.jsonl
 ```
 
 Output files (all gitignored under `data/`):
@@ -37,8 +37,8 @@ Output files (all gitignored under `data/`):
 | `none` | Catch-all when no other rule fires |
 
 The taxonomy is fixed for v1 of the corpus. Adding labels requires:
-1. Adding the value to `SkillLabel` in `eval/sica_eval/corpus/schemas.py`.
-2. Adding the heuristic rule to `eval/sica_eval/corpus/labeler.py`.
+1. Adding the value to `SkillLabel` in `eval/setdrift_eval/corpus/schemas.py`.
+2. Adding the heuristic rule to `eval/setdrift_eval/corpus/labeler.py`.
 3. Bumping the corpus version string so downstream consumers re-verify.
 
 ## Manual verification protocol

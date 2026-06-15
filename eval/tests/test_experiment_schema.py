@@ -2,7 +2,7 @@
 import pytest
 from pydantic import ValidationError
 
-from sica_eval.schemas.experiment import ExperimentManifest, F1Result
+from setdrift_eval.schemas.experiment import ExperimentManifest, F1Result
 
 
 def _manifest_kwargs(**overrides) -> dict:

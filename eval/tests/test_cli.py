@@ -2,11 +2,11 @@
 import sys
 from pathlib import Path
 
-from sica_eval.cli import main
+from setdrift_eval.cli import main
 
 
 def test_corpus_build_invokes_pipeline(monkeypatch, tmp_path: Path, capsys):
-    """`sica-eval corpus build --raw-dir X --output Y --version Z` runs the builder."""
+    """`setdrift-eval corpus build --raw-dir X --output Y --version Z` runs the builder."""
     raw_dir = tmp_path / "raw"
     raw_dir.mkdir()
     output_path = tmp_path / "out.jsonl"
@@ -15,19 +15,19 @@ def test_corpus_build_invokes_pipeline(monkeypatch, tmp_path: Path, capsys):
 
     def fake_build_corpus(raw_dir: Path, output_path: Path, corpus_version: str,
                           corpus_name: str = "gitbug-java", **kwargs):
-        from sica_eval.corpus.schemas import Corpus
+        from setdrift_eval.corpus.schemas import Corpus
 
         calls["raw_dir"] = raw_dir
         calls["output_path"] = output_path
         calls["corpus_version"] = corpus_version
         return Corpus(name=corpus_name, version=corpus_version, prompts=[])
 
-    monkeypatch.setattr("sica_eval.cli.build_corpus", fake_build_corpus, raising=True)
+    monkeypatch.setattr("setdrift_eval.cli.build_corpus", fake_build_corpus, raising=True)
     monkeypatch.setattr(
         sys,
         "argv",
         [
-            "sica-eval",
+            "setdrift-eval",
             "corpus",
             "build",
             "--raw-dir",

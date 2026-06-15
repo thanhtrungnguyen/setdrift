@@ -74,7 +74,7 @@ def corpus_path(tmp_path):
 @pytest.fixture()
 def map_path():
     """Use the real (re-frozen) intent_skill_map.yaml."""
-    return _SICA_PLUGIN_ROOT / "eval" / "sica_eval" / "corpus" / "intent_skill_map.yaml"
+    return _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
 
 
 @pytest.fixture()
@@ -120,7 +120,7 @@ def _make_propose_spy(monkeypatch, skill_name: str, new_desc: str = "improved de
     Also monkeypatches _build_optimizer_trainset so the adversarial-negative floor
     (>=50) is not enforced on the minimal test corpus.
     """
-    from sica_eval.optimizer import gepa_wrapper as gw
+    from setdrift_eval.optimizer import gepa_wrapper as gw
 
     seen_trainsets: list = []
 
@@ -152,14 +152,14 @@ def _make_propose_spy(monkeypatch, skill_name: str, new_desc: str = "improved de
             cycle_id=cycle_id,
         )
 
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._propose", fake_propose)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._propose", fake_propose)
     return seen_trainsets
 
 
 def _make_verify_result(promote: bool, f1_delta: float = 0.05):
     """Build a fake VerifyResult for monkeypatching."""
-    from sica_eval.optimizer.verifier import VerifyResult
+    from setdrift_eval.optimizer.verifier import VerifyResult
 
     if promote:
         reason = f"promoted: 0.8000 > 0.7500 upper band (delta=+{f1_delta:+.4f})"
@@ -182,17 +182,17 @@ def test_run_loop_cycle_only_passes_train_to_optimizer(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """Goodhart firewall: only split=='train' examples reach gepa_wrapper.propose."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     seen = _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=False),
     )
 
     # Bypass the precision gate guard
-    from sica_eval.optimizer.orchestrator import _check_precision_gate
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    from setdrift_eval.optimizer.orchestrator import _check_precision_gate
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -230,7 +230,7 @@ def test_promoted_cycle_has_all_steps_same_cycle_id(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """Promoted cycle writes observe/diagnose/patch/verify/promote records sharing cycle_id."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
     monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
@@ -240,10 +240,10 @@ def test_promoted_cycle_has_all_steps_same_cycle_id(
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True, f1_delta=0.05),
     )
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     manifest = run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -282,7 +282,7 @@ def test_rejected_cycle_has_rollback_step(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """Rejected cycle writes observe/diagnose/patch/verify/rollback sharing cycle_id."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
     monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
@@ -291,10 +291,10 @@ def test_rejected_cycle_has_rollback_step(
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=False, f1_delta=-0.15),
     )
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     manifest = run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -326,7 +326,7 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """Full audit.jsonl includes hmac_sig; genealogy does NOT (D-38, T-03-61)."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
     monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
@@ -335,10 +335,10 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=False),
     )
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -376,8 +376,8 @@ def test_dry_run_does_not_write_to_live_plugin(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """dry_run=True + approve=False must not modify any file in plugin/ (D-43)."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
-    from sica_eval.optimizer import applier as _applier
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer import applier as _applier
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
     monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
@@ -389,13 +389,13 @@ def test_dry_run_does_not_write_to_live_plugin(
     def spy_apply(proposal, *, dry_run=False):
         apply_calls.append({"proposal": proposal, "dry_run": dry_run})
 
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._apply_proposal", spy_apply)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._apply_proposal", spy_apply)
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True),
     )
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -424,7 +424,7 @@ def test_approve_true_calls_apply_with_dry_run_false(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
     """approve=True must call apply_proposal(dry_run=False) for a promoted candidate."""
-    from sica_eval.optimizer.orchestrator import run_loop_cycle
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
     monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
@@ -436,13 +436,13 @@ def test_approve_true_calls_apply_with_dry_run_false(
     def spy_apply(proposal, *, dry_run=False):
         apply_calls.append({"dry_run": dry_run})
 
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._apply_proposal", spy_apply)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._apply_proposal", spy_apply)
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
-        "sica_eval.optimizer.orchestrator._verify_candidate",
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True),
     )
-    monkeypatch.setattr("sica_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -468,7 +468,7 @@ def test_approve_true_calls_apply_with_dry_run_false(
 
 def test_gepa_wrapper_has_no_audit_write():
     """gepa_wrapper.py must contain no audit write (Pitfall 5, T-03-63)."""
-    from sica_eval.optimizer import gepa_wrapper as gw
+    from setdrift_eval.optimizer import gepa_wrapper as gw
 
     src = Path(gw.__file__).read_text(encoding="utf-8")
     # Strip comments
@@ -489,7 +489,7 @@ def test_verifier_has_no_audit_write():
     We check for actual write calls (open/write_text/_append), NOT docstring mentions.
     The verifier is allowed to say 'Does NOT write audit log' in its docstring.
     """
-    from sica_eval.optimizer import verifier as v
+    from setdrift_eval.optimizer import verifier as v
 
     src = Path(v.__file__).read_text(encoding="utf-8")
     # Only check code lines (non-comment, non-docstring-only)
@@ -517,7 +517,7 @@ def test_verifier_has_no_audit_write():
 # ---------------------------------------------------------------------------
 
 def test_run_loop_cycle_exported_from_optimizer_init():
-    """run_loop_cycle must be importable from sica_eval.optimizer."""
-    from sica_eval.optimizer import run_loop_cycle
+    """run_loop_cycle must be importable from setdrift_eval.optimizer."""
+    from setdrift_eval.optimizer import run_loop_cycle
 
     assert callable(run_loop_cycle)

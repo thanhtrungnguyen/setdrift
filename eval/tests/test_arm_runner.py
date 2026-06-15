@@ -1,7 +1,7 @@
 """Offline arm-harness tests (Plan 02-04 Task 3, D-32). Fully offline."""
 import re
 
-from sica_eval.benchmark import arm_runner
+from setdrift_eval.benchmark import arm_runner
 
 _NAME_RE = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
 

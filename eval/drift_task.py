@@ -66,7 +66,7 @@ from inspect_ai.solver import Solver, TaskState, generate, solver
 
 from inspect_ai.model import get_model
 
-from sica_eval.benchmark.arm_runner import load_skill_tools, run_arm
+from setdrift_eval.benchmark.arm_runner import load_skill_tools, run_arm
 
 # ---------------------------------------------------------------------------
 # Arm config resolution (CR-01) — resolved lazily at solve time, not import,

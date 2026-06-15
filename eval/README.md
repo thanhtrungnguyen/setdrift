@@ -1,6 +1,6 @@
 # eval — SICA evaluation harness
 
-Python package (`sica_eval`). Three pillars mirroring the brief:
+Python package (`setdrift_eval`). Three pillars mirroring the brief:
 
 - `benchmark/` — build an offline replay benchmark from issue→commit pairs
   (start with public GitBug-Java/Defects4J; add the parking repo after the IP ruling).

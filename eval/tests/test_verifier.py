@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from sica_eval.optimizer.verifier import VerifyResult, verify_candidate
+from setdrift_eval.optimizer.verifier import VerifyResult, verify_candidate
 
 
 # ---------------------------------------------------------------------------
@@ -95,8 +95,8 @@ def _make_proposal(skills_dir, target_skill="spring-boot-endpoint", new_desc="Im
 
 def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
     """promote=True iff candidate mean F1 > baseline_mean + 2σ (upper band edge)."""
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.telemetry import scorer
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.telemetry import scorer
 
     rows = [
         _row("p_val1", "add endpoint", ["spring-annotation-fix"]),
@@ -116,7 +116,7 @@ def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
 
     def mock_run_health(corpus_path, arm, **kw):
         call_count["n"] += 1
-        from sica_eval.schemas.experiment import F1Result
+        from setdrift_eval.schemas.experiment import F1Result
         if arm == "A":
             # Candidate: high F1
             return F1Result(
@@ -179,8 +179,8 @@ def test_verify_rejects_below_upper_band_with_reason(tmp_path, monkeypatch):
 
     D-41 / T-03-32 (Repudiation): silent rejection is NEVER acceptable.
     """
-    from sica_eval.benchmark import arm_runner
-    from sica_eval.telemetry import scorer
+    from setdrift_eval.benchmark import arm_runner
+    from setdrift_eval.telemetry import scorer
 
     rows = [
         _row("p_val1", "add endpoint", ["spring-annotation-fix"]),
@@ -195,7 +195,7 @@ def test_verify_rejects_below_upper_band_with_reason(tmp_path, monkeypatch):
     original_noise_band = scorer.noise_band
 
     def mock_run_health(corpus_path, arm, **kw):
-        from sica_eval.schemas.experiment import F1Result
+        from setdrift_eval.schemas.experiment import F1Result
         if arm == "A":
             # Candidate: below band
             return F1Result(
@@ -251,7 +251,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     A test asserts that no test-split prompt_id is passed into the scoring call.
     This is the structural Goodhart firewall enforcement.
     """
-    from sica_eval.telemetry import scorer
+    from setdrift_eval.telemetry import scorer
 
     rows = [
         _row("p_val1", "val prompt 1", ["spring-annotation-fix"]),
@@ -277,8 +277,8 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     def capture_run_health(corpus_path, arm, **kw):
         # Inspect the corpus_path to see which prompts would be scored
         # We track which prompts are in the corpus_path passed to run_health
-        from sica_eval.telemetry.scorer import val_only_prompts
-        from sica_eval.schemas.experiment import F1Result
+        from setdrift_eval.telemetry.scorer import val_only_prompts
+        from setdrift_eval.schemas.experiment import F1Result
         # Record the val-only prompts that would be scored
         try:
             prompts = val_only_prompts(corpus_path)
@@ -314,7 +314,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
 
     # Core assertion: test-split prompts must not be evaluated
     # We verify this by checking the verifier calls val_only_prompts helper
-    from sica_eval.telemetry.scorer import val_only_prompts
+    from setdrift_eval.telemetry.scorer import val_only_prompts
     val_rows = val_only_prompts(cp)
     val_ids = {r["prompt_id"] for r in val_rows}
     test_ids = {"p_test1", "p_test2"}
@@ -335,7 +335,7 @@ def test_verifier_reuses_noise_band_for_baseline(tmp_path, monkeypatch):
     This is the Goodhart firewall (T-03-31): the promotion criterion must be the
     frozen Phase-2 ruler, not a loop-invented metric.
     """
-    from sica_eval.telemetry import scorer as scorer_module
+    from setdrift_eval.telemetry import scorer as scorer_module
 
     rows = [_row("p_val1", "add endpoint", ["spring-annotation-fix"])]
     splits = {"p_val1": "val"}
@@ -354,7 +354,7 @@ def test_verifier_reuses_noise_band_for_baseline(tmp_path, monkeypatch):
     monkeypatch.setattr(scorer_module, "noise_band", tracking_noise_band)
 
     def mock_run_health(corpus_path, arm, **kw):
-        from sica_eval.schemas.experiment import F1Result
+        from setdrift_eval.schemas.experiment import F1Result
         return F1Result(
             arm=arm, macro_f1_mean=0.6,
             noise_band_low=0.58, noise_band_high=0.62,

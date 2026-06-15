@@ -7,7 +7,7 @@ and scrub_for_genealogy excludes hmac_sig (T-03-22 mitigation).
 import pytest
 from pydantic import ValidationError
 
-from sica_eval.schemas.loop_manifest import AuditRecord, LoopManifest, scrub_for_genealogy
+from setdrift_eval.schemas.loop_manifest import AuditRecord, LoopManifest, scrub_for_genealogy
 
 
 def _audit_kwargs(**overrides) -> dict:

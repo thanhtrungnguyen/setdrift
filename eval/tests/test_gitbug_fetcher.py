@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from sica_eval.corpus import fetcher
-from sica_eval.corpus.gitbug_fetcher import iter_bug_records
+from setdrift_eval.corpus import fetcher
+from setdrift_eval.corpus.gitbug_fetcher import iter_bug_records
 
 _BUG = {
     "repository": "owner/repo",

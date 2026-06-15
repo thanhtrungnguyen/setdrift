@@ -1,7 +1,7 @@
 #!/bin/sh
 # Blast-radius pre-commit hook (D-47, defense-in-depth for REQ-SAFETY-04).
 #
-# SOURCE OF TRUTH: eval/sica_eval/optimizer/fence.py (ALLOWED_PREFIXES). This shell
+# SOURCE OF TRUTH: eval/setdrift_eval/optimizer/fence.py (ALLOWED_PREFIXES). This shell
 # script is a deliberate MIRROR of that allowlist, because a git hook cannot import
 # Python. If you change ALLOWED_PREFIXES in fence.py you MUST update the case pattern
 # below to match. The fence.py CI test (tests/test_fence.py) is the primary gate; this
@@ -34,7 +34,7 @@ for f in $staged; do
                 *)
                     echo "BLAST-RADIUS VIOLATION: staged config-write '$f' is outside the" >&2
                     echo "  allowed prefixes (plugin/, CLAUDE.md). See" >&2
-                    echo "  eval/sica_eval/optimizer/fence.py (source of truth). Commit rejected." >&2
+                    echo "  eval/setdrift_eval/optimizer/fence.py (source of truth). Commit rejected." >&2
                     violations=1 ;;
             esac ;;
         *)

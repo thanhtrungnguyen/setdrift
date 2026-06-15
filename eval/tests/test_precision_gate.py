@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from sica_eval.corpus import precision_gate
-from sica_eval.corpus.precision_gate_cli import main as gate_main
+from setdrift_eval.corpus import precision_gate
+from setdrift_eval.corpus.precision_gate_cli import main as gate_main
 
 
 def _corpus(tmp_path, rows):

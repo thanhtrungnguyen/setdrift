@@ -12,7 +12,7 @@ from pathlib import Path
 import dspy
 import pytest
 
-from sica_eval.optimizer import gepa_wrapper as gw
+from setdrift_eval.optimizer import gepa_wrapper as gw
 
 _FROZEN_MAP = {"spring-annotation-fix": ["spring_boot_endpoint"], "jpa-migration": [], "none": []}
 
@@ -57,8 +57,8 @@ def test_wrapper_module_has_no_write_capability():
     )
     assert "write_text" not in non_comment
     assert "open(" not in non_comment
-    assert "import sica_eval.optimizer.orchestrator" not in non_comment
-    assert "import sica_eval.optimizer.applier" not in non_comment
+    assert "import setdrift_eval.optimizer.orchestrator" not in non_comment
+    assert "import setdrift_eval.optimizer.applier" not in non_comment
     assert "data/" not in src  # no storage-path reference anywhere (incl. comments)
 
 

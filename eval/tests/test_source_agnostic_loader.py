@@ -9,7 +9,7 @@ later (on a clean end-June IP ruling) with zero architecture change.
 """
 import json
 
-from sica_eval.corpus.schemas import BugSource, LabeledPrompt, SkillLabel
+from setdrift_eval.corpus.schemas import BugSource, LabeledPrompt, SkillLabel
 
 
 def _prompt(dataset: str, bug_id: str) -> LabeledPrompt:
