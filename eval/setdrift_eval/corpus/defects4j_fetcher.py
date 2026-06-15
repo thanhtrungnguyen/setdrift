@@ -26,7 +26,7 @@ from setdrift_eval.corpus.fetcher import BugRecord
 DEFECTS4J_REPO = "https://github.com/rjust/defects4j"
 """Pinned upstream — clone at tag v1.2.0 into DEFAULT_D4J_DIR."""
 
-DEFAULT_D4J_DIR = Path(os.environ.get("SICA_DEFECTS4J_DIR", "data/raw/defects4j"))
+DEFAULT_D4J_DIR = Path(os.environ.get("SETDRIFT_DEFECTS4J_DIR", "data/raw/defects4j"))
 
 # All 6 projects are extractable via .src.patch (02-01 spike — no exclusions).
 D4J_PROJECTS = ["Chart", "Closure", "Lang", "Math", "Mockito", "Time"]

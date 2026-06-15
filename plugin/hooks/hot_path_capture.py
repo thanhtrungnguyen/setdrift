@@ -13,7 +13,7 @@ The hot path must stay stdlib-only and near-instant (Pitfall 2: Presidio
 cold-start) — do NOT pull the Presidio or detect-secrets libraries into this
 module; all redaction happens later in the batch scrubber.
 
-Capture is OPT-IN: nothing is written unless SICA_TELEMETRY_OPT_IN is set
+Capture is OPT-IN: nothing is written unless SETDRIFT_TELEMETRY_OPT_IN is set
 (unset in CI / dev). The data/ wall is the true firewall; this hook is the
 thin capture edge.
 """
@@ -25,9 +25,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Default to the gitignored wall. Overridable via env (tests point it at tmp).
-TELEMETRY_RAW_DIR = Path(os.environ.get("SICA_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
+TELEMETRY_RAW_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
 # Opt-in gate: production capture only when explicitly enabled (Exit Gate #8).
-OPT_IN = os.environ.get("SICA_TELEMETRY_OPT_IN", "").strip()
+OPT_IN = os.environ.get("SETDRIFT_TELEMETRY_OPT_IN", "").strip()
 
 
 def main() -> int:

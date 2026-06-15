@@ -1,6 +1,6 @@
 """Pluggable LLM transport layer for the SICA eval harness.
 
-Dispatches on SICA_LLM_BACKEND (default: "anthropic"):
+Dispatches on SETDRIFT_LLM_BACKEND (default: "anthropic"):
   - "anthropic" : Anthropic Messages API — behavior byte-identical to the original
                   inline call in response_cache.py (pre-refactor t=0 baseline).
   - "openrouter": OpenAI Chat-Completions wire format routed through OpenRouter,
@@ -42,15 +42,15 @@ def call_model(model: str, prompt: str, tools: list[dict],
                     to fit the JudgeVerdict rationale field (D-13a).
 
     Raises:
-        ValueError: if SICA_LLM_BACKEND is set to an unrecognised backend.
+        ValueError: if SETDRIFT_LLM_BACKEND is set to an unrecognised backend.
     """
-    backend = os.environ.get("SICA_LLM_BACKEND", "anthropic")
+    backend = os.environ.get("SETDRIFT_LLM_BACKEND", "anthropic")
     if backend == "anthropic":
         return _call_anthropic(model, prompt, tools, max_tokens)
     if backend == "openrouter":
         return _call_openrouter(model, prompt, tools, max_tokens)
     raise ValueError(
-        f"Unknown SICA_LLM_BACKEND={backend!r}. Supported values: 'anthropic', 'openrouter'."
+        f"Unknown SETDRIFT_LLM_BACKEND={backend!r}. Supported values: 'anthropic', 'openrouter'."
     )
 
 
@@ -98,8 +98,8 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict],
 
     Environment variables (all optional except OPENROUTER_API_KEY):
         OPENROUTER_API_KEY            — required; KeyError propagates if unset (fail-loud).
-        SICA_OPENROUTER_PROVIDER      — JSON list of provider names; default '["Anthropic"]'.
-        SICA_OPENROUTER_ALLOW_FALLBACKS — "true"/"false"; default "false" (no fallbacks).
+        SETDRIFT_OPENROUTER_PROVIDER      — JSON list of provider names; default '["Anthropic"]'.
+        SETDRIFT_OPENROUTER_ALLOW_FALLBACKS — "true"/"false"; default "false" (no fallbacks).
     """
     client = openai.OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -108,10 +108,10 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict],
 
     # Provider lock: default to first-party Anthropic, no fallbacks.
     provider_order: list[str] = json.loads(
-        os.environ.get("SICA_OPENROUTER_PROVIDER", '["Anthropic"]')
+        os.environ.get("SETDRIFT_OPENROUTER_PROVIDER", '["Anthropic"]')
     )
     allow_fallbacks: bool = (
-        os.environ.get("SICA_OPENROUTER_ALLOW_FALLBACKS", "false").lower() == "true"
+        os.environ.get("SETDRIFT_OPENROUTER_ALLOW_FALLBACKS", "false").lower() == "true"
     )
 
     # Convert Anthropic tool specs to OpenAI function specs.

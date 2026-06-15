@@ -11,11 +11,11 @@ from pathlib import Path
 
 import duckdb
 
-TELEMETRY_DIR = Path(os.environ.get("SICA_TELEMETRY_DIR", "data/telemetry"))
+TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
 PARQUET_DIR = TELEMETRY_DIR / "parquet"
 PARQUET_THRESHOLD_BYTES = 500 * 1024 * 1024  # ~500 MB
 # MUST match the harness constant in 01-04 (shared canary identity).
-CANARY_TOOL_NAME = "SICA_CANARY_TOOL_V1"
+CANARY_TOOL_NAME = "SETDRIFT_CANARY_TOOL_V1"
 
 
 def _glob() -> str:

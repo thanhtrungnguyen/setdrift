@@ -34,16 +34,16 @@ HARD_CUT_DATE = "2026-07-15"
 # ---------------------------------------------------------------------------
 # Env-var-overridable paths (mirrors orchestrator.py pattern)
 # ---------------------------------------------------------------------------
-_RAW_EVENTS = Path(os.environ.get("SICA_DRIFT_RAW_EVENTS", "data/drift/events-raw.jsonl"))
-_PUBLIC_EVENTS = Path(os.environ.get("SICA_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl"))
+_RAW_EVENTS = Path(os.environ.get("SETDRIFT_DRIFT_RAW_EVENTS", "data/drift/events-raw.jsonl"))
+_PUBLIC_EVENTS = Path(os.environ.get("SETDRIFT_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl"))
 
 
 def _read_raw_path() -> Path:
-    return Path(os.environ.get("SICA_DRIFT_RAW_EVENTS", "data/drift/events-raw.jsonl"))
+    return Path(os.environ.get("SETDRIFT_DRIFT_RAW_EVENTS", "data/drift/events-raw.jsonl"))
 
 
 def _read_public_path() -> Path:
-    return Path(os.environ.get("SICA_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl"))
+    return Path(os.environ.get("SETDRIFT_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl"))
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ def append_drift_event(event: DriftEvent) -> None:
     - Full record (includes notes/commit-message text) → data/drift/events-raw.jsonl (gitignored).
     - Scrubbed record (NO notes, NO commit-message text) → experiments/drift-event-log.jsonl (committed).
 
-    Both paths are env-var-overridable (SICA_DRIFT_RAW_EVENTS, SICA_DRIFT_PUBLIC_EVENTS)
+    Both paths are env-var-overridable (SETDRIFT_DRIFT_RAW_EVENTS, SETDRIFT_DRIFT_PUBLIC_EVENTS)
     for test isolation and deployment flexibility.
 
     Eval-side fail-loud: filesystem errors propagate (no bare except).
@@ -176,7 +176,7 @@ def count_qualifying_events(public_path: Path | None = None) -> int:
 
     Args:
         public_path: Optional override for the public events JSONL path.
-                     Defaults to SICA_DRIFT_PUBLIC_EVENTS env var or experiments/drift-event-log.jsonl.
+                     Defaults to SETDRIFT_DRIFT_PUBLIC_EVENTS env var or experiments/drift-event-log.jsonl.
 
     Returns:
         Number of valid JSONL records in the public log, or 0 if the file doesn't exist.

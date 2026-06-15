@@ -81,10 +81,10 @@ _BATCH = Path(__file__).resolve().parents[4] / "plugin" / "hooks" / "stop_batch_
 
 def _load_batch(monkeypatch, tmp_path):
     """Import stop_batch_scrubber with telemetry dirs pointed at tmp_path."""
-    monkeypatch.setenv("SICA_TELEMETRY_RAW_DIR", str(tmp_path / "raw"))
-    monkeypatch.setenv("SICA_TELEMETRY_DIR", str(tmp_path))
-    monkeypatch.setenv("SICA_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
-    monkeypatch.setenv("SICA_TELEMETRY_AUDIT_PATH", str(tmp_path / "scrubber-audit.jsonl"))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_RAW_DIR", str(tmp_path / "raw"))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_DIR", str(tmp_path))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_AUDIT_PATH", str(tmp_path / "scrubber-audit.jsonl"))
     spec = importlib.util.spec_from_file_location("stop_batch_scrubber", _BATCH)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

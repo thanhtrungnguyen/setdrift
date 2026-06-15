@@ -46,7 +46,7 @@ if str(_EVAL_DIR) not in sys.path:
 
 from setdrift_eval.benchmark.response_cache import load_or_call, CACHE_DIR
 
-_DEFAULT_MODEL = os.environ.get("SICA_MODEL", "claude-sonnet-4-6")
+_DEFAULT_MODEL = os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6")
 _DEFAULT_CORPUS = Path("data/corpora/public/corpus.jsonl")
 _DEFAULT_SKILLS_DIR = Path("plugin/skills")
 

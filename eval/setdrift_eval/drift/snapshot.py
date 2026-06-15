@@ -31,7 +31,7 @@ import subprocess
 import tarfile
 from pathlib import Path
 
-SNAPSHOT_ROOT = Path(os.environ.get("SICA_SNAPSHOT_ROOT", "data/drift/snapshots"))
+SNAPSHOT_ROOT = Path(os.environ.get("SETDRIFT_SNAPSHOT_ROOT", "data/drift/snapshots"))
 
 
 def checkout_snapshot(repo_path: Path | str, commit_sha: str) -> tuple[Path, str]:

@@ -76,21 +76,21 @@ def test_append_drift_event_dual_writes(tmp_path):
 
     evt = DriftEvent(**_make_event(notes="commit msg that must not cross the wall"))
 
-    old_raw = os.environ.get("SICA_DRIFT_RAW_EVENTS")
-    old_pub = os.environ.get("SICA_DRIFT_PUBLIC_EVENTS")
+    old_raw = os.environ.get("SETDRIFT_DRIFT_RAW_EVENTS")
+    old_pub = os.environ.get("SETDRIFT_DRIFT_PUBLIC_EVENTS")
     try:
-        os.environ["SICA_DRIFT_RAW_EVENTS"] = str(raw_path)
-        os.environ["SICA_DRIFT_PUBLIC_EVENTS"] = str(public_path)
+        os.environ["SETDRIFT_DRIFT_RAW_EVENTS"] = str(raw_path)
+        os.environ["SETDRIFT_DRIFT_PUBLIC_EVENTS"] = str(public_path)
         append_drift_event(evt)
     finally:
         if old_raw is None:
-            os.environ.pop("SICA_DRIFT_RAW_EVENTS", None)
+            os.environ.pop("SETDRIFT_DRIFT_RAW_EVENTS", None)
         else:
-            os.environ["SICA_DRIFT_RAW_EVENTS"] = old_raw
+            os.environ["SETDRIFT_DRIFT_RAW_EVENTS"] = old_raw
         if old_pub is None:
-            os.environ.pop("SICA_DRIFT_PUBLIC_EVENTS", None)
+            os.environ.pop("SETDRIFT_DRIFT_PUBLIC_EVENTS", None)
         else:
-            os.environ["SICA_DRIFT_PUBLIC_EVENTS"] = old_pub
+            os.environ["SETDRIFT_DRIFT_PUBLIC_EVENTS"] = old_pub
 
     # Both files created
     assert raw_path.exists(), "Raw events file was not created"

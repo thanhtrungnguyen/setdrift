@@ -95,7 +95,7 @@ def _make_fake_openai(tool_calls, finish_reason: str = "tool_calls"):
 
 def test_anthropic_to_openai_tool_conversion(monkeypatch):
     """Anthropic tool spec converts to OpenAI function spec shape."""
-    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
 
     fake_openai, recorded = _make_fake_openai([_make_tool_call("spring_boot_endpoint")])
@@ -117,7 +117,7 @@ def test_anthropic_to_openai_tool_conversion(monkeypatch):
 
 def test_tool_calls_map_to_tool_use_blocks(monkeypatch):
     """OpenAI tool_calls response maps correctly to internal tool_use block list."""
-    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
 
     # --- case 1: one tool call ---
@@ -142,7 +142,7 @@ def test_tool_calls_map_to_tool_use_blocks(monkeypatch):
 
 def test_provider_lock_in_extra_body(monkeypatch):
     """extra_body carries provider lock; tool_choice present iff tools non-empty."""
-    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
 
     # --- case 1: tools non-empty -> tool_choice="auto" ---
@@ -172,7 +172,7 @@ def test_provider_lock_in_extra_body(monkeypatch):
 
 def test_call_model_accepts_per_call_max_tokens(monkeypatch):
     """D-13a: max_tokens param overrides default; existing callers without it are unaffected."""
-    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
     fake_openai, recorded = _make_fake_openai([_make_tool_call("spring_boot_endpoint")])
     monkeypatch.setattr(lb, "openai", fake_openai)
@@ -189,7 +189,7 @@ def test_call_model_accepts_per_call_max_tokens(monkeypatch):
 def test_call_openrouter_fail_loud_on_empty_choices(monkeypatch):
     """D-13b: _call_openrouter raises RuntimeError (not TypeError) on empty choices."""
     import pytest
-    monkeypatch.setenv("SICA_LLM_BACKEND", "openrouter")
+    monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
 
     fake_response = types.SimpleNamespace(choices=[], usage=_make_usage(),

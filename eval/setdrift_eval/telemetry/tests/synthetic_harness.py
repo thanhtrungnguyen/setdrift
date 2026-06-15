@@ -17,7 +17,7 @@ import threading
 from pathlib import Path
 
 # MUST equal query.py's CANARY_TOOL_NAME (shared canary identity).
-CANARY_TOOL_NAME = "SICA_CANARY_TOOL_V1"
+CANARY_TOOL_NAME = "SETDRIFT_CANARY_TOOL_V1"
 
 _HOOKS = Path(__file__).resolve().parents[4] / "plugin" / "hooks"
 _HOT_PATH = _HOOKS / "hot_path_capture.py"
@@ -25,8 +25,8 @@ _BATCH = _HOOKS / "stop_batch_scrubber.py"
 
 
 def _child_env() -> dict:
-    """Inherit env (so SICA_TELEMETRY_* point where the caller set them) + force opt-in."""
-    return {**os.environ, "SICA_TELEMETRY_OPT_IN": "1"}
+    """Inherit env (so SETDRIFT_TELEMETRY_* point where the caller set them) + force opt-in."""
+    return {**os.environ, "SETDRIFT_TELEMETRY_OPT_IN": "1"}
 
 
 def _inject(payload: dict) -> None:
@@ -115,7 +115,7 @@ def run_concurrent_write_test(per_session: int = 20) -> dict:
     for t in threads:
         t.join()
 
-    raw_dir = Path(os.environ.get("SICA_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
+    raw_dir = Path(os.environ.get("SETDRIFT_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
     counts = {}
     for s in sessions:
         # Strict parser over the per-session RAW file — zero interleaving expected

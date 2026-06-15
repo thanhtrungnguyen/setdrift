@@ -64,9 +64,9 @@ REVISIONS = ["early", "mid", "late"]
 N_RUNS = 5
 
 _EXPERIMENTS_DIR = Path(
-    os.environ.get("SICA_EXPERIMENTS_DIR", "experiments")
+    os.environ.get("SETDRIFT_EXPERIMENTS_DIR", "experiments")
 )
-_CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
+_CACHE_DIR = Path(os.environ.get("SETDRIFT_CACHE_DIR", "data/cache"))
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +178,7 @@ def run_grid(
             "ANTHROPIC_API_KEY is not set. "
             "Export it before running the grid: "
             "export ANTHROPIC_API_KEY=sk-ant-... "
-            "(or set SICA_LLM_BACKEND=openrouter and OPENROUTER_API_KEY). "
+            "(or set SETDRIFT_LLM_BACKEND=openrouter and OPENROUTER_API_KEY). "
             "This is a live API run — no key means no scoring."
         )
 

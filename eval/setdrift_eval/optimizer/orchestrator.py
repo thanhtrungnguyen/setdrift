@@ -35,10 +35,10 @@ from setdrift_eval.optimizer.verifier import verify_candidate as _verify_candida
 from setdrift_eval.schemas.loop_manifest import AuditRecord, LoopManifest, scrub_for_genealogy
 
 # --- configurable paths (env-var pattern from capture_event.py) ---
-_AUDIT_PATH = Path(os.environ.get("SICA_AUDIT_PATH", "data/audit/audit.jsonl"))
-_GENEALOGY_PATH = Path(os.environ.get("SICA_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl"))
-_MODEL = os.environ.get("SICA_MODEL", "claude-sonnet-4-6")
-_OPTIMIZER_BACKEND = os.environ.get("SICA_OPTIMIZER", "gepa")
+_AUDIT_PATH = Path(os.environ.get("SETDRIFT_AUDIT_PATH", "data/audit/audit.jsonl"))
+_GENEALOGY_PATH = Path(os.environ.get("SETDRIFT_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl"))
+_MODEL = os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6")
+_OPTIMIZER_BACKEND = os.environ.get("SETDRIFT_OPTIMIZER", "gepa")
 
 
 class OrchestratorError(RuntimeError):
@@ -72,11 +72,11 @@ def _now_iso() -> str:
 
 
 def _read_audit_path() -> Path:
-    return Path(os.environ.get("SICA_AUDIT_PATH", "data/audit/audit.jsonl"))
+    return Path(os.environ.get("SETDRIFT_AUDIT_PATH", "data/audit/audit.jsonl"))
 
 
 def _read_genealogy_path() -> Path:
-    return Path(os.environ.get("SICA_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl"))
+    return Path(os.environ.get("SETDRIFT_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl"))
 
 
 # ---------------------------------------------------------------------------

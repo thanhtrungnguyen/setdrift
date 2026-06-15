@@ -20,7 +20,7 @@ import numpy as np
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MAX_TOKENS = 200
 OVERLAP = 40
-WINDOW_N = int(os.environ.get("SICA_DRIFT_WINDOW_N", "20"))
+WINDOW_N = int(os.environ.get("SETDRIFT_DRIFT_WINDOW_N", "20"))
 
 
 def load_model():
@@ -131,7 +131,7 @@ def compute_drift_index(config_text: str, commit_window: list[str], n: int = WIN
     Args:
         config_text: The configuration string to measure staleness for.
         commit_window: List of code content strings (e.g., changed Java file contents).
-        n: Rolling window size (default WINDOW_N; overridable via SICA_DRIFT_WINDOW_N).
+        n: Rolling window size (default WINDOW_N; overridable via SETDRIFT_DRIFT_WINDOW_N).
 
     Returns:
         float in [0.0, 1.0]. Returns 0.0 (non-stale) when commit_window is empty.

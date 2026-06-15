@@ -167,14 +167,14 @@ def main() -> int:
         "--arm-a-skills", type=Path, default=None,
         help=(
             "skills directory for arm A (SICA-managed config); "
-            "default: SICA_ARM_A_SKILLS env var or plugin/skills"
+            "default: SETDRIFT_ARM_A_SKILLS env var or plugin/skills"
         ),
     )
     drift_p.add_argument(
         "--arm-b-skills", type=Path, default=None,
         help=(
             "skills directory for arm B (frozen hand-written config); "
-            "default: SICA_ARM_B_SKILLS env var or plugin/skills-frozen"
+            "default: SETDRIFT_ARM_B_SKILLS env var or plugin/skills-frozen"
         ),
     )
     drift_p.add_argument(
@@ -285,7 +285,7 @@ def main() -> int:
         import os
         from setdrift_eval.optimizer.signer import generate_key
 
-        key_path = Path(os.environ.get("SICA_SIGNING_KEY", "data/keys/sica-hmac.key"))
+        key_path = Path(os.environ.get("SETDRIFT_SIGNING_KEY", "data/keys/sica-hmac.key"))
         if key_path.exists():
             print(
                 f"[setdrift-eval] init-keys: key already exists at '{key_path}' — "
@@ -389,21 +389,21 @@ def main() -> int:
         # DIFFERENT configs. Arm B defaults to the frozen baseline plugin/skills;
         # arm A has NO safe default (promotion is in-place — there is no static
         # "promoted" dir), so it must be supplied via --arm-a-skills or
-        # SICA_ARM_A_SKILLS. Fail loud rather than silently aliasing A to B.
+        # SETDRIFT_ARM_A_SKILLS. Fail loud rather than silently aliasing A to B.
         arm_a_skills = args.arm_a_skills or (
-            Path(os.environ["SICA_ARM_A_SKILLS"])
-            if os.environ.get("SICA_ARM_A_SKILLS")
+            Path(os.environ["SETDRIFT_ARM_A_SKILLS"])
+            if os.environ.get("SETDRIFT_ARM_A_SKILLS")
             else None
         )
         if arm_a_skills is None:
             raise SystemExit(
                 "[setdrift-eval] drift: arm A (SICA-managed config) has no safe default. "
-                "Pass --arm-a-skills <dir> or set SICA_ARM_A_SKILLS to the Phase-3 "
+                "Pass --arm-a-skills <dir> or set SETDRIFT_ARM_A_SKILLS to the Phase-3 "
                 "promoted/optimized skills dir. Defaulting it to plugin/skills would "
                 "make arm A == arm B and null the A/B comparison (CR-01)."
             )
         arm_b_skills = args.arm_b_skills or Path(
-            os.environ.get("SICA_ARM_B_SKILLS", "plugin/skills")
+            os.environ.get("SETDRIFT_ARM_B_SKILLS", "plugin/skills")
         )
         # Belt-and-suspenders: even with distinct paths, fail loudly if both arms
         # resolve to an identical effective toolset — that makes every paired_diff

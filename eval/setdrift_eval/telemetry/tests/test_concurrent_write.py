@@ -2,9 +2,9 @@
 
 
 def _env(tmp_path, monkeypatch):
-    monkeypatch.setenv("SICA_TELEMETRY_OPT_IN", "1")
-    monkeypatch.setenv("SICA_TELEMETRY_RAW_DIR", str(tmp_path / "raw"))
-    monkeypatch.setenv("SICA_TELEMETRY_DIR", str(tmp_path))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_OPT_IN", "1")
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_RAW_DIR", str(tmp_path / "raw"))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_DIR", str(tmp_path))
 
 
 def test_two_parallel_sessions_no_interleave(tmp_path, monkeypatch):

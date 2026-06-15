@@ -31,10 +31,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Env-var constants (read at module load time; monkeypatching env + reload works)
 # ---------------------------------------------------------------------------
 
-_DEPRECATION_DIR = Path(os.environ.get("SICA_DEPRECATION_DIR", "data/deprecation"))
-ARCHIVE_AFTER_N = int(os.environ.get("SICA_ARCHIVE_AFTER_N", "20"))
-QUARANTINE_WINDOW = int(os.environ.get("SICA_QUARANTINE_WINDOW", "10"))
-QUARANTINE_REJECTION_RATE = float(os.environ.get("SICA_QUARANTINE_RATE", "0.80"))
+_DEPRECATION_DIR = Path(os.environ.get("SETDRIFT_DEPRECATION_DIR", "data/deprecation"))
+ARCHIVE_AFTER_N = int(os.environ.get("SETDRIFT_ARCHIVE_AFTER_N", "20"))
+QUARANTINE_WINDOW = int(os.environ.get("SETDRIFT_QUARANTINE_WINDOW", "10"))
+QUARANTINE_REJECTION_RATE = float(os.environ.get("SETDRIFT_QUARANTINE_RATE", "0.80"))
 
 # Name of the decisions log file inside _DEPRECATION_DIR
 _DECISIONS_LOG = "decisions.jsonl"
@@ -76,19 +76,19 @@ class Decision(BaseModel):
 
 def _deprecation_dir() -> Path:
     """Return the current deprecation dir (re-reads env each time for testability)."""
-    return Path(os.environ.get("SICA_DEPRECATION_DIR", "data/deprecation"))
+    return Path(os.environ.get("SETDRIFT_DEPRECATION_DIR", "data/deprecation"))
 
 
 def _archive_after_n() -> int:
-    return int(os.environ.get("SICA_ARCHIVE_AFTER_N", "20"))
+    return int(os.environ.get("SETDRIFT_ARCHIVE_AFTER_N", "20"))
 
 
 def _quarantine_window() -> int:
-    return int(os.environ.get("SICA_QUARANTINE_WINDOW", "10"))
+    return int(os.environ.get("SETDRIFT_QUARANTINE_WINDOW", "10"))
 
 
 def _quarantine_rejection_rate() -> float:
-    return float(os.environ.get("SICA_QUARANTINE_RATE", "0.80"))
+    return float(os.environ.get("SETDRIFT_QUARANTINE_RATE", "0.80"))
 
 
 def _now_iso() -> str:

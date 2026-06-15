@@ -5,7 +5,7 @@ eval/-target raises FenceViolation, stage_signed_candidate returns a signature,
 restore_config verifies HMAC before writing (T-03-20 mitigation).
 
 All tests are offline (no API calls). HMAC key is written to a temp path via
-SICA_SIGNING_KEY env override (never touches data/keys/).
+SETDRIFT_SIGNING_KEY env override (never touches data/keys/).
 """
 import os
 import textwrap
@@ -24,10 +24,10 @@ from setdrift_eval.optimizer.signer import SigningKeyError, generate_key
 
 @pytest.fixture()
 def hmac_key_env(tmp_path, monkeypatch):
-    """Write a fresh HMAC key to a temp path and point SICA_SIGNING_KEY at it."""
+    """Write a fresh HMAC key to a temp path and point SETDRIFT_SIGNING_KEY at it."""
     key_file = tmp_path / "test-hmac.key"
     key_file.write_text(generate_key(), encoding="utf-8")
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
     # Re-initialize _KEY_PATH in signer after env change
     import importlib
     import setdrift_eval.optimizer.signer as signer_mod

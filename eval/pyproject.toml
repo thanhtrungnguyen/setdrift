@@ -27,7 +27,7 @@ dependencies = [
   "scipy>=1.11,<2.0",
   "numpy>=1.26,<3.0",
   "pyyaml>=6,<7",
-  # OpenRouter transport (SICA_LLM_BACKEND=openrouter uses OpenAI Chat-Completions wire format).
+  # OpenRouter transport (SETDRIFT_LLM_BACKEND=openrouter uses OpenAI Chat-Completions wire format).
   "openai>=1.0",
 ]
 

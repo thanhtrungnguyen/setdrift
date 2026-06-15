@@ -4,7 +4,7 @@ Tests: init-keys generates a key when absent + refuses overwrite;
 rollback with a valid audit entry restores + prints verified=True;
 rollback against a tampered audit entry fails loud (no write).
 
-All tests are offline. SICA_SIGNING_KEY and key paths are redirected to tmp_path.
+All tests are offline. SETDRIFT_SIGNING_KEY and key paths are redirected to tmp_path.
 """
 import json
 import sys
@@ -21,7 +21,7 @@ from setdrift_eval.optimizer.signer import generate_key
 
 @pytest.fixture()
 def tmp_env(tmp_path, monkeypatch):
-    """Redirect data/ paths to tmp_path; point SICA_SIGNING_KEY at tmp key."""
+    """Redirect data/ paths to tmp_path; point SETDRIFT_SIGNING_KEY at tmp key."""
     keys_dir = tmp_path / "data" / "keys"
     keys_dir.mkdir(parents=True)
     key_file = keys_dir / "sica-hmac.key"
@@ -29,7 +29,7 @@ def tmp_env(tmp_path, monkeypatch):
     audit_dir = tmp_path / "data" / "audit"
     audit_dir.mkdir(parents=True)
 
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
 
     import setdrift_eval.optimizer.signer as signer_mod
     signer_mod._KEY_PATH = key_file

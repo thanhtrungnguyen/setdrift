@@ -19,13 +19,13 @@ _FROZEN_MAP = {"spring-annotation-fix": ["spring_boot_endpoint"], "jpa-migration
 
 # --- Task 2: backend swap (REQ-LOOP-01) -------------------------------------------
 def test_build_optimizer_default_is_gepa(monkeypatch):
-    monkeypatch.delenv("SICA_OPTIMIZER", raising=False)
+    monkeypatch.delenv("SETDRIFT_OPTIMIZER", raising=False)
     opt = gw.build_optimizer(lambda *a, **k: 0.0)
     assert isinstance(opt, dspy.GEPA)
 
 
 def test_build_optimizer_miprov2_on_flag(monkeypatch):
-    monkeypatch.setenv("SICA_OPTIMIZER", "miprov2")
+    monkeypatch.setenv("SETDRIFT_OPTIMIZER", "miprov2")
     opt = gw.build_optimizer(lambda *a, **k: 0.0)
     assert isinstance(opt, dspy.MIPROv2)
 

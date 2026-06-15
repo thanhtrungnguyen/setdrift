@@ -21,10 +21,10 @@ from pathlib import Path
 
 from setdrift_eval.telemetry.scrubber import scrub_event
 
-TELEMETRY_RAW_DIR = Path(os.environ.get("SICA_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
-TELEMETRY_DIR = Path(os.environ.get("SICA_TELEMETRY_DIR", "data/telemetry"))
-QUARANTINE_DIR = Path(os.environ.get("SICA_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
-AUDIT_PATH = Path(os.environ.get("SICA_TELEMETRY_AUDIT_PATH", "data/telemetry/scrubber-audit.jsonl"))
+TELEMETRY_RAW_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
+TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
+QUARANTINE_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
+AUDIT_PATH = Path(os.environ.get("SETDRIFT_TELEMETRY_AUDIT_PATH", "data/telemetry/scrubber-audit.jsonl"))
 
 
 def _now() -> str:

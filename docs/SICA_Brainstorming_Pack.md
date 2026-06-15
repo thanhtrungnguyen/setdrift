@@ -1,6 +1,6 @@
 # SICA Plugin — Brainstorming Companion
 
-Read alongside `SICA_Plugin_Research_Brief.docx`. This file is unfiltered sparks, gaps,
+Read alongside `SETDRIFT_Plugin_Research_Brief.docx`. This file is unfiltered sparks, gaps,
 and alternative framings — pick what energises you and ignore the rest.
 
 ---
@@ -132,4 +132,4 @@ That is it. Five tickets buys you a month of clear work; the rest of the backlog
 as you learn.
 
 ---
-*Companion to SICA_Plugin_Research_Brief.docx — Trung, May 2026.*
+*Companion to SETDRIFT_Plugin_Research_Brief.docx — Trung, May 2026.*

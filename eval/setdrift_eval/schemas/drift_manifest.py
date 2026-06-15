@@ -61,7 +61,7 @@ class DriftManifest(ExperimentManifest):
     window_n: int = Field(
         description=(
             "Rolling window size N: compute_drift_index uses the last N entries "
-            "of commit_window (D-57). Set via SICA_DRIFT_WINDOW_N env var."
+            "of commit_window (D-57). Set via SETDRIFT_DRIFT_WINDOW_N env var."
         )
     )
 

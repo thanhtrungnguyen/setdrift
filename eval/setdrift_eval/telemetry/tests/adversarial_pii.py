@@ -217,7 +217,7 @@ def _fmt(r: dict) -> str:
 
 
 if __name__ == "__main__":
-    os.environ.setdefault("SICA_TELEMETRY_OPT_IN", "1")
+    os.environ.setdefault("SETDRIFT_TELEMETRY_OPT_IN", "1")
     out = Path(tempfile.mkdtemp(prefix="adv_pii_"))
     print("=== UNAIDED (generic recognizers only, no deny-list) ===")
     diag = measure_recall(use_deny_list=False)

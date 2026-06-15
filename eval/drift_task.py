@@ -80,25 +80,25 @@ def _resolve_arm_skills(arm: str) -> Path:
     Arm B is the frozen hand-written baseline (default ``plugin/skills``).
     Arm A is the SICA-managed/optimized config and has NO safe default:
     promotion happens in-place, so there is no static "promoted" dir. It MUST
-    be supplied via ``SICA_ARM_A_SKILLS``. Silently defaulting arm A to
+    be supplied via ``SETDRIFT_ARM_A_SKILLS``. Silently defaulting arm A to
     ``plugin/skills`` would make arm A == arm B and null the A/B paired
     comparison the falsifiable claim depends on (CR-01).
     """
     if arm == "A":
-        v = os.environ.get("SICA_ARM_A_SKILLS")
+        v = os.environ.get("SETDRIFT_ARM_A_SKILLS")
         if not v:
             raise RuntimeError(
-                "SICA_ARM_A_SKILLS is not set — arm A (SICA-managed config) has no "
+                "SETDRIFT_ARM_A_SKILLS is not set — arm A (SICA-managed config) has no "
                 "safe default. Point it at the Phase-3 promoted/optimized skills dir. "
                 "Falling back to plugin/skills would make arm A == arm B and null the "
                 "A/B comparison the falsifiable claim depends on (CR-01)."
             )
         return Path(v)
     # Arm B = frozen hand-written baseline.
-    return Path(os.environ.get("SICA_ARM_B_SKILLS", "plugin/skills"))
+    return Path(os.environ.get("SETDRIFT_ARM_B_SKILLS", "plugin/skills"))
 
 
-_CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
+_CACHE_DIR = Path(os.environ.get("SETDRIFT_CACHE_DIR", "data/cache"))
 
 # ---------------------------------------------------------------------------
 # Synthetic drift dataset helpers
@@ -226,7 +226,7 @@ def _sica_skill_solver(arm: str) -> Solver:
 
             tools = load_skill_tools(skills_dir)
             # CR-05: honor Inspect's active --model instead of silently using
-            # arm_runner's SICA_MODEL default. get_model().name is the model id
+            # arm_runner's SETDRIFT_MODEL default. get_model().name is the model id
             # without the provider prefix (e.g. "claude-sonnet-4-6"), which is
             # what run_arm forwards to the SICA backend.
             model_name = get_model().name

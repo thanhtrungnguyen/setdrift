@@ -1,7 +1,7 @@
 """Behavior + perf tests for the hot-path capture hook (Plan 01-01 Task 2).
 
 The hook is driven as a real subprocess with stdin piped, exactly as Claude Code
-invokes it, with SICA_TELEMETRY_RAW_DIR pointed at a tmp dir.
+invokes it, with SETDRIFT_TELEMETRY_RAW_DIR pointed at a tmp dir.
 """
 import json
 import subprocess
@@ -14,17 +14,17 @@ HOOK = Path(__file__).resolve().parents[4] / "plugin" / "hooks" / "hot_path_capt
 
 def _run(payload, raw_dir, opt_in=True):
     """Invoke the hook subprocess; return (returncode, raw_path or None)."""
-    env = {"SICA_TELEMETRY_RAW_DIR": str(raw_dir)}
+    env = {"SETDRIFT_TELEMETRY_RAW_DIR": str(raw_dir)}
     if opt_in:
-        env["SICA_TELEMETRY_OPT_IN"] = "1"
+        env["SETDRIFT_TELEMETRY_OPT_IN"] = "1"
     # Pass a minimal but valid env (Windows needs SYSTEMROOT for subprocess).
     import os
 
     full_env = {**os.environ, **env}
-    full_env.pop("SICA_TELEMETRY_OPT_IN", None)
+    full_env.pop("SETDRIFT_TELEMETRY_OPT_IN", None)
     if opt_in:
-        full_env["SICA_TELEMETRY_OPT_IN"] = "1"
-    full_env["SICA_TELEMETRY_RAW_DIR"] = str(raw_dir)
+        full_env["SETDRIFT_TELEMETRY_OPT_IN"] = "1"
+    full_env["SETDRIFT_TELEMETRY_RAW_DIR"] = str(raw_dir)
 
     stdin_data = payload if isinstance(payload, str) else json.dumps(payload)
     proc = subprocess.run(

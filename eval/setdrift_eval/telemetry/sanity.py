@@ -10,8 +10,8 @@ import json
 import os
 from pathlib import Path
 
-TELEMETRY_DIR = Path(os.environ.get("SICA_TELEMETRY_DIR", "data/telemetry"))
-QUARANTINE_DIR = Path(os.environ.get("SICA_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
+TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
+QUARANTINE_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
 SANITY_FLAGS = TELEMETRY_DIR / "sanity-flags.jsonl"
 
 

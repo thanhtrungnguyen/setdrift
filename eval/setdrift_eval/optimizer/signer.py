@@ -19,7 +19,7 @@ import json
 import os
 from pathlib import Path
 
-_KEY_PATH = Path(os.environ.get("SICA_SIGNING_KEY", "data/keys/sica-hmac.key"))
+_KEY_PATH = Path(os.environ.get("SETDRIFT_SIGNING_KEY", "data/keys/sica-hmac.key"))
 
 
 class SigningKeyError(RuntimeError):
@@ -32,7 +32,7 @@ def _load_key() -> bytes:
         raise SigningKeyError(
             f"HMAC signing key not found at '{_KEY_PATH}'. "
             "Run `setdrift-eval init-keys` to generate one (it lives behind the data wall; "
-            "set SICA_SIGNING_KEY to override the path). Never commit the key."
+            "set SETDRIFT_SIGNING_KEY to override the path). Never commit the key."
         )
     key = _KEY_PATH.read_bytes().strip()
     if not key:

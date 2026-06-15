@@ -266,31 +266,31 @@ def test_drift_task_runs_in_sandbox() -> None:
 
 
 def test_resolve_arm_skills_fail_loud_and_defaults(monkeypatch) -> None:
-    """CR-01: _resolve_arm_skills must fail loud for arm A when SICA_ARM_A_SKILLS
+    """CR-01: _resolve_arm_skills must fail loud for arm A when SETDRIFT_ARM_A_SKILLS
     is unset (silently aliasing A to plugin/skills would make A == B and null the
     falsifiable-claim comparison), return the env path when set, and default arm B
     to the frozen baseline plugin/skills.
     """
     drift_task_mod = _import_drift_task()
-    monkeypatch.delenv("SICA_ARM_A_SKILLS", raising=False)
-    monkeypatch.delenv("SICA_ARM_B_SKILLS", raising=False)
+    monkeypatch.delenv("SETDRIFT_ARM_A_SKILLS", raising=False)
+    monkeypatch.delenv("SETDRIFT_ARM_B_SKILLS", raising=False)
 
     # Arm A with no env var → fail loud (not a silent plugin/skills fallback).
-    with pytest.raises(RuntimeError, match="SICA_ARM_A_SKILLS"):
+    with pytest.raises(RuntimeError, match="SETDRIFT_ARM_A_SKILLS"):
         drift_task_mod._resolve_arm_skills("A")
 
     # Arm A with env var → that path.
-    monkeypatch.setenv("SICA_ARM_A_SKILLS", "some/promoted/config")
+    monkeypatch.setenv("SETDRIFT_ARM_A_SKILLS", "some/promoted/config")
     assert drift_task_mod._resolve_arm_skills("A") == Path("some/promoted/config")
 
     # Arm B defaults to the frozen baseline, and is overridable.
     assert drift_task_mod._resolve_arm_skills("B") == Path("plugin/skills")
-    monkeypatch.setenv("SICA_ARM_B_SKILLS", "plugin/skills-frozen")
+    monkeypatch.setenv("SETDRIFT_ARM_B_SKILLS", "plugin/skills-frozen")
     assert drift_task_mod._resolve_arm_skills("B") == Path("plugin/skills-frozen")
 
 
 # ---------------------------------------------------------------------------
-# Test 10 (CR-05): the solver honors Inspect's active --model, not SICA_MODEL
+# Test 10 (CR-05): the solver honors Inspect's active --model, not SETDRIFT_MODEL
 # ---------------------------------------------------------------------------
 
 
@@ -300,7 +300,7 @@ def test_solver_threads_active_model_into_run_arm() -> None:
     Source-level guard (mirrors test 7's ast approach) because exercising the
     real solver requires the Docker sandbox. The bug was run_arm being called
     with no model= kwarg, so Inspect's --model was silently ignored and every
-    cell scored arm_runner.MODEL (SICA_MODEL default).
+    cell scored arm_runner.MODEL (SETDRIFT_MODEL default).
     """
     import ast
 
@@ -328,5 +328,5 @@ def test_solver_threads_active_model_into_run_arm() -> None:
         kwargs = {kw.arg for kw in call.keywords}
         assert "model" in kwargs, (
             "run_arm must be called with model= so Inspect's --model is honored "
-            "instead of the SICA_MODEL default (CR-05)"
+            "instead of the SETDRIFT_MODEL default (CR-05)"
         )

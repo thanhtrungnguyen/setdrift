@@ -20,8 +20,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-TELEMETRY_RAW_DIR = Path(os.environ.get("SICA_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
-OPT_IN = os.environ.get("SICA_TELEMETRY_OPT_IN", "").strip()
+TELEMETRY_RAW_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
+OPT_IN = os.environ.get("SETDRIFT_TELEMETRY_OPT_IN", "").strip()
 
 
 def main() -> int:

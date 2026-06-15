@@ -19,7 +19,7 @@ from pathlib import Path
 from setdrift_eval.corpus.fetcher import BugRecord
 
 GITBUG_JAVA_REPO = "https://github.com/gitbugactions/gitbug-java"
-DEFAULT_GITBUG_DIR = Path(os.environ.get("SICA_GITBUG_DIR", "data/raw/gitbug-java-meta"))
+DEFAULT_GITBUG_DIR = Path(os.environ.get("SETDRIFT_GITBUG_DIR", "data/raw/gitbug-java-meta"))
 
 
 def _load_bugs(path: Path) -> list[dict]:

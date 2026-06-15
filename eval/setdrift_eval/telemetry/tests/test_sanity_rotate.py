@@ -4,8 +4,8 @@ import json
 
 
 def _reload(mod_name, tmp_path, monkeypatch):
-    monkeypatch.setenv("SICA_TELEMETRY_DIR", str(tmp_path))
-    monkeypatch.setenv("SICA_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_DIR", str(tmp_path))
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
     import importlib as _il
     mod = _il.import_module(mod_name)
     _il.reload(mod)

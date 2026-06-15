@@ -21,7 +21,7 @@ from pathlib import Path
 
 from setdrift_eval.benchmark.llm_backend import call_model
 
-CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
+CACHE_DIR = Path(os.environ.get("SETDRIFT_CACHE_DIR", "data/cache"))
 
 
 def cache_key(model: str, prompt: str, tools: list[dict]) -> str:

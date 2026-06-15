@@ -9,7 +9,7 @@ replay is deterministic.
 - Arm B: real skill toolset → fired = {tool_use block names}.
 - Arm C: empty toolset → always-NONE zero-configuration floor (fires nothing).
 
-Model is pinned via SICA_MODEL (default claude-sonnet-4-6). The tool_choice /
+Model is pinned via SETDRIFT_MODEL (default claude-sonnet-4-6). The tool_choice /
 empty-toolset decision lives entirely in response_cache.load_or_call — this
 module never builds the create kwargs itself.
 """
@@ -20,7 +20,7 @@ import yaml
 
 from setdrift_eval.benchmark.response_cache import CACHE_DIR, load_or_call
 
-MODEL = os.environ.get("SICA_MODEL", "claude-sonnet-4-6")
+MODEL = os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6")
 
 
 def build_skill_tool(name: str, description: str) -> dict:

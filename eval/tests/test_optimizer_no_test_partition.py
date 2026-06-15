@@ -15,8 +15,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-_SICA_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
-_GEPA_WRAPPER_SRC = _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "optimizer" / "gepa_wrapper.py"
+_SETDRIFT_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
+_GEPA_WRAPPER_SRC = _SETDRIFT_PLUGIN_ROOT / "eval" / "setdrift_eval" / "optimizer" / "gepa_wrapper.py"
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ def skills_dir(tmp_path):
 
 @pytest.fixture()
 def map_path():
-    return _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
+    return _SETDRIFT_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
 
 
 @pytest.fixture()
@@ -94,7 +94,7 @@ def experiments_dir(tmp_path):
 def hmac_key(tmp_path, monkeypatch):
     key_file = tmp_path / "sica-hmac.key"
     key_file.write_text("b" * 64, encoding="utf-8")
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
     return key_file
 
 
@@ -112,9 +112,9 @@ def test_only_train_examples_reach_propose(
     corpus_file, split = mixed_corpus
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     seen_trainsets: list = []
 

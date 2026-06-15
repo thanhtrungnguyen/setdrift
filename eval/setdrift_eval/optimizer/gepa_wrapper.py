@@ -39,13 +39,13 @@ from setdrift_eval.optimizer.fence import ALLOWED_PREFIXES  # read-only: proposa
 from setdrift_eval.telemetry.scorer import project_to_intents, scored_intents
 
 # --- pins / knobs -----------------------------------------------------------------
-OPTIMIZER_BACKEND = os.environ.get("SICA_OPTIMIZER", "gepa")  # "gepa" | "miprov2"
+OPTIMIZER_BACKEND = os.environ.get("SETDRIFT_OPTIMIZER", "gepa")  # "gepa" | "miprov2"
 REFLECTION_LM_MODEL = "anthropic/claude-sonnet-4-6"           # model pin (default arm)
-MAX_METRIC_CALLS = int(os.environ.get("SICA_GEPA_MAX_METRIC_CALLS", "200"))
+MAX_METRIC_CALLS = int(os.environ.get("SETDRIFT_GEPA_MAX_METRIC_CALLS", "200"))
 NO_IMPROVEMENT_PATIENCE = 10                                  # exit-gate patience
 PARETO_DIVERSITY_FLOOR = 5                                    # exit-gate >=5 candidates
 MIN_ADVERSARIAL_NEGATIVES = 50                               # exit-gate >=50 negatives
-CARDINALITY_PENALTY_WEIGHT = float(os.environ.get("SICA_CARDINALITY_PENALTY", "0.25"))
+CARDINALITY_PENALTY_WEIGHT = float(os.environ.get("SETDRIFT_CARDINALITY_PENALTY", "0.25"))
 SEED = 42
 
 # The anti-overfit Constraint literal injected into every reflective feedback string
@@ -86,12 +86,12 @@ class SkillProposal(BaseModel):
 
 # --- optimizer construction (REQ-LOOP-01 one-flag swap) ---------------------------
 def build_optimizer(metric_fn):
-    """Return a dspy.GEPA by default, or a dspy.MIPROv2 iff SICA_OPTIMIZER=miprov2.
+    """Return a dspy.GEPA by default, or a dspy.MIPROv2 iff SETDRIFT_OPTIMIZER=miprov2.
 
     The backend is read from the environment at call time so the swap is a single env
     flag with no other code edits (REQ-LOOP-01). Both arms pin the model and seed.
     """
-    backend = os.environ.get("SICA_OPTIMIZER", OPTIMIZER_BACKEND)
+    backend = os.environ.get("SETDRIFT_OPTIMIZER", OPTIMIZER_BACKEND)
     if backend == "miprov2":
         lm = dspy.LM(REFLECTION_LM_MODEL, temperature=1.0, max_tokens=8192)
         return dspy.MIPROv2(

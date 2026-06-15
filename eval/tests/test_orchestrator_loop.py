@@ -21,7 +21,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 OVERLAP_PHRASE = "Spring annotation patterns in the parking services"
-_SICA_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
+_SETDRIFT_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture()
@@ -74,7 +74,7 @@ def corpus_path(tmp_path):
 @pytest.fixture()
 def map_path():
     """Use the real (re-frozen) intent_skill_map.yaml."""
-    return _SICA_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
+    return _SETDRIFT_PLUGIN_ROOT / "eval" / "setdrift_eval" / "corpus" / "intent_skill_map.yaml"
 
 
 @pytest.fixture()
@@ -101,12 +101,12 @@ def precision_gate_report(experiments_dir):
 
 @pytest.fixture()
 def hmac_key(tmp_path, monkeypatch):
-    """Generate a throwaway HMAC key and point SICA_SIGNING_KEY at it."""
+    """Generate a throwaway HMAC key and point SETDRIFT_SIGNING_KEY at it."""
     key_dir = tmp_path / "keys"
     key_dir.mkdir()
     key_file = key_dir / "sica-hmac.key"
     key_file.write_text("a" * 64, encoding="utf-8")  # 32-byte hex key
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
     return key_file
 
 
@@ -233,10 +233,10 @@ def test_promoted_cycle_has_all_steps_same_cycle_id(
     from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
 
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
@@ -285,9 +285,9 @@ def test_rejected_cycle_has_rollback_step(
     from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
@@ -329,9 +329,9 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
     from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     _make_propose_spy(monkeypatch, "spring-boot-endpoint")
     monkeypatch.setattr(
@@ -380,9 +380,9 @@ def test_dry_run_does_not_write_to_live_plugin(
     from setdrift_eval.optimizer import applier as _applier
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     apply_calls: list = []
 
@@ -427,9 +427,9 @@ def test_approve_true_calls_apply_with_dry_run_false(
     from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
     audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
-    monkeypatch.setenv("SICA_AUDIT_PATH", str(audit_path))
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
     genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
-    monkeypatch.setenv("SICA_GENEALOGY_PATH", str(genealogy_path))
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
 
     apply_calls: list = []
 

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import duckdb
 
-DB_PATH = Path(os.environ.get("SICA_DRIFT_DB", "data/drift/results.ddb"))
+DB_PATH = Path(os.environ.get("SETDRIFT_DRIFT_DB", "data/drift/results.ddb"))
 
 # ---------------------------------------------------------------------------
 # DDL — three tables for the Phase 4 drift grid (from RESEARCH.md Pattern 5)

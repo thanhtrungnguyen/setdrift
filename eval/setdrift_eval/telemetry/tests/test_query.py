@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 
 
 def _query(tmp_path, monkeypatch):
-    """Reload the query module with SICA_TELEMETRY_DIR pointed at tmp_path."""
-    monkeypatch.setenv("SICA_TELEMETRY_DIR", str(tmp_path))
+    """Reload the query module with SETDRIFT_TELEMETRY_DIR pointed at tmp_path."""
+    monkeypatch.setenv("SETDRIFT_TELEMETRY_DIR", str(tmp_path))
     import setdrift_eval.telemetry.query as q
     importlib.reload(q)
     return q
@@ -35,7 +35,7 @@ def test_missing_canary_zero_when_present(tmp_path, monkeypatch):
     """Test 2: a session containing the canary → missing_canary_count == 0."""
     _write_session(tmp_path, "sX", [
         {"_session": "sX", "tool_name": "Bash", "_ts_captured": _now()},
-        {"_session": "sX", "tool_name": "SICA_CANARY_TOOL_V1", "_ts_captured": _now()},
+        {"_session": "sX", "tool_name": "SETDRIFT_CANARY_TOOL_V1", "_ts_captured": _now()},
     ])
     q = _query(tmp_path, monkeypatch)
     assert q.missing_canary_count() == 0
