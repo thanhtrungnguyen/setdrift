@@ -53,6 +53,59 @@ Tracked in the Jira project `SICA`; per-run results land in `experiments/`.
 
 ## Architecture
 
+```text
+┌───────────────────────────────────────────────────────────────────┐
+│                     Claude Code Runtime                            │
+│          (where the plugin manifests, hooks, and skills live)      │
+├──────────────────┬──────────────────────┬───────────────────────────┤
+│  Plugin Manifest │   Hooks (Event       │   Skills, Commands,       │
+│  & Marketplace   │   Capture)           │   Sub-agents              │
+│ `.claude-plugin/ │ `plugin/hooks/       │ `plugin/skills/`          │
+│  plugin.json`    │  capture_event.py`   │ `plugin/commands/`        │
+│                  │                      │ `plugin/agents/`          │
+└──────────────────┴──────────────────────┴───────────────────────────┘
+         │                                │
+         │ Telemetry events              │ Observable skill triggers
+         ▼                                │ and config drifts
+┌───────────────────────────────────────────────────────────────────┐
+│                    Telemetry Storage (gitignored)                  │
+│              `data/telemetry/events.jsonl` (appended)              │
+│  Contains: session_id, tool_name, success, ts, cwd (scrubbed)     │
+└───────────────────────────────────────────────────────────────────┘
+         │
+         │ Raw telemetry logs
+         ▼
+┌───────────────────────────────────────────────────────────────────┐
+│             Python Evaluation Harness (eval/setdrift_eval/)        │
+├──────────────────┬──────────────────────┬───────────────────────────┤
+│  benchmark/      │   optimizer/         │   telemetry/              │
+│  - Issue→commit  │  - Skill-trigger     │  - Parse events.jsonl     │
+│    replay        │    optimization      │  - Compute health metrics │
+│  - Task dataset  │  - CLAUDE.md tuning  │  - Detect drift signals   │
+│  - Offline eval  │  - DSPy MIPROv2,     │  - F1, pass-rate scoring  │
+│                  │    GEPA backends     │                           │
+└──────────────────┴──────────────────────┴───────────────────────────┘
+         │
+         │ Diagnosis (skill match analysis, config score)
+         ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                    Patch Proposal Engine                           │
+│                (not yet implemented; scaffolding)                  │
+│  - Generates new skill descriptions                               │
+│  - Proposes CLAUDE.md edits                                       │
+│  - Ranks by predicted impact                                      │
+└───────────────────────────────────────────────────────────────────┘
+         │
+         │ Proposed config changes
+         ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                    Verification & Rollback                         │
+│  - Replay benchmark with new config                               │
+│  - Auto-promote (outside noise band) or auto-revert               │
+│  - Audit trail in registrations/ + experiments/                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
 Setdrift runs one loop — **observe → diagnose → patch → verify** — across two halves:
 
 - **`plugin/`** — the Claude Code plugin (CC-native).
