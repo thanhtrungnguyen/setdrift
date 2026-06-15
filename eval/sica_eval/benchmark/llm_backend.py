@@ -19,10 +19,11 @@ import os
 import anthropic  # module-level so the test fixture can patch sica_eval.benchmark.llm_backend.anthropic.Anthropic
 import openai  # module-level so the test fixture can patch sica_eval.benchmark.llm_backend.openai.OpenAI
 
-MAX_TOKENS = 256  # only tool selection matters; generated text is irrelevant
+MAX_TOKENS = 256  # default; judge path passes 512 — never bump this constant
 
 
-def call_model(model: str, prompt: str, tools: list[dict]) -> dict:
+def call_model(model: str, prompt: str, tools: list[dict],
+               max_tokens: int = MAX_TOKENS) -> dict:
     """Dispatch to the configured LLM backend and return the canonical response dict.
 
     The returned dict always has the shape:
@@ -35,14 +36,19 @@ def call_model(model: str, prompt: str, tools: list[dict]) -> dict:
     This shape is the contract consumed verbatim by arm_runner.py and scorer.py;
     do NOT change field names or nesting.
 
+    Args:
+        max_tokens: Per-call token cap. Default (256) preserves frozen-file
+                    behaviour for arm_runner/response_cache. Judge calls pass 512
+                    to fit the JudgeVerdict rationale field (D-13a).
+
     Raises:
         ValueError: if SICA_LLM_BACKEND is set to an unrecognised backend.
     """
     backend = os.environ.get("SICA_LLM_BACKEND", "anthropic")
     if backend == "anthropic":
-        return _call_anthropic(model, prompt, tools)
+        return _call_anthropic(model, prompt, tools, max_tokens)
     if backend == "openrouter":
-        return _call_openrouter(model, prompt, tools)
+        return _call_openrouter(model, prompt, tools, max_tokens)
     raise ValueError(
         f"Unknown SICA_LLM_BACKEND={backend!r}. Supported values: 'anthropic', 'openrouter'."
     )
@@ -52,7 +58,8 @@ def call_model(model: str, prompt: str, tools: list[dict]) -> dict:
 # Anthropic backend (default)
 # ---------------------------------------------------------------------------
 
-def _call_anthropic(model: str, prompt: str, tools: list[dict]) -> dict:
+def _call_anthropic(model: str, prompt: str, tools: list[dict],
+                    max_tokens: int = MAX_TOKENS) -> dict:
     """Call the Anthropic Messages API.
 
     Logic moved verbatim from response_cache.py (pre-refactor) so the default
@@ -61,7 +68,7 @@ def _call_anthropic(model: str, prompt: str, tools: list[dict]) -> dict:
     client = anthropic.Anthropic()
     kwargs: dict = {
         "model": model,
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens,
         "temperature": 0,
         "messages": [{"role": "user", "content": prompt}],
     }
@@ -82,7 +89,8 @@ def _call_anthropic(model: str, prompt: str, tools: list[dict]) -> dict:
 # OpenRouter backend (OpenAI Chat-Completions wire format)
 # ---------------------------------------------------------------------------
 
-def _call_openrouter(model: str, prompt: str, tools: list[dict]) -> dict:
+def _call_openrouter(model: str, prompt: str, tools: list[dict],
+                     max_tokens: int = MAX_TOKENS) -> dict:
     """Call the OpenRouter API using the OpenAI Chat-Completions wire format.
 
     Provider-locked to first-party Anthropic by default (configurable via env).
@@ -121,7 +129,7 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict]) -> dict:
 
     kwargs: dict = {
         "model": model,
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens,
         "temperature": 0,
         "messages": [{"role": "user", "content": prompt}],
         "extra_body": {
