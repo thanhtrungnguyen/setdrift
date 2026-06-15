@@ -1,0 +1,47 @@
+[
+  {
+    "winner": "1",
+    "confidence": 0.85,
+    "rationale": "Response 1 is more accurate and concise, correctly identifying the Spring Boot annotation pattern.",
+    "bias_mode": "verbosity",
+    "model_id": "claude-sonnet-4-6",
+    "position_swapped": false,
+    "prompt_id": "p001"
+  },
+  {
+    "winner": "2",
+    "confidence": 0.72,
+    "rationale": "Response 2 provides a more complete explanation of dependency injection with practical examples.",
+    "bias_mode": "position",
+    "model_id": "openai/gpt-4o",
+    "position_swapped": true,
+    "prompt_id": "p002"
+  },
+  {
+    "winner": "tie",
+    "confidence": 0.50,
+    "rationale": "Both responses equally address the REST endpoint question with similar depth and accuracy.",
+    "bias_mode": "self_preference",
+    "model_id": "google/gemini-2.5-pro",
+    "position_swapped": false,
+    "prompt_id": "p003"
+  },
+  {
+    "winner": "1",
+    "confidence": 0.91,
+    "rationale": "Response 1 correctly identifies the transactional boundary issue in the Spring service layer.",
+    "bias_mode": "authority",
+    "model_id": "claude-sonnet-4-6",
+    "position_swapped": true,
+    "prompt_id": "p004"
+  },
+  {
+    "winner": "2",
+    "confidence": 0.68,
+    "rationale": "Response 2 provides a clearer explanation of the JPA repository pattern and its Spring integration.",
+    "bias_mode": "recency",
+    "model_id": "openai/gpt-4o",
+    "position_swapped": false,
+    "prompt_id": "p005"
+  }
+]
