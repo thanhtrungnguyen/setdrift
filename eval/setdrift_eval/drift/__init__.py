@@ -1,1 +1,1 @@
-"""SICA drift-index detector and synthetic-drift evaluation (Phase 4)."""
+"""Setdrift drift-index detector and synthetic-drift evaluation (Phase 4)."""

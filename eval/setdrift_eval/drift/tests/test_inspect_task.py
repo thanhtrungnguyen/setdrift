@@ -295,7 +295,7 @@ def test_resolve_arm_skills_fail_loud_and_defaults(monkeypatch) -> None:
 
 
 def test_solver_threads_active_model_into_run_arm() -> None:
-    """CR-05: the SICA solver must forward Inspect's active model to run_arm.
+    """CR-05: the Setdrift solver must forward Inspect's active model to run_arm.
 
     Source-level guard (mirrors test 7's ast approach) because exercising the
     real solver requires the Docker sandbox. The bug was run_arm being called

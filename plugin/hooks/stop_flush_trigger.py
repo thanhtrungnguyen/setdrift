@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA Stop-hook flush trigger (deferred-batch architecture, D-26).
+"""Setdrift Stop-hook flush trigger (deferred-batch architecture, D-26).
 
 Fires on the Claude Code `Stop` event. Its only job is to hand the just-ended
 session's RAW buffer off to the batch scrubber (stop_batch_scrubber.py, built in

@@ -69,7 +69,7 @@ research evidence: the mechanism records learnings to `.learnings/` via human-au
 or semi-automated notes, not via an automated observe→diagnose→patch→verify loop with
 a scorer and promotion gate. Classification remains **Partial\*** with the footnote
 "human-in-the-loop learning, not automated closed-loop." The risk flagged in A4
-(if claude-mem actually has a fully automated loop, SICA's differentiation weakens)
+(if claude-mem actually has a fully automated loop, Setdrift's differentiation weakens)
 must be resolved by the human reviewer visiting the canonical source before
 dissertation submission.
 
@@ -90,7 +90,7 @@ dissertation submission.
 | **Evidence basis** | CITED (deployhq.com blog) + CITED (arize.com/blog) + ASSUMED for drift column (05-RESEARCH.md 2026-06-15) |
 | **Screenshot/commit-ref note** | ⚠ NEEDS LIVE SCREENSHOT/COMMIT-REF CAPTURE BEFORE SUBMISSION — capture the Arize blog post URL and confirm the Cursor product documentation confirms no native optimization loop |
 
-**SICA differentiation note:** SICA measures skill-trigger quality (which rule should
+**Setdrift differentiation note:** Setdrift measures skill-trigger quality (which rule should
 fire) as F1 against a labeled corpus. The Arize approach measures task-completion
 accuracy (does the whole agent succeed?) — a different and less targeted objective.
 
@@ -148,7 +148,7 @@ All four columns are still populated; evidence depth is lighter than Tier 1.
 |-------|-------|
 | **Source URL** | https://github.com/cline/cline; https://arize.com/blog/optimizing-coding-agent-rules |
 | **Access date** | 2026-06-15 (via 05-RESEARCH.md research window) |
-| **State summary** | VS Code AI coding agent with `.clinerules` configuration files. Arize AI optimized `.clinerules` via DSPy meta-prompting (third-party research experiment using SWE-bench pass-rate — not a native Cline feature, different evaluation target from SICA). |
+| **State summary** | VS Code AI coding agent with `.clinerules` configuration files. Arize AI optimized `.clinerules` via DSPy meta-prompting (third-party research experiment using SWE-bench pass-rate — not a native Cline feature, different evaluation target from Setdrift). |
 | **Closed-loop** | NO (native); third-party research experiment exists (Arize), not a native Cline product feature |
 | **Ground-truth labels** | NO† — Arize experiment uses SWE-bench pass/fail (task-level, not skill-trigger labels) |
 | **F1 metric** | NO† — Arize uses pass-rate accuracy, not skill-trigger F1 |
@@ -196,6 +196,6 @@ All four columns are still populated; evidence depth is lighter than Tier 1.
 
 ---
 
-*Log maintained by: SICA Phase 5 Plan 03 executor*
+*Log maintained by: Setdrift Phase 5 Plan 03 executor*
 *Log created: 2026-06-15*
 *Next required review: 2026-07-15*

@@ -15,7 +15,7 @@ description: >-
 > overlap in description ("Spring annotation patterns in the parking services") so
 > GEPA can demonstrably reduce cross-firing between web-layer (@RestController)
 > and persistence-layer (@Entity) triggers. The `description` above is the learned
-> parameter that the SICA optimizer (eval/setdrift_eval/optimizer) will tune.
+> parameter that the Setdrift optimizer (eval/setdrift_eval/optimizer) will tune.
 
 ## When this applies
 Creating or mapping a persistence-layer entity in the IAM / Parking / Storage services.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA hot-path telemetry capture hook (deferred-batch architecture, REQ-OPS-01).
+"""Setdrift hot-path telemetry capture hook (deferred-batch architecture, REQ-OPS-01).
 
 This is the HOT PATH. It does the absolute minimum: read the hook payload from
 stdin and append it — RAW, UNSCRUBBED — to a per-session buffer inside the

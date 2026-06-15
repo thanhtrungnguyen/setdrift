@@ -8,7 +8,7 @@ What this module does:
     - yoke_minute captured ONCE per (model, revision) pair, before iterating
       arms (Pitfall 1 — both A and B rows carry the same value)
     - Per-cell deterministic seed: sha256(arm-model-revision-run_idx)[:8]
-    - Temperature 0 enforced via the SICA response_cache (arm_runner)
+    - Temperature 0 enforced via the Setdrift response_cache (arm_runner)
     - No CachePolicy(per_epoch=False) anywhere (Pitfall 5)
     - Content-addressed snapshot via checkout_snapshot() (REQ-DRIFT-02)
     - Frozen ruler consumed by import only (Goodhart firewall)
@@ -165,7 +165,7 @@ def run_grid(
         corpus_path:    Path to corpus JSONL with prompt/split/ground_truth fields.
         map_path:       Path to the frozen intent_skill_map.yaml (FROZEN ruler).
         revision_shas:  {"early": sha, "mid": sha, "late": sha}
-        cache_dir:      LLM response cache directory (SICA response_cache).
+        cache_dir:      LLM response cache directory (Setdrift response_cache).
         experiments_dir: Where to write DriftManifest JSON files.
 
     Raises:

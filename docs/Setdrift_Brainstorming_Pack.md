@@ -1,4 +1,4 @@
-# SICA Plugin — Brainstorming Companion
+# Setdrift Plugin — Brainstorming Companion
 
 Read alongside `SETDRIFT_Plugin_Research_Brief.docx`. This file is unfiltered sparks, gaps,
 and alternative framings — pick what energises you and ignore the rest.
@@ -37,7 +37,7 @@ Numbered for easy citation in Jira. Each can be a one-week experiment or a secti
 14. **Per-developer config layering.** Generic core → team pack → personal overlay. Measure whether per-developer overlays add or subtract value over team-wide config.
 15. **Counterfactual debugging.** When a Claude Code task fails, replay with one config component removed at a time to localise which line of CLAUDE.md or which skill caused the failure. Ablation-as-feature.
 16. **Carbon / cost dashboard.** Tie configuration changes to $ saved and kWh reduced. VinSmart's ESG team will love this. Real money is a great chart.
-17. **Cross-team plugin marketplace.** When SICA improves a skill on team A, surface the diff to team B as a suggested PR. Federated skill-evolution.
+17. **Cross-team plugin marketplace.** When Setdrift improves a skill on team A, surface the diff to team B as a suggested PR. Federated skill-evolution.
 18. **Skill PR-review bot.** Treat every auto-proposed skill edit as a PR; have a separate Claude review it before promotion. The plugin becomes self-policing.
 19. **Pre-registration.** Write hypotheses into `/registrations/01-hypothesis.md` before running experiments. Reviewers in 2026 increasingly demand this. Easy credibility win.
 20. **Open-skill leaderboard.** Publish your eval harness so other teams can submit skills and benchmark them. Bootstraps a research community around your plugin.
@@ -85,7 +85,7 @@ Pre-empt these now. Each answer should be a paragraph in chapter 6 (Threats to V
 - *"Self-improvement loops can collapse / diverge. How did you handle convergence?"* — Cite [DGM's archive-based safety](https://arxiv.org/abs/2505.22954) and report convergence curves explicitly.
 - *"LLM-as-judge is biased."* — Validate with a 20% manual spot-check (already in your brief) and report inter-rater agreement.
 - *"You used Sonnet 4.6. A new model breaks everything."* — Pin the model; report results on at least one other (Haiku 4.5) to show the methodology, not the score, generalises.
-- *"What if SICA proposes a malicious change?"* — Section 1 on signed configs, dry-run promotion, human approval gate.
+- *"What if Setdrift proposes a malicious change?"* — Section 1 on signed configs, dry-run promotion, human approval gate.
 - *"Why won't the parking team revert?"* — Field study with consent + rollback button + weekly retro.
 
 ---

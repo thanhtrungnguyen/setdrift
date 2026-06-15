@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA Stop-hook batch scrubber (D-27 quarantine policy, REQ-SAFETY-01).
+"""Setdrift Stop-hook batch scrubber (D-27 quarantine policy, REQ-SAFETY-01).
 
 Invoked by stop_flush_trigger.py with a session_id. Reads that session's RAW
 buffer, routes each event to the clean per-session events.jsonl (if it scrubs

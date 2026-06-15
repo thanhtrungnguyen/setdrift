@@ -1,5 +1,5 @@
 {
-  "name": "sica-marketplace",
+  "name": "setdrift-marketplace",
   "owner": { "name": "Nguyen Thanh Trung" },
   "metadata": {
     "description": "Self-improving configuration plugin for Claude Code.",
@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "sica",
+      "name": "setdrift",
       "source": "./",
       "description": "Observe-diagnose-patch-verify loop over Claude Code configuration."
     }

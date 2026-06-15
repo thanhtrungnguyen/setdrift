@@ -10,9 +10,9 @@
 # Image is pinned by digest to prevent tag-swap tampering (T-04-05).
 # cpus + mem_limit bound the container for DoS protection (T-04-05).
 #
-# NOTE: No volume mounts — snapshot content is read host-side by the SICA
+# NOTE: No volume mounts — snapshot content is read host-side by the Setdrift
 # harness (arm_runner.run_arm + response_cache.load_or_call). The solver
-# reads from the host-side SICA cache; no filesystem injection into the
+# reads from the host-side Setdrift cache; no filesystem injection into the
 # container is needed, which avoids the Docker Compose V2 Windows
 # relative-path resolution pitfall (RESEARCH.md Pitfall 4).
 services:

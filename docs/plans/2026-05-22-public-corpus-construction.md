@@ -50,7 +50,7 @@ Edit `repo/sica-plugin/eval/pyproject.toml`. Replace the `[project]` and `[proje
 [project]
 name = "setdrift-eval"
 version = "0.0.1"
-description = "Evaluation harness for the SICA self-improving Claude Code plugin"
+description = "Evaluation harness for the Setdrift self-improving Claude Code plugin"
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{ name = "Nguyen Thanh Trung" }]
@@ -1181,7 +1181,7 @@ from setdrift_eval.corpus.builder import build_corpus
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="setdrift-eval", description="SICA evaluation harness")
+    parser = argparse.ArgumentParser(prog="setdrift-eval", description="Setdrift evaluation harness")
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("benchmark", help="run the offline replay benchmark")

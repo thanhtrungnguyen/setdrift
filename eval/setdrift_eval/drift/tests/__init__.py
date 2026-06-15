@@ -1,1 +1,1 @@
-"""Tests for the SICA drift-index detector and evaluation infrastructure (Phase 4)."""
+"""Tests for the Setdrift drift-index detector and evaluation infrastructure (Phase 4)."""

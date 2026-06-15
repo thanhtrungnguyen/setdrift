@@ -1,7 +1,7 @@
 """Leave-one-out failure attribution ablation table (REQ-LOOP-03).
 
 Implements the 5-component leave-one-out set from RESEARCH §Proposed Discretion
-Answers: full SICA config, 4 single-component ablations, and arm-C floor.
+Answers: full Setdrift config, 4 single-component ablations, and arm-C floor.
 
 What this module does:
 - build_ablation_table: re-runs arm harness with components removed via run_arm
@@ -89,7 +89,7 @@ def build_ablation_table(
     """Build a leave-one-out ablation table for one failure prompt.
 
     The 6-configuration set (RESEARCH §Proposed Discretion Answers 1):
-    1. Full SICA config (both skills, optimized descriptions)
+    1. Full Setdrift config (both skills, optimized descriptions)
     2. spring-boot-endpoint description → baseline (swap in baseline desc)
     3. spring-jpa-entity description → baseline (swap in baseline desc)
     4. spring-boot-endpoint removed entirely
@@ -170,7 +170,7 @@ def build_ablation_table(
 
         configs = [
             # 1. Full config
-            ("None (full SICA config)", _tools_for(skill_names)),
+            ("None (full Setdrift config)", _tools_for(skill_names)),
             # 2. First skill desc → baseline
             (f"{sbe} desc→base", _tools_for(skill_names, {sbe: baseline_desc})),
             # 3. Second skill desc → baseline
@@ -185,7 +185,7 @@ def build_ablation_table(
     elif len(skill_names) == 1:
         s = skill_names[0]
         configs = [
-            ("None (full SICA config)", _tools_for(skill_names)),
+            ("None (full Setdrift config)", _tools_for(skill_names)),
             (f"{s} desc→base", _tools_for(skill_names, {s: baseline_desc})),
             (f"{s} removed", []),
             ("arm-C floor (no skills)", []),
@@ -195,7 +195,7 @@ def build_ablation_table(
     else:
         # No skills: all 6 are arm-C floor
         configs = [
-            ("None (full SICA config — no skills)", []),
+            ("None (full Setdrift config — no skills)", []),
             ("ablation 1 (no skills)", []),
             ("ablation 2 (no skills)", []),
             ("ablation 3 (no skills)", []),

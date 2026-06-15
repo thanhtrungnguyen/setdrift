@@ -1,4 +1,4 @@
-"""Layered PII/secret scrubber for SICA telemetry (REQ-SAFETY-01).
+"""Layered PII/secret scrubber for Setdrift telemetry (REQ-SAFETY-01).
 
 Runs OFF the hot path (Stop-hook batch / cron context, 600s budget) so Presidio's
 NLP cold start is acceptable. Three layers:

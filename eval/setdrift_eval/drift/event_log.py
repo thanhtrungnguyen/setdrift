@@ -90,7 +90,7 @@ class DriftEvent(BaseModel):
     f1_at_event_A: float | None = Field(
         default=None,
         description=(
-            "Macro-F1 of arm A (SICA-managed config) at the time of this drift event. "
+            "Macro-F1 of arm A (Setdrift-managed config) at the time of this drift event. "
             "Populated from grid_runner.run_grid() output when >=3 events qualify (D-51 real-drift path)."
         ),
     )

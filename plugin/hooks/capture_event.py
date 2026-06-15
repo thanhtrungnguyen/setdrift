@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA telemetry capture hook.
+"""Setdrift telemetry capture hook.
 
 Reads a Claude Code hook event from stdin (JSON) and appends a *scrubbed*,
 minimal record to the telemetry store. The store path defaults to the

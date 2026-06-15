@@ -34,7 +34,7 @@ class DriftManifest(ExperimentManifest):
 
     # Grid axes — the 12-cell experiment design (2 arms × 3 revisions × 2 models)
     grid_arm: str = Field(
-        description="Experiment arm: 'A' (SICA-managed) or 'B' (frozen hand-written config)"
+        description="Experiment arm: 'A' (Setdrift-managed) or 'B' (frozen hand-written config)"
     )
     grid_revision: str = Field(
         description="Codebase revision label: 'early' | 'mid' | 'late'"

@@ -11,7 +11,7 @@ description: >-
 # Spring Boot Endpoint (parking platform conventions)
 
 > SAMPLE SKILL — this is the optimization *target*. Its `description` above is the
-> learned parameter that the SICA optimizer (eval/setdrift_eval/optimizer) will tune.
+> learned parameter that the Setdrift optimizer (eval/setdrift_eval/optimizer) will tune.
 
 ## When this applies
 Creating or editing an HTTP endpoint in the CMS API / IAM / Storage services.

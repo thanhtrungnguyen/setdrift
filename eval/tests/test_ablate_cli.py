@@ -89,7 +89,7 @@ def _make_map(tmp_path):
 
 def test_build_ablation_table_returns_six_rows(tmp_path, monkeypatch):
     """build_ablation_table returns one row per 6 configurations:
-    full SICA config, 4 leave-one-out ablations, and arm-C floor.
+    full Setdrift config, 4 leave-one-out ablations, and arm-C floor.
     """
     from setdrift_eval.benchmark import arm_runner
     from setdrift_eval.optimizer.ablate import build_ablation_table
@@ -211,7 +211,7 @@ def test_render_table_contains_required_columns():
 
     rows = [
         {
-            "component": "None (full SICA config)",
+            "component": "None (full Setdrift config)",
             "fired_intents": ["spring-annotation-fix"],
             "f1": 1.0,
             "delta_vs_full": 0.0,
@@ -274,7 +274,7 @@ def test_health_arm_choices_includes_a(capsys):
 # ---------------------------------------------------------------------------
 
 def test_full_config_row_has_zero_delta(tmp_path, monkeypatch):
-    """The 'None (full SICA config)' row must have delta_vs_full == 0.0 (it's the baseline)."""
+    """The 'None (full Setdrift config)' row must have delta_vs_full == 0.0 (it's the baseline)."""
     from setdrift_eval.benchmark import arm_runner
     from setdrift_eval.optimizer.ablate import build_ablation_table
 

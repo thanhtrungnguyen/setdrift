@@ -1,4 +1,4 @@
-"""Pluggable LLM transport layer for the SICA eval harness.
+"""Pluggable LLM transport layer for the Setdrift eval harness.
 
 Dispatches on SETDRIFT_LLM_BACKEND (default: "anthropic"):
   - "anthropic" : Anthropic Messages API — behavior byte-identical to the original

@@ -27,7 +27,7 @@ See `docs/design/2026-05-20-falsifiable-claim.md` §4 for sourcing details.
 
 ## Conditions
 
-- **A:** SICA-managed config
+- **A:** Setdrift-managed config
 - **B:** Frozen hand-written config *(comparator)*
 - **C:** No-config baseline (stock Claude Code)
 

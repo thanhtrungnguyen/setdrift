@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "setdrift-eval"
 version = "0.0.1"
-description = "Evaluation harness for the SICA self-improving Claude Code plugin"
+description = "Evaluation harness for the Setdrift self-improving Claude Code plugin"
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{ name = "Nguyen Thanh Trung" }]

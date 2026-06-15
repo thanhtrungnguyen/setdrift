@@ -1,4 +1,4 @@
-"""Dry-run promotion gate for the SICA closed loop (Phase 3, D-41, REQ-LOOP-03).
+"""Dry-run promotion gate for the Setdrift closed loop (Phase 3, D-41, REQ-LOOP-03).
 
 This module implements the M9 verifier: promote iff candidate mean macro-F1 clears
 baseline_mean + 2σ on the VAL partition ONLY (Goodhart firewall — never reads test).

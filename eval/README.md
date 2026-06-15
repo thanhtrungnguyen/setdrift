@@ -1,4 +1,4 @@
-# eval — SICA evaluation harness
+# eval — Setdrift evaluation harness
 
 Python package (`setdrift_eval`). Three pillars mirroring the brief:
 

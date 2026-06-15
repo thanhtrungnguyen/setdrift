@@ -12,7 +12,7 @@ def _rollback_restore(skill_descriptions, expected_sig, targets):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="setdrift-eval", description="SICA evaluation harness")
+    parser = argparse.ArgumentParser(prog="setdrift-eval", description="Setdrift evaluation harness")
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("benchmark", help="run the offline replay benchmark")
@@ -166,7 +166,7 @@ def main() -> int:
     drift_p.add_argument(
         "--arm-a-skills", type=Path, default=None,
         help=(
-            "skills directory for arm A (SICA-managed config); "
+            "skills directory for arm A (Setdrift-managed config); "
             "default: SETDRIFT_ARM_A_SKILLS env var or plugin/skills"
         ),
     )
@@ -385,7 +385,7 @@ def main() -> int:
 
         con = connect()
 
-        # CR-01: arm A (SICA-managed) and arm B (frozen hand-written) must be
+        # CR-01: arm A (Setdrift-managed) and arm B (frozen hand-written) must be
         # DIFFERENT configs. Arm B defaults to the frozen baseline plugin/skills;
         # arm A has NO safe default (promotion is in-place — there is no static
         # "promoted" dir), so it must be supplied via --arm-a-skills or
@@ -397,7 +397,7 @@ def main() -> int:
         )
         if arm_a_skills is None:
             raise SystemExit(
-                "[setdrift-eval] drift: arm A (SICA-managed config) has no safe default. "
+                "[setdrift-eval] drift: arm A (Setdrift-managed config) has no safe default. "
                 "Pass --arm-a-skills <dir> or set SETDRIFT_ARM_A_SKILLS to the Phase-3 "
                 "promoted/optimized skills dir. Defaulting it to plugin/skills would "
                 "make arm A == arm B and null the A/B comparison (CR-01)."
@@ -414,7 +414,7 @@ def main() -> int:
             raise SystemExit(
                 "[setdrift-eval] drift: arm A and arm B resolve to identical toolsets "
                 f"(A={arm_a_skills}, B={arm_b_skills}) — the A/B comparison is "
-                "meaningless. Point --arm-a-skills at the SICA-managed config and "
+                "meaningless. Point --arm-a-skills at the Setdrift-managed config and "
                 "--arm-b-skills at the frozen hand-written baseline (CR-01)."
             )
         arm_configs = {
