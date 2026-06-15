@@ -26,6 +26,14 @@ def main() -> int:
     health_p.add_argument("--map", type=Path, default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"))
     health_p.add_argument("--skills-dir", type=Path, default=Path("plugin/skills"))
     health_p.add_argument("--experiments-dir", type=Path, default=Path("experiments"))
+    health_p.add_argument(
+        "--json", dest="emit_json", action="store_true",
+        help="emit metrics as JSON to stdout (D-12, feeds Phase-6 Next.js)",
+    )
+    health_p.add_argument(
+        "--live", action="store_true",
+        help="launch Textual TUI dashboard (D-03)",
+    )
 
     corpus_parser = sub.add_parser("corpus", help="build and verify the public prompt corpus")
     corpus_sub = corpus_parser.add_subparsers(dest="corpus_cmd")
@@ -280,6 +288,34 @@ def main() -> int:
             corpus_path=args.corpus, output_path=args.output, seed=args.seed
         )
         print(f"[setdrift-eval] verification CSV written -> {args.output}")
+        return 0
+
+    if args.cmd == "health" and getattr(args, "live", False):
+        # Lazy import: textual is an optional extra (D-03)
+        from setdrift_eval.dashboard.app import SicaDashboard
+        SicaDashboard(
+            corpus_path=args.corpus_path,
+            arm=args.arm,
+            seed=args.seed,
+            map_path=args.map,
+            skills_dir=args.skills_dir,
+            experiments_dir=args.experiments_dir,
+        ).run()
+        return 0
+
+    if args.cmd == "health" and getattr(args, "emit_json", False):
+        # Lazy import: dashboard is an optional extra; json is stdlib (D-12)
+        import json as _json
+        from setdrift_eval.dashboard.health_export import export_health_json
+        payload = export_health_json(
+            corpus_path=args.corpus_path,
+            arm=args.arm,
+            seed=args.seed,
+            map_path=args.map,
+            skills_dir=args.skills_dir,
+            experiments_dir=args.experiments_dir,
+        )
+        print(_json.dumps(payload, indent=2))
         return 0
 
     if args.cmd == "health":
