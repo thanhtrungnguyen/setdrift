@@ -5,7 +5,7 @@ Test groups:
   - log_*          : LogPanel tail/empty-state/write_loop_event behaviour (D-17)
   - metric_widget_*: MetricWidget set_value / set_gated / set_stale (no .renderable)
   - skill_table_*  : SkillTable update-without-clear guard (RESEARCH Pitfall 5)
-  - app_*          : SicaDashboard headless pilot smoke test (Textual run_test)
+  - app_*          : SetdriftDashboard headless pilot smoke test (Textual run_test)
 
 All Textual App tests use the built-in pilot / run_test harness — no live
 terminal, no network, no real API calls.  HEADLESS only.
@@ -396,15 +396,15 @@ import pytest
 
 
 def test_app_compose_headless():
-    """SicaDashboard composes without error in headless mode (Textual pilot)."""
+    """SetdriftDashboard composes without error in headless mode (Textual pilot)."""
     pytest.importorskip("textual")
 
-    from setdrift_eval.dashboard.app import SicaDashboard
+    from setdrift_eval.dashboard.app import SetdriftDashboard
 
     async def _run():
         # Patch _poll_metrics worker so no real corpus/experiments files are needed
         fake_result = _make_f1_result()
-        app = SicaDashboard(
+        app = SetdriftDashboard(
             corpus_path=Path("/nonexistent/corpus.jsonl"),
             arm="B",
         )
@@ -423,11 +423,11 @@ def test_app_log_toggle_keybinding():
     """Pressing 'l' toggles the log panel collapsed state (UI-SPEC §A.9)."""
     pytest.importorskip("textual")
 
-    from setdrift_eval.dashboard.app import SicaDashboard
+    from setdrift_eval.dashboard.app import SetdriftDashboard
     from setdrift_eval.dashboard.log_panel import LogPanel
 
     async def _run():
-        app = SicaDashboard(
+        app = SetdriftDashboard(
             corpus_path=Path("/nonexistent/corpus.jsonl"),
             arm="B",
         )

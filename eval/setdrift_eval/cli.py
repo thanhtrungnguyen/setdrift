@@ -292,8 +292,8 @@ def main() -> int:
 
     if args.cmd == "health" and getattr(args, "live", False):
         # Lazy import: textual is an optional extra (D-03)
-        from setdrift_eval.dashboard.app import SicaDashboard
-        SicaDashboard(
+        from setdrift_eval.dashboard.app import SetdriftDashboard
+        SetdriftDashboard(
             corpus_path=args.corpus_path,
             arm=args.arm,
             seed=args.seed,

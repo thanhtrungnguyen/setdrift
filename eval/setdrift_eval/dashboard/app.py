@@ -1,7 +1,7 @@
 """Setdrift Loop Dashboard — Textual TUI (D-03, single-source-of-truth D-04).
 
 What this module does:
-  - SicaDashboard(App): an information-dense Textual TUI that surfaces the full
+  - SetdriftDashboard(App): an information-dense Textual TUI that surfaces the full
     health surface — 9 metric widgets (F1 + noise band, pass rate, cost $, drift
     index, event count, loop status, last refresh), a per-skill DataTable, and a
     scrollable Loop + Telemetry log panel (D-17).
@@ -19,8 +19,8 @@ What it does NOT do:
   - Assign .renderable on any widget (Pitfall 2 guard).
 
 Launch via:
-    from setdrift_eval.dashboard.app import SicaDashboard
-    SicaDashboard(corpus_path=..., arm="B").run()
+    from setdrift_eval.dashboard.app import SetdriftDashboard
+    SetdriftDashboard(corpus_path=..., arm="B").run()
 or:
     setdrift-eval health --live --arm B
 """
@@ -96,7 +96,7 @@ LogPanel RichLog {
 """
 
 
-class SicaDashboard(App):
+class SetdriftDashboard(App):
     """Information-dense Setdrift loop management dashboard.
 
     Reads all metrics via run_health (D-04 single-source-of-truth).
