@@ -174,3 +174,23 @@ Sources: `quick/260610-0o9` refactor task. This entry follows the append-only di
 **(c) Frozen primary metric preserved.** This change does NOT alter the frozen primary metric. `scorer.py` is byte-unchanged. The response-cache key (sha256 of model + prompt + sorted tools) and the persisted dict shape (`content`, `usage`, `stop_reason`) are byte-identical to the *t=0* baseline, so the A/B comparison semantics are fully preserved. The `arm_runner.py` and `scorer.py` modules continue to operate without modification.
 
 **(d) Reclassification of response_cache.py.** `response_cache.py` is reclassified from a frozen-firewall file to a **pluggable-transport delegate**. It is now responsible only for cache-key generation, cache lookup, and persistence; it delegates the actual model call to `llm_backend.call_model`. The Goodhart firewall files — the modules whose byte-integrity is asserted in the Phase 4 drift-evaluation plans — are: **`scorer.py`, `experiment.py`, and `arm_runner.py`**. `response_cache.py` is explicitly removed from that frozen set.
+
+### 2026-06-15 — Project rename: SICA → Setdrift (identifier rename, behavior-preserving)
+
+Sources: `docs/design/2026-06-15-setdrift-rename.md` (rename design doc). This entry follows the append-only discipline (D-11); no changes to §1–§8 original text or to prior Change Log entries.
+
+**(a) Rename.** The project's public/brand name is now **Setdrift** (a coined control-theory term: *setpoint* + *drift*), resolving the acronym collision with Robeyns et al. 2025, *Self-Improving Coding Agent* (§9 References). Identifiers renamed across the codebase:
+
+| Old | New |
+|-----|-----|
+| import package `sica_eval` | `setdrift_eval` |
+| dist / CLI `sica-eval` | `setdrift-eval` |
+| env vars `SICA_*` (e.g. `SICA_MODEL`, `SICA_LLM_BACKEND`) | `SETDRIFT_*` (`SETDRIFT_MODEL`, `SETDRIFT_LLM_BACKEND`) |
+| plugin id `sica` / marketplace `sica-marketplace` | `setdrift` / `setdrift-marketplace` |
+| GitHub repo `sica-plugin` | `setdrift` |
+
+Prior Change Log entries (e.g. the 2026-06-10 transport entry) retain their original `sica_eval` / `SICA_LLM_BACKEND` / `SICA_MODEL` text under append-only discipline; from 2026-06-15 onward those identifiers read `setdrift_eval` / `SETDRIFT_LLM_BACKEND` / `SETDRIFT_MODEL`. The Jira project key remains `SICA` (unchanged).
+
+**(b) Behavior preserved; frozen arm intact.** Pure identifier rename, no logic change. The Goodhart firewall files (`scorer.py`, `experiment.py`, `arm_runner.py`) are byte-identical except for the mechanical `sica_eval`→`setdrift_eval` import token and `SICA_*`→`SETDRIFT_*` env-name token; the response-cache key, the persisted dict shape (`content`, `usage`, `stop_reason`), and all measurement semantics are unchanged. The offline test suite (incl. the D-13 byte-identity tests, plan 05-01) shows the same pre-existing pass/fail set before and after the rename.
+
+**(c) Config-hash re-pinning.** Because experiment provenance pins a config hash over file text and env-var names, the rename shifts config hashes. Pre-rename experiment records remain valid under their original hashes and identifiers; runs from 2026-06-15 onward are pinned under the new identifier map above. No experiment results are invalidated — the rename changes names, not numbers.
