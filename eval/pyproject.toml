@@ -29,6 +29,12 @@ dependencies = [
   "pyyaml>=6,<7",
   # OpenRouter transport (SETDRIFT_LLM_BACKEND=openrouter uses OpenAI Chat-Completions wire format).
   "openai>=1.0",
+  # Phase-5 reporting & triangulation deps (slopcheck [OK] 2026-06-15, all pinned ranges).
+  # textual>=8,<9: NOT the UI-SPEC stale >=0.80 pin — 8.x is current SemVer (RESEARCH Pitfall 1).
+  "textual>=8,<9",
+  "networkx>=3.5,<4",
+  "matplotlib>=3.9,<4",
+  "statsmodels>=0.14,<0.15",
 ]
 
 [project.optional-dependencies]

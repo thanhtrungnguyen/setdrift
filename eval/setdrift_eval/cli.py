@@ -182,6 +182,21 @@ def main() -> int:
         help="also run the Haiku TEST-partition A/B sensitivity arm (REQ-DRIFT-03, D-59)",
     )
 
+    # --- judge-sensitivity subcommand (Phase 5 Wave 1, D-11) ---
+    judge_p = sub.add_parser(
+        "judge-sensitivity",
+        help="run 5-bias-mode x 3-family LLM-as-judge sensitivity matrix (D-11)",
+    )
+    judge_p.add_argument(
+        "--slice", type=Path, default=Path("data/judge/slice_100.jsonl"),
+        help="path to 100-prompt curated slice (D-14)",
+    )
+    judge_p.add_argument("--seed", type=int, default=42)
+    judge_p.add_argument(
+        "--manifest", type=Path, default=Path("experiments/judge-sensitivity.json"),
+        help="output path for the scrubbed kappa matrix (experiments/ only — not data/)",
+    )
+
     # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
     deprecate_scan_p = sub.add_parser(
         "deprecate-scan",
@@ -373,6 +388,11 @@ def main() -> int:
             f"staged={staged}"
         )
         return 0
+
+    if args.cmd == "judge-sensitivity":
+        # Lazy import (project convention — D-11 judge harness)
+        from setdrift_eval.judge.runner import run_judge_sensitivity
+        return run_judge_sensitivity(args)
 
     if args.cmd == "drift":
         # Lazy imports — [drift] extra not required at setdrift-eval load time
