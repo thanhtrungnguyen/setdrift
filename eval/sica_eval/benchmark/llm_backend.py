@@ -146,7 +146,16 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict],
 
     response = client.chat.completions.create(**kwargs)
 
-    msg = response.choices[0].message
+    # D-13b: fail loud on null/empty choices — OpenRouter 504s surface as empty list
+    choices = response.choices
+    if not choices:
+        body_extra = getattr(response, "model_extra", {}) or {}
+        raise RuntimeError(
+            f"OpenRouter returned no choices (model={model!r}). "
+            f"Response body extras: {body_extra}. "
+            "Check OPENROUTER_API_KEY, model slug, and provider availability."
+        )
+    msg = choices[0].message
     tcs = msg.tool_calls or []
     content = [
         {
@@ -158,7 +167,7 @@ def _call_openrouter(model: str, prompt: str, tools: list[dict],
     ]
 
     # Map OpenAI finish_reason to Anthropic stop_reason vocabulary.
-    finish_reason = response.choices[0].finish_reason
+    finish_reason = choices[0].finish_reason
     stop_reason_map = {"tool_calls": "tool_use", "stop": "end_turn"}
     stop_reason = stop_reason_map.get(finish_reason, finish_reason)
 
