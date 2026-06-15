@@ -2403,7 +2403,7 @@ wheels = [
 ]
 
 [[package]]
-name = "sica-eval"
+name = "setdrift-eval"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [

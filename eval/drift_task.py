@@ -1,17 +1,17 @@
-"""Inspect-AI Task for the SICA synthetic-drift grid (REQ-DRIFT-02).
+"""Inspect-AI Task for the Setdrift synthetic-drift grid (REQ-DRIFT-02).
 
 What this module does:
-  Defines `drift_task`, an @task-decorated function that wraps the SICA
+  Defines `drift_task`, an @task-decorated function that wraps the Setdrift
   arm-runner harness in an Inspect-AI Task with a Docker sandbox. It is
   the orchestration shell for one (mode, revision, arm) cell; the actual
-  F1 scoring is done by the SICA frozen ruler (scorer.py + arm_runner).
+  F1 scoring is done by the Setdrift frozen ruler (scorer.py + arm_runner).
 
 Grid axes (passed as -T flags on the CLI or as Python kwargs):
   mode:      "synthetic" | "real"
       "synthetic" — programmatic magnitude-knob dataset (three drift levels).
       "real"      — samples from a real GitBug-Java revision snapshot.
   revision:  "early" | "mid" | "late"  — codebase snapshot selection.
-  arm:       "A" | "B"  — config axis (SICA-managed vs frozen hand-written).
+  arm:       "A" | "B"  — config axis (Setdrift-managed vs frozen hand-written).
 
 Sandbox spec:
   sandbox=("docker", "drift_compose.yaml") — Inspect-AI manages lifecycle.
@@ -27,7 +27,7 @@ Yoking discipline:
 Caching:
   Uses the default per-epoch cache scope (Pitfall 5: CachePolicy
   per_epoch=False is NEVER set here — it would collapse the noise band).
-  The SICA response_cache.load_or_call provides the reproducibility anchor
+  The Setdrift response_cache.load_or_call provides the reproducibility anchor
   at the arm_runner level; Inspect cache is a secondary convenience layer.
 
 Fail-loud:
@@ -66,7 +66,7 @@ from inspect_ai.solver import Solver, TaskState, generate, solver
 
 from inspect_ai.model import get_model
 
-from sica_eval.benchmark.arm_runner import load_skill_tools, run_arm
+from setdrift_eval.benchmark.arm_runner import load_skill_tools, run_arm
 
 # ---------------------------------------------------------------------------
 # Arm config resolution (CR-01) — resolved lazily at solve time, not import,
@@ -78,27 +78,27 @@ def _resolve_arm_skills(arm: str) -> Path:
     """Resolve the skills directory for an arm.
 
     Arm B is the frozen hand-written baseline (default ``plugin/skills``).
-    Arm A is the SICA-managed/optimized config and has NO safe default:
+    Arm A is the Setdrift-managed/optimized config and has NO safe default:
     promotion happens in-place, so there is no static "promoted" dir. It MUST
-    be supplied via ``SICA_ARM_A_SKILLS``. Silently defaulting arm A to
+    be supplied via ``SETDRIFT_ARM_A_SKILLS``. Silently defaulting arm A to
     ``plugin/skills`` would make arm A == arm B and null the A/B paired
     comparison the falsifiable claim depends on (CR-01).
     """
     if arm == "A":
-        v = os.environ.get("SICA_ARM_A_SKILLS")
+        v = os.environ.get("SETDRIFT_ARM_A_SKILLS")
         if not v:
             raise RuntimeError(
-                "SICA_ARM_A_SKILLS is not set — arm A (SICA-managed config) has no "
+                "SETDRIFT_ARM_A_SKILLS is not set — arm A (Setdrift-managed config) has no "
                 "safe default. Point it at the Phase-3 promoted/optimized skills dir. "
                 "Falling back to plugin/skills would make arm A == arm B and null the "
                 "A/B comparison the falsifiable claim depends on (CR-01)."
             )
         return Path(v)
     # Arm B = frozen hand-written baseline.
-    return Path(os.environ.get("SICA_ARM_B_SKILLS", "plugin/skills"))
+    return Path(os.environ.get("SETDRIFT_ARM_B_SKILLS", "plugin/skills"))
 
 
-_CACHE_DIR = Path(os.environ.get("SICA_CACHE_DIR", "data/cache"))
+_CACHE_DIR = Path(os.environ.get("SETDRIFT_CACHE_DIR", "data/cache"))
 
 # ---------------------------------------------------------------------------
 # Synthetic drift dataset helpers
@@ -206,12 +206,12 @@ def _build_dataset(mode: str, revision: str) -> Dataset:
 
 
 # ---------------------------------------------------------------------------
-# SICA skill solver — delegates to arm_runner.run_arm
+# Setdrift skill solver — delegates to arm_runner.run_arm
 # ---------------------------------------------------------------------------
 
 
 def _sica_skill_solver(arm: str) -> Solver:
-    """Return an Inspect-AI solver that fires the SICA arm_runner for one prompt.
+    """Return an Inspect-AI solver that fires the Setdrift arm_runner for one prompt.
 
     The solver loads skills from the arm config directory, runs run_arm(),
     and stores the fired tool-name set in state.metadata["fired_skills"].
@@ -226,9 +226,9 @@ def _sica_skill_solver(arm: str) -> Solver:
 
             tools = load_skill_tools(skills_dir)
             # CR-05: honor Inspect's active --model instead of silently using
-            # arm_runner's SICA_MODEL default. get_model().name is the model id
+            # arm_runner's SETDRIFT_MODEL default. get_model().name is the model id
             # without the provider prefix (e.g. "claude-sonnet-4-6"), which is
-            # what run_arm forwards to the SICA backend.
+            # what run_arm forwards to the Setdrift backend.
             model_name = get_model().name
             fired = run_arm(prompt, tools, model=model_name, cache_dir=_CACHE_DIR)
             state.metadata["fired_skills"] = list(fired)
@@ -242,7 +242,7 @@ def _sica_skill_solver(arm: str) -> Solver:
 
 
 # ---------------------------------------------------------------------------
-# SICA F1 scorer — secondary result; authoritative F1 comes from grid_runner
+# Setdrift F1 scorer — secondary result; authoritative F1 comes from grid_runner
 # ---------------------------------------------------------------------------
 
 
@@ -266,7 +266,7 @@ def _sica_f1_scorer() -> Scorer:
                 value=hit,
                 answer=str(sorted(fired)),
                 explanation=(
-                    f"SICA fired {len(fired)} skill(s): {sorted(fired)}. "
+                    f"Setdrift fired {len(fired)} skill(s): {sorted(fired)}. "
                     "Authoritative F1 is computed by grid_runner.py."
                 ),
             )
@@ -292,7 +292,7 @@ def drift_task(
     Args:
         mode:     "synthetic" (magnitude-knob dataset) or "real" (GitBug-Java).
         revision: "early" | "mid" | "late" — codebase snapshot label.
-        arm:      "A" (SICA-managed config) or "B" (frozen hand-written config).
+        arm:      "A" (Setdrift-managed config) or "B" (frozen hand-written config).
 
     The model is NOT hardcoded — pass via --model on the CLI or model= in
     inspect_eval(). network_mode: none is enforced at compose level.

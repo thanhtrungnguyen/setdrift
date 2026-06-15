@@ -10,8 +10,8 @@ import json
 import pytest
 import yaml
 
-from sica_eval.telemetry import scorer
-from sica_eval.telemetry.scorer import ScorerError, run_health
+from setdrift_eval.telemetry import scorer
+from setdrift_eval.telemetry.scorer import ScorerError, run_health
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ def test_arm_a_loads_nonempty_toolset(tmp_path, monkeypatch):
     Pitfall 3 (RESEARCH): arm=="A" was NOT handled before this plan — tools were []
     (the empty arm-C path). After the controlled fix, arm in ("A","B") loads tools.
     """
-    from sica_eval.benchmark import arm_runner
+    from setdrift_eval.benchmark import arm_runner
 
     sd = _make_skill_dir(tmp_path, {"spring-boot-endpoint": "Use for Spring REST endpoints."})
 
@@ -120,7 +120,7 @@ def test_arm_a_loads_nonempty_toolset(tmp_path, monkeypatch):
 
 def test_arm_a_fires_via_run_arm_not_run_arm_c(tmp_path, monkeypatch):
     """arm="A" must dispatch to run_arm (tool-path), not run_arm_c (empty floor)."""
-    from sica_eval.benchmark import arm_runner
+    from setdrift_eval.benchmark import arm_runner
 
     sd = _make_skill_dir(tmp_path, {"spring-boot-endpoint": "Use for REST endpoints."})
 
@@ -154,7 +154,7 @@ def test_arm_a_fires_via_run_arm_not_run_arm_c(tmp_path, monkeypatch):
 
 def test_val_only_prompts_excludes_test_split(tmp_path):
     """val_only_prompts() must return only split=='val' rows — never 'test' or 'train'."""
-    from sica_eval.telemetry.scorer import val_only_prompts
+    from setdrift_eval.telemetry.scorer import val_only_prompts
 
     corp = tmp_path / "corpora" / "public"
     corp.mkdir(parents=True, exist_ok=True)
@@ -193,7 +193,7 @@ def test_arm_a_f1_differs_from_arm_c_when_skill_fires(tmp_path, monkeypatch):
     it would return the same result as arm C (zero trigger on all prompts → same F1).
     After the fix, arm A loads real tools and can fire them.
     """
-    from sica_eval.benchmark import arm_runner
+    from setdrift_eval.benchmark import arm_runner
 
     sd = _make_skill_dir(tmp_path, {"spring-boot-endpoint": "Use for REST endpoints."})
 

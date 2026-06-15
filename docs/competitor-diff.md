@@ -1,4 +1,4 @@
-# Competitor Differential — SICA vs. 8 Comparators
+# Competitor Differential — Setdrift vs. 8 Comparators
 
 **Chapter 2 figure — Competitor Positioning**
 
@@ -17,7 +17,7 @@
 
 | Comparator | Closed-loop | Ground-truth labels | F1 metric | Drift-aware | Evidence tier |
 |-----------|:-----------:|:-------------------:|:---------:|:-----------:|:-------------:|
-| **SICA (ours)** | **YES** | **YES** (labeled corpus, κ ≥ 0.6) | **YES** (macro-F1, noise band) | **YES** (drift index) | [Tier 1 — internal](#sica-ours) |
+| **Setdrift (ours)** | **YES** | **YES** (labeled corpus, κ ≥ 0.6) | **YES** (macro-F1, noise band) | **YES** (drift index) | [Tier 1 — internal](#setdrift-ours) |
 | obra/superpowers | NO | NO | NO | NO | [Tier 1](#1-obrasuperpowers) |
 | claude-mem | Partial\* | NO | NO | NO | [Tier 1](#2-claude-mem) |
 | Cursor Rules | NO | NO† | NO† | NO | [Tier 1](#3-cursor-rules-cursorrules--cursor_rulesmd) |
@@ -36,25 +36,25 @@ before dissertation submission (see verification log Entry 2, Assumption A4).
 **Footnote †:** A third-party research experiment (Arize AI, 2026) optimized
 `.clinerules` (Cline's analog) and Cursor Rules via DSPy meta-prompting, using
 SWE-bench Lite unit-test pass/fail as ground truth. This is not a native product
-feature. The evaluation target (task-completion accuracy) is distinct from SICA's
+feature. The evaluation target (task-completion accuracy) is distinct from Setdrift's
 target (skill-trigger label F1 against a labeled corpus). These cells are marked
 NO† to acknowledge the third-party experiment while correctly classifying the
 native product capability.
 
 ---
 
-## SICA's Defensible Novelty
+## Setdrift's Defensible Novelty
 
-**SICA is the only entry in this table that simultaneously holds all four rubric
+**Setdrift is the only entry in this table that simultaneously holds all four rubric
 columns.** Each of the 8 comparators fails at least three of the four columns.
 The closest comparator, obra/superpowers, fails all four: it provides the same
-composable SKILL.md pattern as SICA's plugin layer but adds no measurement loop,
+composable SKILL.md pattern as Setdrift's plugin layer but adds no measurement loop,
 no labeled corpus, no F1 metric, and no drift signal. claude-mem comes nearest
 on the closed-loop column (Partial) but still lacks ground-truth labels, F1 scoring,
 and drift awareness. The Arize/SWE-bench research thread (Cline, Cursor Rules, Devin)
 demonstrates that automated config optimization is an active research area, but it
 uses a different evaluation target — task-level pass-rate over a static benchmark —
-rather than skill-trigger F1 over a labeled, drift-sensitive corpus. SICA's
+rather than skill-trigger F1 over a labeled, drift-sensitive corpus. Setdrift's
 contribution is precisely this combination: a closed loop that optimizes the
 configuration parameter that directly governs skill-trigger quality (F1), with
 a drift-aware monitoring signal as the loop's trigger.
@@ -79,7 +79,7 @@ dissertation submission.
 
 ## Per-Comparator Rationale
 
-### SICA (ours)
+### Setdrift (ours)
 Automated observe→diagnose→patch→verify loop; labeled developer-prompt corpus
 (GitBug-Java–derived, κ ≥ 0.6 floor); skill-trigger macro-F1 as primary metric;
 drift index monitoring over evaluation window.
@@ -87,7 +87,7 @@ drift index monitoring over evaluation window.
 
 ### 1. obra/superpowers
 Open-source Claude Code plugin marketplace framework (177K+ GitHub stars, May 2026).
-Composable SKILL.md pattern identical to SICA's plugin layer; no measurement loop,
+Composable SKILL.md pattern identical to Setdrift's plugin layer; no measurement loop,
 no labeled corpus, no F1 metric, no drift signal. Skills are hand-curated.
 [Verification log: Tier 1 — github.com/obra/superpowers, accessed 2026-06-15;
 screenshot needed before submission]
@@ -138,4 +138,4 @@ No per-project skill-trigger configuration layer; no configuration optimization.
 
 *Source: `docs/competitor-verification-log.md` (tiered evidence per D-07)*
 *Research date: 2026-06-15 | Valid until: 2026-07-15*
-*SICA Phase 5 Plan 03 | REQ-DELIV-03*
+*Setdrift Phase 5 Plan 03 | REQ-DELIV-03*

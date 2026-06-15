@@ -1,5 +1,5 @@
 {
-  "name": "sica",
+  "name": "setdrift",
   "version": "0.0.1",
   "description": "Self-improving Claude Code configuration: telemetry capture, skill-trigger optimization, and config regression detection. Validated on a Spring Boot microservice platform.",
   "author": { "name": "Nguyen Thanh Trung" },

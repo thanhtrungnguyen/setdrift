@@ -1,22 +1,20 @@
-﻿# sica-plugin
+﻿# Setdrift
 
 **A self-improving Claude Code plugin** that treats AI-coding-agent configuration
 (CLAUDE.md, skills, hooks, sub-agents, MCP wiring) as a continuously optimizable
 parameter — observed, diagnosed, patched, and verified in a closed loop.
 Validated on a production Java / Spring Boot microservice platform.
 
-> ⚠️ **Name note.** **SICA** in this repository names a Claude Code plugin
-> that treats AI-coding-agent *configuration* — skills, hooks, CLAUDE.md,
-> sub-agents, MCP wiring — as a continuously optimizable parameter, and
-> defends the falsifiable claim that an automated observe→diagnose→patch→verify
-> loop sustains skill-trigger F1 above a frozen hand-written configuration
-> as the codebase and model drift. **SICA** is also the name of Robeyns
-> et al. 2025, *Self-Improving Coding Agent*, which targets a different
-> layer: the agent edits its **own source code** to improve itself. The
-> name collision is acknowledged; this project is related but distinct
-> work — configuration-optimization, not source-code-self-improvement —
-> and a 5-axis differential against Robeyns 2025 lands in dissertation
-> Chapter 2 (background and related work).
+> ⚠️ **Name note.** **Setdrift** is a coined control-theory term — *setpoint*
+> (the target value a feedback loop holds, here skill-trigger F1) + *drift*
+> (the codebase/model change the loop corrects) — naming this project's
+> falsifiable claim in one word. It is **not** to be confused with Robeyns
+> et al. 2025, *Self-Improving Coding Agent* (sometimes abbreviated "SICA"),
+> which targets a different layer: the agent edits its **own source code** to
+> improve itself. Setdrift optimizes *configuration*, not source code —
+> related but distinct work. A 5-axis differential against Robeyns 2025 lands
+> in dissertation Chapter 2 (background and related work). *(Previously
+> codenamed "SICA"; the Jira project key remains `SICA`.)*
 
 ## The falsifiable claim
 
@@ -36,7 +34,7 @@ auto-tuned one, that is a *finding*, not a failure (see `registrations/`).
 ## Repository layout (monorepo)
 
 ```
-sica-plugin/
+setdrift/
 ├── plugin/          Claude Code plugin (CC-native: manifests, skills, hooks, agents, commands)
 ├── eval/            Python evaluation harness (benchmark, optimizer, telemetry analysis)
 ├── experiments/     Experiment configs + tracked RESULTS (never raw data)

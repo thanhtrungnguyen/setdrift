@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from sica_eval.optimizer.deprecator import (
+from setdrift_eval.optimizer.deprecator import (
     ARCHIVE_AFTER_N,
     QUARANTINE_WINDOW,
     QUARANTINE_REJECTION_RATE,
@@ -26,7 +26,7 @@ from sica_eval.optimizer.deprecator import (
     rejection_rate,
     scan,
 )
-from sica_eval.benchmark.arm_runner import load_skill_tools
+from setdrift_eval.benchmark.arm_runner import load_skill_tools
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +59,7 @@ def _make_events_jsonl(events_path: Path, events: list[dict]) -> None:
 
 
 def test_env_constants_have_correct_defaults():
-    """SICA_ARCHIVE_AFTER_N, SICA_QUARANTINE_WINDOW, SICA_QUARANTINE_RATE must read from env."""
+    """SETDRIFT_ARCHIVE_AFTER_N, SETDRIFT_QUARANTINE_WINDOW, SETDRIFT_QUARANTINE_RATE must read from env."""
     # defaults when env vars are not overridden
     assert ARCHIVE_AFTER_N == 20
     assert QUARANTINE_WINDOW == 10
@@ -88,9 +88,9 @@ def test_count_idle_sessions_below_N(tmp_path):
 
 def test_count_idle_sessions_at_N(tmp_path, monkeypatch):
     """Skill with exactly N distinct session_ids and no firing is flagged (count == N)."""
-    monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
+    monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     events_path = tmp_path / "events.jsonl"
@@ -137,8 +137,8 @@ def test_record_firing_appends_record(tmp_path):
     """record_firing appends a JSONL record to the deprecation dir."""
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         record_firing("test_skill", "sess-1", fired=True, rejected=False)
         skill_log = dep_dir / "test_skill.jsonl"
@@ -153,9 +153,9 @@ def test_record_firing_appends_record(tmp_path):
         assert "ts" in r
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_rejection_rate_below_threshold(tmp_path):
@@ -175,17 +175,17 @@ def test_rejection_rate_below_threshold(tmp_path):
             fh.write(json.dumps(r) + "\n")
 
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         rate = rejection_rate("sk")
         assert rate == pytest.approx(0.30, abs=1e-6)
         assert rate <= QUARANTINE_REJECTION_RATE
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_rejection_rate_above_threshold(tmp_path):
@@ -205,17 +205,17 @@ def test_rejection_rate_above_threshold(tmp_path):
             fh.write(json.dumps(r) + "\n")
 
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         rate = rejection_rate("bad_skill")
         assert rate == pytest.approx(0.90, abs=1e-6)
         assert rate > QUARANTINE_REJECTION_RATE
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_rejection_rate_no_firing_log(tmp_path):
@@ -223,16 +223,16 @@ def test_rejection_rate_no_firing_log(tmp_path):
     dep_dir = tmp_path / "deprecation"
     dep_dir.mkdir()
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         rate = rejection_rate("never_fired_skill")
         assert rate == 0.0
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 # ---------------------------------------------------------------------------
@@ -248,8 +248,8 @@ def test_quarantine_moves_skill_outside_glob(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         decision = quarantine_skill("bad-skill", skills_dir)
         # Original location must be gone
@@ -263,9 +263,9 @@ def test_quarantine_moves_skill_outside_glob(tmp_path):
         assert decision.reason  # non-empty reason
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_quarantined_skill_not_loaded_by_load_skill_tools(tmp_path):
@@ -286,8 +286,8 @@ def test_quarantined_skill_not_loaded_by_load_skill_tools(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         # Before quarantine: both skills loaded
         tools_before = load_skill_tools(skills_dir)
@@ -305,9 +305,9 @@ def test_quarantined_skill_not_loaded_by_load_skill_tools(tmp_path):
         assert "bad_skill" not in tool_names_after, "bad-skill must NOT load after quarantine"
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 # ---------------------------------------------------------------------------
@@ -323,8 +323,8 @@ def test_promote_skill_restores_to_load_glob(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         # Quarantine first
         quarantine_skill("bad-skill", skills_dir)
@@ -344,9 +344,9 @@ def test_promote_skill_restores_to_load_glob(tmp_path):
         assert not (skills_dir / "quarantine" / "bad-skill" / "SKILL.md").exists()
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_promote_non_quarantined_skill_raises(tmp_path):
@@ -356,16 +356,16 @@ def test_promote_non_quarantined_skill_raises(tmp_path):
     _make_skill_dir(skills_dir, "normal-skill")
 
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(tmp_path / "deprecation")
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(tmp_path / "deprecation")
     try:
         with pytest.raises((ValueError, FileNotFoundError)):
             promote_skill("normal-skill", skills_dir)
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 # ---------------------------------------------------------------------------
@@ -393,8 +393,8 @@ def test_decision_logged_with_reason_quarantine(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         decision = quarantine_skill("noisy-skill", skills_dir)
         # The decision record must be logged to the deprecation dir
@@ -411,9 +411,9 @@ def test_decision_logged_with_reason_quarantine(tmp_path):
         assert decision.reason, "returned Decision must have a non-empty reason"
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 def test_decision_logged_with_reason_promote(tmp_path):
@@ -424,8 +424,8 @@ def test_decision_logged_with_reason_promote(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
-    original = os.environ.get("SICA_DEPRECATION_DIR")
-    os.environ["SICA_DEPRECATION_DIR"] = str(dep_dir)
+    original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
+    os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         quarantine_skill("rehab-skill", skills_dir)
         decision = promote_skill("rehab-skill", skills_dir)
@@ -437,9 +437,9 @@ def test_decision_logged_with_reason_promote(tmp_path):
         assert promote_lines[-1]["reason"], "promote decision reason must be non-empty"
     finally:
         if original is None:
-            del os.environ["SICA_DEPRECATION_DIR"]
+            del os.environ["SETDRIFT_DEPRECATION_DIR"]
         else:
-            os.environ["SICA_DEPRECATION_DIR"] = original
+            os.environ["SETDRIFT_DEPRECATION_DIR"] = original
 
 
 # ---------------------------------------------------------------------------
@@ -449,9 +449,9 @@ def test_decision_logged_with_reason_promote(tmp_path):
 
 def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     """scan flags a skill for archive when it has >= ARCHIVE_AFTER_N idle sessions."""
-    monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
+    monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -467,7 +467,7 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     _make_events_jsonl(events_path, events)
 
     dep_dir = tmp_path / "deprecation"
-    monkeypatch.setenv("SICA_DEPRECATION_DIR", str(dep_dir))
+    monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)
@@ -480,9 +480,9 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
 
 def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     """scan does NOT flag a skill that fired in the last N sessions."""
-    monkeypatch.setenv("SICA_ARCHIVE_AFTER_N", "3")
+    monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -498,7 +498,7 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     _make_events_jsonl(events_path, events)
 
     dep_dir = tmp_path / "deprecation"
-    monkeypatch.setenv("SICA_DEPRECATION_DIR", str(dep_dir))
+    monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)
@@ -530,9 +530,9 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
         for i in range(10)
     ])
 
-    monkeypatch.setenv("SICA_DEPRECATION_DIR", str(dep_dir))
+    monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     from importlib import reload
-    import sica_eval.optimizer.deprecator as dep_mod
+    import setdrift_eval.optimizer.deprecator as dep_mod
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)

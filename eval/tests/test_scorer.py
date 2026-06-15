@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 import yaml
 
-from sica_eval.telemetry import scorer
-from sica_eval.telemetry.scorer import ScorerError
+from setdrift_eval.telemetry import scorer
+from setdrift_eval.telemetry.scorer import ScorerError
 
 
 def _map_file(tmp_path, mapping):

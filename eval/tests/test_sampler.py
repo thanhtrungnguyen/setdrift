@@ -2,7 +2,7 @@
 import csv
 from pathlib import Path
 
-from sica_eval.corpus.sampler import emit_verification_csv
+from setdrift_eval.corpus.sampler import emit_verification_csv
 
 
 def _write_jsonl(path: Path, n: int) -> None:

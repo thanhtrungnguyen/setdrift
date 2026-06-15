@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA telemetry capture hook.
+"""Setdrift telemetry capture hook.
 
 Reads a Claude Code hook event from stdin (JSON) and appends a *scrubbed*,
 minimal record to the telemetry store. The store path defaults to the
@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Default to the gitignored wall. Overridable via env.
-STORE = Path(os.environ.get("SICA_TELEMETRY_PATH", "data/telemetry/events.jsonl"))
+STORE = Path(os.environ.get("SETDRIFT_TELEMETRY_PATH", "data/telemetry/events.jsonl"))
 
 SECRET_RE = re.compile(r"(sk-[A-Za-z0-9-]{8,}|AKIA[0-9A-Z]{12,}|ghp_[A-Za-z0-9]{20,})")
 

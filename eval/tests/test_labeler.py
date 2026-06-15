@@ -1,7 +1,7 @@
 """Heuristic labeler unit tests."""
-from sica_eval.corpus.fetcher import BugRecord
-from sica_eval.corpus.labeler import label_bug
-from sica_eval.corpus.schemas import SkillLabel
+from setdrift_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.labeler import label_bug
+from setdrift_eval.corpus.schemas import SkillLabel
 
 
 def _make_record(diff: str, commit_message: str = "") -> BugRecord:

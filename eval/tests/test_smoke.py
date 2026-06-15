@@ -1,6 +1,6 @@
 """Smoke test — the test infrastructure itself is alive."""
-import sica_eval
+import setdrift_eval
 
 
 def test_package_version_is_set():
-    assert sica_eval.__version__ == "0.0.1"
+    assert setdrift_eval.__version__ == "0.0.1"

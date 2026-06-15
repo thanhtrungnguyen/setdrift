@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SICA Stop-hook batch scrubber (D-27 quarantine policy, REQ-SAFETY-01).
+"""Setdrift Stop-hook batch scrubber (D-27 quarantine policy, REQ-SAFETY-01).
 
 Invoked by stop_flush_trigger.py with a session_id. Reads that session's RAW
 buffer, routes each event to the clean per-session events.jsonl (if it scrubs
@@ -19,12 +19,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sica_eval.telemetry.scrubber import scrub_event
+from setdrift_eval.telemetry.scrubber import scrub_event
 
-TELEMETRY_RAW_DIR = Path(os.environ.get("SICA_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
-TELEMETRY_DIR = Path(os.environ.get("SICA_TELEMETRY_DIR", "data/telemetry"))
-QUARANTINE_DIR = Path(os.environ.get("SICA_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
-AUDIT_PATH = Path(os.environ.get("SICA_TELEMETRY_AUDIT_PATH", "data/telemetry/scrubber-audit.jsonl"))
+TELEMETRY_RAW_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_RAW_DIR", "data/telemetry/raw"))
+TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
+QUARANTINE_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
+AUDIT_PATH = Path(os.environ.get("SETDRIFT_TELEMETRY_AUDIT_PATH", "data/telemetry/scrubber-audit.jsonl"))
 
 
 def _now() -> str:

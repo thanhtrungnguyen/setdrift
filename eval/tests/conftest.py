@@ -129,7 +129,7 @@ def mock_anthropic_client(monkeypatch):
     class _FakeClient:
         messages = _Messages()
 
-    monkeypatch.setattr("sica_eval.benchmark.llm_backend.anthropic.Anthropic", lambda: _FakeClient())
+    monkeypatch.setattr("setdrift_eval.benchmark.llm_backend.anthropic.Anthropic", lambda: _FakeClient())
     return calls
 
 

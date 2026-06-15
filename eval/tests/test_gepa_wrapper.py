@@ -12,20 +12,20 @@ from pathlib import Path
 import dspy
 import pytest
 
-from sica_eval.optimizer import gepa_wrapper as gw
+from setdrift_eval.optimizer import gepa_wrapper as gw
 
 _FROZEN_MAP = {"spring-annotation-fix": ["spring_boot_endpoint"], "jpa-migration": [], "none": []}
 
 
 # --- Task 2: backend swap (REQ-LOOP-01) -------------------------------------------
 def test_build_optimizer_default_is_gepa(monkeypatch):
-    monkeypatch.delenv("SICA_OPTIMIZER", raising=False)
+    monkeypatch.delenv("SETDRIFT_OPTIMIZER", raising=False)
     opt = gw.build_optimizer(lambda *a, **k: 0.0)
     assert isinstance(opt, dspy.GEPA)
 
 
 def test_build_optimizer_miprov2_on_flag(monkeypatch):
-    monkeypatch.setenv("SICA_OPTIMIZER", "miprov2")
+    monkeypatch.setenv("SETDRIFT_OPTIMIZER", "miprov2")
     opt = gw.build_optimizer(lambda *a, **k: 0.0)
     assert isinstance(opt, dspy.MIPROv2)
 
@@ -57,8 +57,8 @@ def test_wrapper_module_has_no_write_capability():
     )
     assert "write_text" not in non_comment
     assert "open(" not in non_comment
-    assert "import sica_eval.optimizer.orchestrator" not in non_comment
-    assert "import sica_eval.optimizer.applier" not in non_comment
+    assert "import setdrift_eval.optimizer.orchestrator" not in non_comment
+    assert "import setdrift_eval.optimizer.applier" not in non_comment
     assert "data/" not in src  # no storage-path reference anywhere (incl. comments)
 
 

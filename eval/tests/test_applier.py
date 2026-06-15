@@ -5,7 +5,7 @@ eval/-target raises FenceViolation, stage_signed_candidate returns a signature,
 restore_config verifies HMAC before writing (T-03-20 mitigation).
 
 All tests are offline (no API calls). HMAC key is written to a temp path via
-SICA_SIGNING_KEY env override (never touches data/keys/).
+SETDRIFT_SIGNING_KEY env override (never touches data/keys/).
 """
 import os
 import textwrap
@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from sica_eval.optimizer.fence import FenceViolation
-from sica_eval.optimizer.gepa_wrapper import SkillProposal
-from sica_eval.optimizer.signer import SigningKeyError, generate_key
+from setdrift_eval.optimizer.fence import FenceViolation
+from setdrift_eval.optimizer.gepa_wrapper import SkillProposal
+from setdrift_eval.optimizer.signer import SigningKeyError, generate_key
 
 
 # ---------------------------------------------------------------------------
@@ -24,13 +24,13 @@ from sica_eval.optimizer.signer import SigningKeyError, generate_key
 
 @pytest.fixture()
 def hmac_key_env(tmp_path, monkeypatch):
-    """Write a fresh HMAC key to a temp path and point SICA_SIGNING_KEY at it."""
+    """Write a fresh HMAC key to a temp path and point SETDRIFT_SIGNING_KEY at it."""
     key_file = tmp_path / "test-hmac.key"
     key_file.write_text(generate_key(), encoding="utf-8")
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
     # Re-initialize _KEY_PATH in signer after env change
     import importlib
-    import sica_eval.optimizer.signer as signer_mod
+    import setdrift_eval.optimizer.signer as signer_mod
     signer_mod._KEY_PATH = Path(str(key_file))
     yield key_file
 
@@ -75,10 +75,10 @@ def plugin_proposal(fake_skill_file):
 
 def test_apply_proposal_eval_target_raises_fence_violation(tmp_path):
     """apply_proposal with a target inside eval/ raises FenceViolation, writes nothing."""
-    from sica_eval.optimizer.applier import apply_proposal
+    from setdrift_eval.optimizer.applier import apply_proposal
 
     # Create a file in an eval/-like path inside tmp_path
-    eval_file = tmp_path / "eval" / "sica_eval" / "scorer.py"
+    eval_file = tmp_path / "eval" / "setdrift_eval" / "scorer.py"
     eval_file.parent.mkdir(parents=True)
     eval_file.write_text("# fake scorer\n", encoding="utf-8")
 
@@ -101,11 +101,11 @@ def test_apply_proposal_eval_target_raises_fence_violation(tmp_path):
 
 def test_apply_proposal_dry_run_does_not_write(plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch):
     """apply_proposal(..., dry_run=True) does NOT modify the file but does NOT raise."""
-    from sica_eval.optimizer.applier import apply_proposal
+    from setdrift_eval.optimizer.applier import apply_proposal
 
     # Patch check_allowlist to not raise for this test (proposal targets tmp_path not plugin/)
     monkeypatch.setattr(
-        "sica_eval.optimizer.applier.check_allowlist",
+        "setdrift_eval.optimizer.applier.check_allowlist",
         lambda p: None,
     )
 
@@ -120,10 +120,10 @@ def test_apply_proposal_dry_run_does_not_write(plugin_proposal, fake_skill_file,
 
 def test_apply_proposal_rewrites_only_description(plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch):
     """apply_proposal(..., dry_run=False) replaces ONLY description, preserves body + other keys."""
-    from sica_eval.optimizer.applier import apply_proposal
+    from setdrift_eval.optimizer.applier import apply_proposal
 
     monkeypatch.setattr(
-        "sica_eval.optimizer.applier.check_allowlist",
+        "setdrift_eval.optimizer.applier.check_allowlist",
         lambda p: None,
     )
 
@@ -150,7 +150,7 @@ def test_apply_proposal_rewrites_only_description(plugin_proposal, fake_skill_fi
 
 def test_stage_signed_candidate_returns_hash_and_sig(hmac_key_env):
     """stage_signed_candidate returns (config_hash, hmac_sig) without touching plugin/."""
-    from sica_eval.optimizer.applier import stage_signed_candidate
+    from setdrift_eval.optimizer.applier import stage_signed_candidate
 
     descriptions = {
         "spring-boot-endpoint": "Use when creating a REST endpoint.",
@@ -166,7 +166,7 @@ def test_stage_signed_candidate_returns_hash_and_sig(hmac_key_env):
 
 def test_stage_signed_candidate_deterministic(hmac_key_env):
     """stage_signed_candidate produces the same hash for the same descriptions."""
-    from sica_eval.optimizer.applier import stage_signed_candidate
+    from setdrift_eval.optimizer.applier import stage_signed_candidate
 
     descriptions = {"skill-a": "Description A."}
     h1, s1 = stage_signed_candidate(descriptions)
@@ -181,7 +181,7 @@ def test_stage_signed_candidate_deterministic(hmac_key_env):
 
 def test_restore_config_raises_on_bad_sig_before_write(tmp_path, hmac_key_env, monkeypatch):
     """restore_config with a tampered sig raises before writing anything (T-03-20)."""
-    from sica_eval.optimizer.applier import restore_config
+    from setdrift_eval.optimizer.applier import restore_config
 
     skill_file = tmp_path / "test-skill.md"
     skill_file.write_text("---\nname: test\ndescription: old\n---\nbody\n", encoding="utf-8")
@@ -200,7 +200,7 @@ def test_restore_config_raises_on_bad_sig_before_write(tmp_path, hmac_key_env, m
 
 def test_restore_config_writes_with_valid_sig(tmp_path, hmac_key_env, monkeypatch):
     """restore_config with a valid sig writes the restored descriptions."""
-    from sica_eval.optimizer.applier import restore_config, stage_signed_candidate
+    from setdrift_eval.optimizer.applier import restore_config, stage_signed_candidate
 
     skill_file = tmp_path / "test-skill.md"
     skill_file.write_text(

@@ -5,7 +5,7 @@ from pathlib import Path
 import pydantic
 import pytest
 
-from sica_eval.corpus.fetcher import BugRecord, parse_bug_manifest
+from setdrift_eval.corpus.fetcher import BugRecord, parse_bug_manifest
 
 
 def test_parse_bug_manifest_extracts_required_fields(data_dir: Path):

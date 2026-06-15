@@ -2,8 +2,8 @@
 import json
 from pathlib import Path
 
-from sica_eval.corpus.builder import build_corpus
-from sica_eval.corpus.schemas import Corpus, SkillLabel
+from setdrift_eval.corpus.builder import build_corpus
+from setdrift_eval.corpus.schemas import Corpus, SkillLabel
 
 
 def _write_manifest(target: Path, payload: dict) -> None:
@@ -68,8 +68,8 @@ import hashlib
 
 import pytest
 
-from sica_eval.corpus.builder import freeze_split
-from sica_eval.corpus.schemas import BugSource, LabeledPrompt
+from setdrift_eval.corpus.builder import freeze_split
+from setdrift_eval.corpus.schemas import BugSource, LabeledPrompt
 
 # Defects4J .src.patch (SVN reverse patch) — a benign rename, labeler → [NONE].
 _D4J_PATCH = (

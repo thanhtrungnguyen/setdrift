@@ -1,6 +1,6 @@
 """Prompt synthesizer tests — issue+commit text becomes a realistic prompt."""
-from sica_eval.corpus.fetcher import BugRecord
-from sica_eval.corpus.synthesizer import synthesize_prompt
+from setdrift_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.synthesizer import synthesize_prompt
 
 
 def test_prompt_includes_issue_title_when_present():

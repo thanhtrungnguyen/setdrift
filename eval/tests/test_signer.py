@@ -2,7 +2,7 @@
 
 Covers: canonical key-order independence, sign->verify round-trip, tamper rejection
 (constant-time compare), and fail-loud missing-key error. The key is supplied via a
-tmp file pointed at by SICA_SIGNING_KEY so no test ever touches the real data-wall key.
+tmp file pointed at by SETDRIFT_SIGNING_KEY so no test ever touches the real data-wall key.
 """
 import importlib
 
@@ -10,11 +10,11 @@ import pytest
 
 
 def _signer_with_key(monkeypatch, tmp_path):
-    """Return the signer module rebound to a temp key file via SICA_SIGNING_KEY."""
+    """Return the signer module rebound to a temp key file via SETDRIFT_SIGNING_KEY."""
     key_file = tmp_path / "sica-hmac.key"
     key_file.write_text("a" * 64, encoding="utf-8")  # deterministic test key
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(key_file))
-    from sica_eval.optimizer import signer
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
+    from setdrift_eval.optimizer import signer
     importlib.reload(signer)  # re-evaluate module-level _KEY_PATH against the env
     return signer
 
@@ -44,8 +44,8 @@ def test_verify_rejects_tampered_config(monkeypatch, tmp_path):
 
 def test_missing_key_raises(monkeypatch, tmp_path):
     missing = tmp_path / "nope.key"
-    monkeypatch.setenv("SICA_SIGNING_KEY", str(missing))
-    from sica_eval.optimizer import signer
+    monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(missing))
+    from setdrift_eval.optimizer import signer
     importlib.reload(signer)
     with pytest.raises(signer.SigningKeyError):
         signer.sign_config({"a": "1"})

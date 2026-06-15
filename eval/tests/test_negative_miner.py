@@ -1,8 +1,8 @@
 """Negative miner tests (Plan 02-02 Task 2). Offline — git is monkeypatched."""
 import pytest
 
-from sica_eval.corpus import negative_miner
-from sica_eval.corpus.schemas import SkillLabel
+from setdrift_eval.corpus import negative_miner
+from setdrift_eval.corpus.schemas import SkillLabel
 
 
 def test_load_constructed_negatives(tmp_path):

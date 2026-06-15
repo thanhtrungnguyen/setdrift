@@ -4,7 +4,7 @@
 
 **Goal:** Build a reproducible mining pipeline that turns the 199 reproducible Java bugs in GitBug-Java into a labeled developer-prompt corpus (`data/corpus/gitbug-java.jsonl`) suitable for measuring skill-trigger F1 under conditions A/B/C of the falsifiable claim (see `docs/design/2026-05-20-falsifiable-claim.md`).
 
-**Architecture:** A new Python subpackage `eval/sica_eval/corpus/` containing a fetcher (clones the GitBug-Java GitHub repo into `data/raw/gitbug-java/`), a heuristic labeler (rule-based diff → `SkillLabel` mapper over a fixed 8-label taxonomy), a prompt synthesizer (issue+commit → developer-prompt string), a corpus builder pipeline that combines them and writes JSONL, a `sica-eval corpus build` CLI subcommand, and a verification sampler that emits a CSV for manual labeling of a 20% random sample. All code is Python 3.14+, schemas are Pydantic v2, tests use pytest. Output ≈199 labeled prompts; reaching the ≥500 target requires a follow-up Defects4J plan (out of scope here).
+**Architecture:** A new Python subpackage `eval/setdrift_eval/corpus/` containing a fetcher (clones the GitBug-Java GitHub repo into `data/raw/gitbug-java/`), a heuristic labeler (rule-based diff → `SkillLabel` mapper over a fixed 8-label taxonomy), a prompt synthesizer (issue+commit → developer-prompt string), a corpus builder pipeline that combines them and writes JSONL, a `setdrift-eval corpus build` CLI subcommand, and a verification sampler that emits a CSV for manual labeling of a 20% random sample. All code is Python 3.14+, schemas are Pydantic v2, tests use pytest. Output ≈199 labeled prompts; reaching the ≥500 target requires a follow-up Defects4J plan (out of scope here).
 
 **Tech Stack:** Python 3.14+, Pydantic 2.x, pytest 8.x, GitPython 3.x (for diff parsing), subprocess (for `git clone`). Existing `eval/pyproject.toml` already declares Pydantic and Anthropic; this plan adds `gitpython` and bumps `pytest` from optional `dev` extra to a runtime test dependency declared the standard way.
 
@@ -14,14 +14,14 @@
 
 | Action | Path | Responsibility |
 |---|---|---|
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/__init__.py` | Package marker + public exports |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/schemas.py` | Pydantic models: `SkillLabel`, `BugSource`, `LabeledPrompt`, `Corpus` |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/fetcher.py` | Clone/refresh `gitbugactions/gitbug-java` into `data/raw/gitbug-java/` and yield `BugRecord` |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/labeler.py` | Rule-based diff → `SkillLabel` mapping |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/synthesizer.py` | issue+commit text → developer-prompt string |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/builder.py` | Pipeline: fetcher → labeler+synthesizer → JSONL writer |
-| Create | `repo/sica-plugin/eval/sica_eval/corpus/sampler.py` | Random 20% sample → CSV for manual verification |
-| Modify | `repo/sica-plugin/eval/sica_eval/cli.py` | Add `corpus build` + `corpus verify` subcommands |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/__init__.py` | Package marker + public exports |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/schemas.py` | Pydantic models: `SkillLabel`, `BugSource`, `LabeledPrompt`, `Corpus` |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/fetcher.py` | Clone/refresh `gitbugactions/gitbug-java` into `data/raw/gitbug-java/` and yield `BugRecord` |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/labeler.py` | Rule-based diff → `SkillLabel` mapping |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/synthesizer.py` | issue+commit text → developer-prompt string |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/builder.py` | Pipeline: fetcher → labeler+synthesizer → JSONL writer |
+| Create | `repo/sica-plugin/eval/setdrift_eval/corpus/sampler.py` | Random 20% sample → CSV for manual verification |
+| Modify | `repo/sica-plugin/eval/setdrift_eval/cli.py` | Add `corpus build` + `corpus verify` subcommands |
 | Modify | `repo/sica-plugin/eval/pyproject.toml` | Add `gitpython>=3.1` to runtime deps; declare test config |
 | Create | `repo/sica-plugin/eval/tests/__init__.py` | Test package marker |
 | Create | `repo/sica-plugin/eval/tests/conftest.py` | Shared fixtures (sample diffs, sample issues) |
@@ -31,7 +31,7 @@
 | Create | `repo/sica-plugin/eval/tests/test_builder.py` | End-to-end pipeline integration test (with fixtures, no network) |
 | Create | `repo/sica-plugin/docs/corpus.md` | Usage doc: how to build, verify, and extend the corpus |
 
-The new code lives entirely under `eval/sica_eval/corpus/` so it stays self-contained. Output JSONL is written under `data/` which is fully gitignored per `.gitignore` lines 3-4.
+The new code lives entirely under `eval/setdrift_eval/corpus/` so it stays self-contained. Output JSONL is written under `data/` which is fully gitignored per `.gitignore` lines 3-4.
 
 ---
 
@@ -48,9 +48,9 @@ Edit `repo/sica-plugin/eval/pyproject.toml`. Replace the `[project]` and `[proje
 
 ```toml
 [project]
-name = "sica-eval"
+name = "setdrift-eval"
 version = "0.0.1"
-description = "Evaluation harness for the SICA self-improving Claude Code plugin"
+description = "Evaluation harness for the Setdrift self-improving Claude Code plugin"
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{ name = "Nguyen Thanh Trung" }]
@@ -94,11 +94,11 @@ Create `repo/sica-plugin/eval/tests/test_smoke.py`:
 
 ```python
 """Smoke test — the test infrastructure itself is alive."""
-import sica_eval
+import setdrift_eval
 
 
 def test_package_version_is_set():
-    assert sica_eval.__version__ == "0.0.1"
+    assert setdrift_eval.__version__ == "0.0.1"
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
@@ -109,7 +109,7 @@ Run from `repo/sica-plugin/eval/`:
 pytest tests/test_smoke.py -v
 ```
 
-Expected: `1 passed`. If `ModuleNotFoundError: sica_eval`, re-run `pip install -e .` from this directory.
+Expected: `1 passed`. If `ModuleNotFoundError: setdrift_eval`, re-run `pip install -e .` from this directory.
 
 - [ ] **Step 6: Commit**
 
@@ -124,8 +124,8 @@ git commit -m "test: add pytest infrastructure and smoke test"
 ## Task 2: Schemas + Skill Taxonomy
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/__init__.py`
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/schemas.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/__init__.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/schemas.py`
 - Create: `repo/sica-plugin/eval/tests/test_schemas.py`
 
 - [ ] **Step 1: Write the failing schema tests**
@@ -139,7 +139,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from sica_eval.corpus.schemas import (
+from setdrift_eval.corpus.schemas import (
     BugSource,
     Corpus,
     LabeledPrompt,
@@ -229,11 +229,11 @@ Run from `repo/sica-plugin/eval/`:
 pytest tests/test_schemas.py -v
 ```
 
-Expected: 4 errors, all `ModuleNotFoundError: sica_eval.corpus`.
+Expected: 4 errors, all `ModuleNotFoundError: setdrift_eval.corpus`.
 
 - [ ] **Step 3: Create the corpus subpackage**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/__init__.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/__init__.py`:
 
 ```python
 """Public corpus construction subsystem.
@@ -241,7 +241,7 @@ Create `repo/sica-plugin/eval/sica_eval/corpus/__init__.py`:
 See docs/plans/2026-05-22-public-corpus-construction.md for the plan
 and docs/design/2026-05-20-falsifiable-claim.md §4 for the methodology.
 """
-from sica_eval.corpus.schemas import (
+from setdrift_eval.corpus.schemas import (
     BugSource,
     Corpus,
     LabeledPrompt,
@@ -253,7 +253,7 @@ __all__ = ["BugSource", "Corpus", "LabeledPrompt", "SkillLabel"]
 
 - [ ] **Step 4: Implement the schemas**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/schemas.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/schemas.py`:
 
 ```python
 """Pydantic schemas for the public corpus.
@@ -334,7 +334,7 @@ Expected: `4 passed`.
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/__init__.py eval/sica_eval/corpus/schemas.py eval/tests/test_schemas.py
+git add eval/setdrift_eval/corpus/__init__.py eval/setdrift_eval/corpus/schemas.py eval/tests/test_schemas.py
 git commit -m "feat(corpus): add SkillLabel taxonomy and Pydantic schemas"
 ```
 
@@ -343,7 +343,7 @@ git commit -m "feat(corpus): add SkillLabel taxonomy and Pydantic schemas"
 ## Task 3: GitBug-Java Fetcher
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/fetcher.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/fetcher.py`
 - Create: `repo/sica-plugin/eval/tests/conftest.py`
 - Modify: `repo/sica-plugin/eval/tests/test_smoke.py` *(not modified — separate test file)*
 
@@ -445,7 +445,7 @@ Create `repo/sica-plugin/eval/tests/test_fetcher.py`:
 import json
 from pathlib import Path
 
-from sica_eval.corpus.fetcher import BugRecord, parse_bug_manifest
+from setdrift_eval.corpus.fetcher import BugRecord, parse_bug_manifest
 
 
 def test_parse_bug_manifest_extracts_required_fields(data_dir: Path):
@@ -491,11 +491,11 @@ def test_bug_record_is_frozen():
         record.bug_id = "y"  # type: ignore[misc]
 ```
 
-Expected: `pytest tests/test_fetcher.py -v` fails with `ModuleNotFoundError: sica_eval.corpus.fetcher`.
+Expected: `pytest tests/test_fetcher.py -v` fails with `ModuleNotFoundError: setdrift_eval.corpus.fetcher`.
 
 - [ ] **Step 3: Implement the fetcher**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/fetcher.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/fetcher.py`:
 
 ```python
 """GitBug-Java fetcher.
@@ -611,7 +611,7 @@ Expected: `2 passed`. (The frozen-model test confirms attribute assignment is re
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/fetcher.py eval/tests/conftest.py eval/tests/test_fetcher.py
+git add eval/setdrift_eval/corpus/fetcher.py eval/tests/conftest.py eval/tests/test_fetcher.py
 git commit -m "feat(corpus): add GitBug-Java fetcher and BugRecord schema"
 ```
 
@@ -620,7 +620,7 @@ git commit -m "feat(corpus): add GitBug-Java fetcher and BugRecord schema"
 ## Task 4: Heuristic Labeler
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/labeler.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/labeler.py`
 - Create: `repo/sica-plugin/eval/tests/test_labeler.py`
 
 The labeler is a pure function: `(BugRecord) -> list[SkillLabel]`. It applies a fixed rule set to the diff text and file paths. Multiple labels can apply to one bug; the catch-all is `SkillLabel.NONE`.
@@ -631,9 +631,9 @@ Create `repo/sica-plugin/eval/tests/test_labeler.py`:
 
 ```python
 """Heuristic labeler unit tests."""
-from sica_eval.corpus.fetcher import BugRecord
-from sica_eval.corpus.labeler import label_bug
-from sica_eval.corpus.schemas import SkillLabel
+from setdrift_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.labeler import label_bug
+from setdrift_eval.corpus.schemas import SkillLabel
 
 
 def _make_record(diff: str, commit_message: str = "") -> BugRecord:
@@ -699,11 +699,11 @@ Run:
 pytest tests/test_labeler.py -v
 ```
 
-Expected: 8 errors, all `ModuleNotFoundError: sica_eval.corpus.labeler`.
+Expected: 8 errors, all `ModuleNotFoundError: setdrift_eval.corpus.labeler`.
 
 - [ ] **Step 3: Implement the labeler**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/labeler.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/labeler.py`:
 
 ```python
 """Rule-based heuristic labeler.
@@ -718,8 +718,8 @@ than recall here because the labels feed into the 20% manual verification pass
 """
 import re
 
-from sica_eval.corpus.fetcher import BugRecord
-from sica_eval.corpus.schemas import SkillLabel
+from setdrift_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.schemas import SkillLabel
 
 _POM_VERSION_RE = re.compile(r"^[-+].*<version>.*</version>", re.MULTILINE)
 _NULL_CHECK_RE = re.compile(r"^\+.*(?:!= null|== null|Optional\.|Objects\.requireNonNull)", re.MULTILINE)
@@ -781,7 +781,7 @@ Expected: `8 passed`. If a regex misses a fixture, tighten the rule and re-run; 
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/labeler.py eval/tests/test_labeler.py
+git add eval/setdrift_eval/corpus/labeler.py eval/tests/test_labeler.py
 git commit -m "feat(corpus): add rule-based heuristic labeler"
 ```
 
@@ -790,7 +790,7 @@ git commit -m "feat(corpus): add rule-based heuristic labeler"
 ## Task 5: Prompt Synthesizer
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/synthesizer.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/synthesizer.py`
 - Create: `repo/sica-plugin/eval/tests/test_synthesizer.py`
 
 The synthesizer turns an issue's title + body + commit message into a single "developer prompt" string in the form a Claude Code user would actually type.
@@ -801,8 +801,8 @@ Create `repo/sica-plugin/eval/tests/test_synthesizer.py`:
 
 ```python
 """Prompt synthesizer tests — issue+commit text becomes a realistic prompt."""
-from sica_eval.corpus.fetcher import BugRecord
-from sica_eval.corpus.synthesizer import synthesize_prompt
+from setdrift_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.synthesizer import synthesize_prompt
 
 
 def test_prompt_includes_issue_title_when_present():
@@ -867,11 +867,11 @@ Run:
 pytest tests/test_synthesizer.py -v
 ```
 
-Expected: 4 errors, all `ModuleNotFoundError: sica_eval.corpus.synthesizer`.
+Expected: 4 errors, all `ModuleNotFoundError: setdrift_eval.corpus.synthesizer`.
 
 - [ ] **Step 3: Implement the synthesizer**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/synthesizer.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/synthesizer.py`:
 
 ```python
 """Prompt synthesizer.
@@ -887,7 +887,7 @@ The conversion is deliberately simple:
 """
 import re
 
-from sica_eval.corpus.fetcher import BugRecord
+from setdrift_eval.corpus.fetcher import BugRecord
 
 MAX_PROMPT_CHARS = 4000
 
@@ -926,7 +926,7 @@ Expected: `4 passed`.
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/synthesizer.py eval/tests/test_synthesizer.py
+git add eval/setdrift_eval/corpus/synthesizer.py eval/tests/test_synthesizer.py
 git commit -m "feat(corpus): add prompt synthesizer with conventional-commit normalization"
 ```
 
@@ -935,7 +935,7 @@ git commit -m "feat(corpus): add prompt synthesizer with conventional-commit nor
 ## Task 6: Corpus Builder Pipeline
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/builder.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/builder.py`
 - Create: `repo/sica-plugin/eval/tests/test_builder.py`
 
 The builder is the orchestration layer: iterate over bug records, label and synthesize each, write JSONL to the output path. It does not call out to the network in tests — tests run against a fixture directory of pre-staged manifest JSONs.
@@ -949,8 +949,8 @@ Create `repo/sica-plugin/eval/tests/test_builder.py`:
 import json
 from pathlib import Path
 
-from sica_eval.corpus.builder import build_corpus
-from sica_eval.corpus.schemas import Corpus, SkillLabel
+from setdrift_eval.corpus.builder import build_corpus
+from setdrift_eval.corpus.schemas import Corpus, SkillLabel
 
 
 def _write_manifest(target: Path, payload: dict) -> None:
@@ -1018,11 +1018,11 @@ Run:
 pytest tests/test_builder.py -v
 ```
 
-Expected: 2 errors, `ModuleNotFoundError: sica_eval.corpus.builder`.
+Expected: 2 errors, `ModuleNotFoundError: setdrift_eval.corpus.builder`.
 
 - [ ] **Step 3: Implement the builder**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/builder.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/builder.py`:
 
 ```python
 """Corpus builder pipeline.
@@ -1033,10 +1033,10 @@ can compute aggregate stats without re-reading.
 """
 from pathlib import Path
 
-from sica_eval.corpus.fetcher import iter_bug_records
-from sica_eval.corpus.labeler import label_bug
-from sica_eval.corpus.schemas import BugSource, Corpus, LabeledPrompt
-from sica_eval.corpus.synthesizer import synthesize_prompt
+from setdrift_eval.corpus.fetcher import iter_bug_records
+from setdrift_eval.corpus.labeler import label_bug
+from setdrift_eval.corpus.schemas import BugSource, Corpus, LabeledPrompt
+from setdrift_eval.corpus.synthesizer import synthesize_prompt
 
 
 def build_corpus(
@@ -1091,7 +1091,7 @@ Expected: `2 passed`.
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/builder.py eval/tests/test_builder.py
+git add eval/setdrift_eval/corpus/builder.py eval/tests/test_builder.py
 git commit -m "feat(corpus): add JSONL corpus builder pipeline"
 ```
 
@@ -1100,7 +1100,7 @@ git commit -m "feat(corpus): add JSONL corpus builder pipeline"
 ## Task 7: CLI Subcommand
 
 **Files:**
-- Modify: `repo/sica-plugin/eval/sica_eval/cli.py`
+- Modify: `repo/sica-plugin/eval/setdrift_eval/cli.py`
 - Create: `repo/sica-plugin/eval/tests/test_cli.py`
 
 Add a `corpus` parent subcommand with `build` and `verify` children. The `build` action delegates to the builder pipeline; `verify` delegates to the sampler (Task 8).
@@ -1114,11 +1114,11 @@ Create `repo/sica-plugin/eval/tests/test_cli.py`:
 import sys
 from pathlib import Path
 
-from sica_eval.cli import main
+from setdrift_eval.cli import main
 
 
 def test_corpus_build_invokes_pipeline(monkeypatch, tmp_path: Path, capsys):
-    """`sica-eval corpus build --raw-dir X --output Y --version Z` runs the builder."""
+    """`setdrift-eval corpus build --raw-dir X --output Y --version Z` runs the builder."""
     raw_dir = tmp_path / "raw"
     raw_dir.mkdir()
     output_path = tmp_path / "out.jsonl"
@@ -1126,19 +1126,19 @@ def test_corpus_build_invokes_pipeline(monkeypatch, tmp_path: Path, capsys):
     calls: dict[str, object] = {}
 
     def fake_build_corpus(raw_dir: Path, output_path: Path, corpus_version: str, corpus_name: str = "gitbug-java"):
-        from sica_eval.corpus.schemas import Corpus
+        from setdrift_eval.corpus.schemas import Corpus
 
         calls["raw_dir"] = raw_dir
         calls["output_path"] = output_path
         calls["corpus_version"] = corpus_version
         return Corpus(name=corpus_name, version=corpus_version, prompts=[])
 
-    monkeypatch.setattr("sica_eval.cli.build_corpus", fake_build_corpus, raising=True)
+    monkeypatch.setattr("setdrift_eval.cli.build_corpus", fake_build_corpus, raising=True)
     monkeypatch.setattr(
         sys,
         "argv",
         [
-            "sica-eval",
+            "setdrift-eval",
             "corpus",
             "build",
             "--raw-dir",
@@ -1166,22 +1166,22 @@ Run:
 pytest tests/test_cli.py -v
 ```
 
-Expected: `AttributeError` or `ImportError` on the `sica_eval.cli.build_corpus` reference.
+Expected: `AttributeError` or `ImportError` on the `setdrift_eval.cli.build_corpus` reference.
 
 - [ ] **Step 3: Update the CLI**
 
-Replace the contents of `repo/sica-plugin/eval/sica_eval/cli.py` with:
+Replace the contents of `repo/sica-plugin/eval/setdrift_eval/cli.py` with:
 
 ```python
-"""CLI entrypoint for the sica-eval harness."""
+"""CLI entrypoint for the setdrift-eval harness."""
 import argparse
 from pathlib import Path
 
-from sica_eval.corpus.builder import build_corpus
+from setdrift_eval.corpus.builder import build_corpus
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="sica-eval", description="SICA evaluation harness")
+    parser = argparse.ArgumentParser(prog="setdrift-eval", description="Setdrift evaluation harness")
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("benchmark", help="run the offline replay benchmark")
@@ -1207,18 +1207,18 @@ def main() -> int:
         corpus = build_corpus(
             raw_dir=args.raw_dir, output_path=args.output, corpus_version=args.version
         )
-        print(f"[sica-eval] built corpus with {len(corpus.prompts)} prompts -> {args.output}")
+        print(f"[setdrift-eval] built corpus with {len(corpus.prompts)} prompts -> {args.output}")
         return 0
     if args.cmd == "corpus" and args.corpus_cmd == "verify":
-        from sica_eval.corpus.sampler import emit_verification_csv
+        from setdrift_eval.corpus.sampler import emit_verification_csv
 
         emit_verification_csv(
             corpus_path=args.corpus, output_path=args.output, seed=args.seed
         )
-        print(f"[sica-eval] verification CSV written -> {args.output}")
+        print(f"[setdrift-eval] verification CSV written -> {args.output}")
         return 0
 
-    print(f"[sica-eval] '{args.cmd or 'help'}' not yet implemented — scaffold.")
+    print(f"[setdrift-eval] '{args.cmd or 'help'}' not yet implemented — scaffold.")
     return 0
 
 
@@ -1240,7 +1240,7 @@ Expected: `1 passed`.
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/cli.py eval/tests/test_cli.py
+git add eval/setdrift_eval/cli.py eval/tests/test_cli.py
 git commit -m "feat(cli): wire 'corpus build' and 'corpus verify' subcommands"
 ```
 
@@ -1249,7 +1249,7 @@ git commit -m "feat(cli): wire 'corpus build' and 'corpus verify' subcommands"
 ## Task 8: Manual Verification Sampler
 
 **Files:**
-- Create: `repo/sica-plugin/eval/sica_eval/corpus/sampler.py`
+- Create: `repo/sica-plugin/eval/setdrift_eval/corpus/sampler.py`
 - Create: `repo/sica-plugin/eval/tests/test_sampler.py`
 
 The sampler reads a JSONL corpus, randomly samples 20% (seeded for reproducibility), and writes a CSV with columns `[prompt_id, prompt, predicted_skills, verified_skills, notes]` for a human to fill in. After the human edits `verified_skills` and saves, a separate command (out of scope here — covered in Task 9 docs) can compute heuristic precision against the human labels.
@@ -1263,7 +1263,7 @@ Create `repo/sica-plugin/eval/tests/test_sampler.py`:
 import csv
 from pathlib import Path
 
-from sica_eval.corpus.sampler import emit_verification_csv
+from setdrift_eval.corpus.sampler import emit_verification_csv
 
 
 def _write_jsonl(path: Path, n: int) -> None:
@@ -1338,11 +1338,11 @@ Run:
 pytest tests/test_sampler.py -v
 ```
 
-Expected: 3 errors, `ModuleNotFoundError: sica_eval.corpus.sampler`.
+Expected: 3 errors, `ModuleNotFoundError: setdrift_eval.corpus.sampler`.
 
 - [ ] **Step 3: Implement the sampler**
 
-Create `repo/sica-plugin/eval/sica_eval/corpus/sampler.py`:
+Create `repo/sica-plugin/eval/setdrift_eval/corpus/sampler.py`:
 
 ```python
 """Manual-verification sampler.
@@ -1424,7 +1424,7 @@ Expected: every test introduced in tasks 1-8 passes (totals: smoke 1 + schemas 4
 
 ```bash
 cd repo/sica-plugin
-git add eval/sica_eval/corpus/sampler.py eval/tests/test_sampler.py
+git add eval/setdrift_eval/corpus/sampler.py eval/tests/test_sampler.py
 git commit -m "feat(corpus): add seeded 20%% verification sampler"
 ```
 
@@ -1454,13 +1454,13 @@ cd eval
 pip install -e ".[dev]"
 
 # 1. Fetch the upstream dataset (idempotent; clones or pulls).
-python -c "from sica_eval.corpus.fetcher import clone_or_update; clone_or_update()"
+python -c "from setdrift_eval.corpus.fetcher import clone_or_update; clone_or_update()"
 
 # 2. Build the labeled corpus.
-sica-eval corpus build --version 2026-05-22
+setdrift-eval corpus build --version 2026-05-22
 
 # 3. Emit a 20% manual-verification sample.
-sica-eval corpus verify --corpus data/corpus/gitbug-java.jsonl
+setdrift-eval corpus verify --corpus data/corpus/gitbug-java.jsonl
 ```
 
 Output files (all gitignored under `data/`):
@@ -1482,8 +1482,8 @@ Output files (all gitignored under `data/`):
 | `none` | Catch-all when no other rule fires |
 
 The taxonomy is fixed for v1 of the corpus. Adding labels requires:
-1. Adding the value to `SkillLabel` in `eval/sica_eval/corpus/schemas.py`.
-2. Adding the heuristic rule to `eval/sica_eval/corpus/labeler.py`.
+1. Adding the value to `SkillLabel` in `eval/setdrift_eval/corpus/schemas.py`.
+2. Adding the heuristic rule to `eval/setdrift_eval/corpus/labeler.py`.
 3. Bumping the corpus version string so downstream consumers re-verify.
 
 ## Manual verification protocol
@@ -1514,11 +1514,11 @@ Run end-to-end against the actual upstream dataset (this DOES hit the network):
 
 ```bash
 cd repo/sica-plugin/eval
-python -c "from sica_eval.corpus.fetcher import clone_or_update; clone_or_update()"
-sica-eval corpus build --version 2026-05-22
+python -c "from setdrift_eval.corpus.fetcher import clone_or_update; clone_or_update()"
+setdrift-eval corpus build --version 2026-05-22
 ```
 
-Expected output: `[sica-eval] built corpus with N prompts -> data/corpus/gitbug-java.jsonl` where N is in the range 150-199.
+Expected output: `[setdrift-eval] built corpus with N prompts -> data/corpus/gitbug-java.jsonl` where N is in the range 150-199.
 
 If N is 0: the upstream manifest schema has changed since this plan was written. Inspect a few files under `data/raw/gitbug-java/` and update `parse_bug_manifest` in `fetcher.py` to match the actual field names.
 

@@ -4,7 +4,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from sica_eval.corpus.schemas import (
+from setdrift_eval.corpus.schemas import (
     BugSource,
     Corpus,
     LabeledPrompt,

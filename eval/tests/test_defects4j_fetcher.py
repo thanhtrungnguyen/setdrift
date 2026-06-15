@@ -6,8 +6,8 @@ the spike (DEFECTS4J-VIABLE) proved patch-file reading needs no init/project_rep
 """
 import pytest
 
-from sica_eval.corpus import fetcher
-from sica_eval.corpus.defects4j_fetcher import iter_bug_records, normalize_and_reverse
+from setdrift_eval.corpus import fetcher
+from setdrift_eval.corpus.defects4j_fetcher import iter_bug_records, normalize_and_reverse
 
 # Defects4J .src.patch = SVN reverse patch: `--- (fixed rev)` / `+++ (buggy rev)`,
 # body `-` = fixed code, `+` = buggy code.
