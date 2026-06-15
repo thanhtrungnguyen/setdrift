@@ -197,6 +197,30 @@ def main() -> int:
         help="output path for the scrubbed kappa matrix (experiments/ only — not data/)",
     )
 
+    # --- figures subcommand (D-10 deterministic figure regeneration) ---
+    figures_p = sub.add_parser(
+        "figures",
+        help="regenerate dissertation figures from experiments/ JSON (D-10)",
+    )
+    figures_p.add_argument(
+        "--experiments-dir", type=Path, default=Path("experiments"),
+        help="path to experiments/ JSON directory",
+    )
+    figures_p.add_argument(
+        "--output-dir", type=Path, default=Path("docs/figures"),
+        help="output directory for PDF/PNG figures",
+    )
+    figures_p.add_argument(
+        "--allow-fixtures", action="store_true",
+        help="allow fixture data (watermark applied); never use for dissertation figures (D-09)",
+    )
+    figures_p.add_argument("--genealogy", action="store_true", help="generate skill genealogy Mermaid diagram")
+    figures_p.add_argument("--f1-curve", action="store_true", help="generate F1-over-versions curve")
+    figures_p.add_argument("--cost-delta", action="store_true", help="generate cost delta figure (REQ-DELIV-02)")
+    figures_p.add_argument("--triangulation", action="store_true", help="generate triangulation scatter (D-15)")
+    figures_p.add_argument("--kappa-matrix", action="store_true", help="generate 5x3 kappa heatmap")
+    figures_p.add_argument("--all", dest="all_figures", action="store_true", help="generate all figures")
+
     # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
     deprecate_scan_p = sub.add_parser(
         "deprecate-scan",
@@ -393,6 +417,11 @@ def main() -> int:
         # Lazy import (project convention — D-11 judge harness)
         from setdrift_eval.judge.runner import run_judge_sensitivity
         return run_judge_sensitivity(args)
+
+    if args.cmd == "figures":
+        # Lazy import (project convention — D-10 deterministic figures CLI)
+        from setdrift_eval.figures.cli import main as figures_main  # lazy import
+        return figures_main(args)
 
     if args.cmd == "drift":
         # Lazy imports — [drift] extra not required at setdrift-eval load time
