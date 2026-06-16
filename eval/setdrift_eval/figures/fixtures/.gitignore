@@ -1,0 +1,4 @@
+# Allow JSONL files in this directory — these are committed test fixtures, NOT telemetry data.
+# The repo-root *.jsonl rule blocks JSONL for the data wall (telemetry capture).
+# Fixture files here are schema-only scaffolding for offline tests (D-09).
+!*.jsonl

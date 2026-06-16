@@ -1,0 +1,11 @@
+{
+  "_description": "Small-N fixture to exercise Spearman + permutation fallback path (N<10; Pitfall 7 / A7). Concordant series: F1 and pass_rate both increase monotonically.",
+  "concordant": {
+    "f1_series": [0.55, 0.61, 0.67, 0.71, 0.76],
+    "pass_rate_series": [0.48, 0.54, 0.61, 0.66, 0.72]
+  },
+  "anti_correlated": {
+    "f1_series": [0.75, 0.68, 0.61, 0.55, 0.50],
+    "pass_rate_series": [0.48, 0.54, 0.61, 0.66, 0.72]
+  }
+}
