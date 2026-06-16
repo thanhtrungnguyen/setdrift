@@ -84,11 +84,33 @@ def build_genealogy_dag(audit_path: Path) -> nx.DiGraph:
             "Do NOT include fixture figures in the dissertation (D-09)."
         )
 
-    records = [
-        json.loads(line)
-        for line in audit_path.read_text(encoding="utf-8").splitlines()
+    raw_lines = [
+        line for line in audit_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+    try:
+        records = [json.loads(line) for line in raw_lines]
+    except json.JSONDecodeError as exc:
+        raise FigureDataError(
+            f"Genealogy audit source is not valid JSONL: {audit_path}. "
+            f"Parse error: {exc}. "
+            "Pass --allow-fixtures to run against fixture data (watermark applied). "
+            "Do NOT include fixture figures in the dissertation (D-09)."
+        ) from exc
+
+    # Validate that the first record has the expected genealogy schema fields.
+    # The live optimizer audit log uses cycle_id/step/ts (different schema) and
+    # must not be mistaken for the version-promotion genealogy (different purpose).
+    _REQUIRED_FIELDS = {"version_id", "skill_name", "f1_mean", "status"}
+    if records and not _REQUIRED_FIELDS.issubset(records[0].keys()):
+        found = set(records[0].keys())
+        raise FigureDataError(
+            f"Genealogy audit source has unexpected schema: {audit_path}. "
+            f"Expected fields {_REQUIRED_FIELDS!r}, found {found!r}. "
+            "The file may be the optimizer cycle log (different schema). "
+            "Pass --allow-fixtures to run against fixture data (watermark applied). "
+            "Do NOT include fixture figures in the dissertation (D-09)."
+        )
 
     G: nx.DiGraph = nx.DiGraph()
     for r in records:

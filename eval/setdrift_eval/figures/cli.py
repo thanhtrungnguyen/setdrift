@@ -94,31 +94,126 @@ def main(args: argparse.Namespace) -> int:
         watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
         print(f"[setdrift-eval figures] cost-delta -> {output}.pdf + .png{watermark_note}")
 
-    # --- genealogy figure (REQ-DELIV-01) — placeholder; Plan 06 fills in ---
+    # --- genealogy figure (REQ-DELIV-01, D-10) ---
     if args.all_figures or getattr(args, "genealogy", False):
+        from setdrift_eval.figures.genealogy import (  # lazy import
+            build_genealogy_dag,
+            dag_to_mermaid,
+            FigureDataError as _GenealogyDataError,
+        )
+
         audit_path = experiments_dir / "audit-genealogy.jsonl"
-        if not audit_path.exists() and not allow_fixtures:
+        fixture_mode = False
+
+        try:
+            dag = build_genealogy_dag(audit_path)
+        except _GenealogyDataError:
+            if not allow_fixtures:
+                raise
+            # --allow-fixtures: load the committed genealogy fixture (D-09 watermark applied)
+            fixture_path = Path(__file__).parent / "fixtures" / "genealogy_fixture.jsonl"
+            dag = build_genealogy_dag(fixture_path)
+            fixture_mode = True
+
+        mermaid_src = dag_to_mermaid(dag, fixture=fixture_mode)
+        genealogy_out = output_dir / "skill-genealogy.md"
+        genealogy_out.write_text(mermaid_src, encoding="utf-8")
+        watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
+        print(f"[setdrift-eval figures] genealogy -> {genealogy_out}{watermark_note}")
+
+    # --- triangulation figure (D-15 pre-registered statistic) ---
+    if args.all_figures or getattr(args, "triangulation", False):
+        import json as _json
+        from setdrift_eval.figures.triangulation import triangulate, plot_triangulation  # lazy
+
+        triangulation_data_path = experiments_dir / "triangulation-series.json"
+        fixture_mode = False
+
+        if triangulation_data_path.exists():
+            raw = _json.loads(triangulation_data_path.read_text(encoding="utf-8"))
+            f1_series = [float(x) for x in raw["f1_series"]]
+            pass_rate_series = [float(x) for x in raw["pass_rate_series"]]
+        elif allow_fixtures:
+            # --allow-fixtures: load the committed triangulation fixture (D-09)
+            fixture_path = Path(__file__).parent / "fixtures" / "triangulation_fixture.json"
+            fixture_data = _json.loads(fixture_path.read_text(encoding="utf-8"))
+            # Use the concordant series from the fixture (small-N permutation path)
+            f1_series = fixture_data["concordant"]["f1_series"]
+            pass_rate_series = fixture_data["concordant"]["pass_rate_series"]
+            fixture_mode = True
+        else:
             raise FigureDataError(
-                f"Genealogy audit source not found: {audit_path}. "
+                f"Triangulation series data not found: {triangulation_data_path}. "
                 "Pass --allow-fixtures to run against fixture data (watermark applied). "
                 "Do NOT include fixture figures in the dissertation (D-09)."
             )
-        # NOTE: Plan 06 wires the full genealogy implementation here.
-        print("[setdrift-eval figures] genealogy — not yet implemented (Plan 06)")
 
-    # --- triangulation figure (D-15) — placeholder; Plan 06 fills in ---
-    if args.all_figures or getattr(args, "triangulation", False):
-        # NOTE: Plan 06 wires the triangulation implementation here.
-        print("[setdrift-eval figures] triangulation — not yet implemented (Plan 06)")
+        stats = triangulate(f1_series, pass_rate_series)
+        triangulation_out = output_dir / "triangulation"
+        plot_triangulation(f1_series, pass_rate_series, stats, triangulation_out,
+                           fixture=fixture_mode)
 
-    # --- kappa-matrix figure (D-11) — placeholder; Plan 06 fills in ---
+        # Persist the triangulate() result dict as companion JSON (D-15: null result is recorded)
+        companion_path = output_dir / "triangulation-stats.json"
+        companion_path.write_text(_json.dumps(stats, indent=2), encoding="utf-8")
+
+        watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
+        null_note = " [NULL RESULT — reported per pre-registration]" if stats.get("null_result") else ""
+        print(
+            f"[setdrift-eval figures] triangulation -> {triangulation_out}.pdf + .png"
+            f"{watermark_note}{null_note}"
+        )
+        print(f"[setdrift-eval figures] triangulation stats -> {companion_path}")
+
+    # --- kappa-matrix figure (D-11 judge sensitivity 5×3 heatmap) ---
     if args.all_figures or getattr(args, "kappa_matrix", False):
-        # NOTE: Plan 06 wires the kappa heatmap implementation here.
-        print("[setdrift-eval figures] kappa-matrix — not yet implemented (Plan 06)")
+        import json as _json
+        from setdrift_eval.figures.kappa_heatmap import plot_kappa_heatmap  # lazy
+        from setdrift_eval.judge.kappa import KappaCell  # lazy
 
-    # --- f1-curve figure — placeholder; Plan 06 fills in ---
+        kappa_data_path = experiments_dir / "judge-sensitivity.json"
+        fixture_mode = False
+
+        if kappa_data_path.exists():
+            raw = _json.loads(kappa_data_path.read_text(encoding="utf-8"))
+            kappa_cells = [KappaCell.model_validate(cell) for cell in raw["kappa_cells"]]
+        elif allow_fixtures:
+            # --allow-fixtures: synthesize a fixture 5×3 KappaCell matrix (D-09)
+            bias_modes = ["verbosity", "position", "self_preference", "authority", "recency"]
+            family_pairs = ["claude_vs_gpt4", "claude_vs_gemini", "gpt4_vs_gemini"]
+            kappa_cells = []
+            for i, bm in enumerate(bias_modes):
+                for j, fp in enumerate(family_pairs):
+                    kappa_val = round(0.5 + i * 0.05 + j * 0.03, 3)
+                    esc = kappa_val < 0.6
+                    kappa_cells.append(KappaCell(
+                        bias_mode=bm,
+                        family_pair=fp,
+                        kappa=kappa_val,
+                        n_prompts=100,
+                        escalation_required=esc,
+                        reason=(
+                            f"[FIXTURE] Cell ({bm}/{fp}): kappa={kappa_val:.3f} "
+                            f"— {'ESCALATION REQUIRED' if esc else 'κ ≥ 0.6 floor'} (D-11)"
+                        ),
+                    ))
+            fixture_mode = True
+        else:
+            raise FigureDataError(
+                f"Judge sensitivity data not found: {kappa_data_path}. "
+                "Pass --allow-fixtures to run against fixture data (watermark applied). "
+                "Do NOT include fixture figures in the dissertation (D-09)."
+            )
+
+        kappa_out = output_dir / "kappa-matrix"
+        plot_kappa_heatmap(kappa_cells, kappa_out, fixture=fixture_mode)
+        watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
+        print(f"[setdrift-eval figures] kappa-matrix -> {kappa_out}.pdf + .png{watermark_note}")
+
+    # --- f1-curve figure — placeholder; future plan fills in ---
     if args.all_figures or getattr(args, "f1_curve", False):
-        # NOTE: Plan 06 wires the F1-over-versions curve implementation here.
-        print("[setdrift-eval figures] f1-curve — not yet implemented (Plan 06)")
+        # NOTE: F1-over-versions curve is not a Phase-3-gated figure in Plan 06.
+        # It is scaffolded here for completeness; implementation deferred.
+        print("[setdrift-eval figures] f1-curve — not yet implemented")
 
     return 0
