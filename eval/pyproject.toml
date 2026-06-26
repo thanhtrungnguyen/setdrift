@@ -54,6 +54,33 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 testpaths = ["tests", "setdrift_eval"]
 addopts = "-ra -q"
 
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+# E/W: pycodestyle errors + warnings (style basics)
+# F: Pyflakes (undefined names, unused imports, etc.)
+# Start conservative: skip I (isort) until import ordering is normalised repo-wide.
+select = ["E", "F", "W"]
+ignore = [
+  "E501",   # line too long — no explicit limit decided yet
+  "E741",   # ambiguous variable name (e.g. 'l') — false-positive rate too high in eval code
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import fixtures / conftest symbols that look unused to ruff
+"tests/**" = ["F401", "F811"]
+"setdrift_eval/**/tests/**" = ["F401", "F811"]
+
+[tool.mypy]
+python_version = "3.14"
+ignore_missing_imports = true
+# Strict-enough for a research codebase; tighten progressively.
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
 [project.scripts]
 setdrift-eval = "setdrift_eval.cli:main"
 
