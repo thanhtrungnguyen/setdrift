@@ -85,7 +85,7 @@ def iter_bug_records(raw_dir: Path = DEFAULT_RAW_DIR) -> Iterator[BugRecord]:
     for path in candidates:
         try:
             record = parse_bug_manifest(path)
-        except KeyError, json.JSONDecodeError:
+        except (KeyError, json.JSONDecodeError):
             continue
         if record.bug_id in seen:
             continue

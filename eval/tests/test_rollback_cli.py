@@ -231,7 +231,7 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
     # Should raise or return non-zero (bad sig)
     try:
         cli_mod.main()
-    except ValueError, Exception:
+    except (ValueError, Exception):
         pass
 
     # The file must remain untouched
