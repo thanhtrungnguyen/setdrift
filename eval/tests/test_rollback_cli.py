@@ -98,7 +98,7 @@ def test_init_keys_refuses_to_overwrite_existing_key(tmp_env, monkeypatch, capsy
 
     monkeypatch.setattr(sys, "argv", ["setdrift-eval", "init-keys"])
     from setdrift_eval.cli import main
-    exit_code = main()
+    main()
 
     # Key must be unchanged
     assert key_file.read_text(encoding="utf-8").strip() == original
@@ -139,7 +139,6 @@ def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, c
     # Patch restore_config target mapping: the CLI needs to know which file to write.
     # We override the skill_file path via a monkeypatched applier.restore_config that
     # uses our tmp skill_file.
-    original_restore = None
 
     def patched_restore(skill_descriptions, expected_sig, targets):
         import setdrift_eval.optimizer.applier as applier_mod
@@ -205,9 +204,9 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
     import setdrift_eval.cli as cli_mod
     # Should raise or return non-zero (bad sig)
     try:
-        exit_code = cli_mod.main()
+        cli_mod.main()
     except (ValueError, Exception):
-        exit_code = 1
+        pass
 
     # The file must remain untouched
     assert skill_file.read_text(encoding="utf-8") == original_content

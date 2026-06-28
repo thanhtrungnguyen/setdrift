@@ -62,7 +62,7 @@ from pathlib import Path
 from inspect_ai import Task, task
 from inspect_ai.dataset import Dataset, Sample
 from inspect_ai.scorer import Score, Scorer, Target, accuracy, scorer
-from inspect_ai.solver import Solver, TaskState, generate, solver
+from inspect_ai.solver import Solver, TaskState, solver
 
 from inspect_ai.model import get_model
 
@@ -220,7 +220,7 @@ def _sica_skill_solver(arm: str) -> Solver:
 
     @solver
     def sica_solver() -> Solver:
-        async def solve(state: TaskState, generate_fn) -> TaskState:  # type: ignore[override]
+        async def solve(state: TaskState, generate_fn) -> TaskState:
             prompt = state.input_text
             skills_dir = _resolve_arm_skills(arm)
 
@@ -236,7 +236,7 @@ def _sica_skill_solver(arm: str) -> Solver:
             state.output.completion = f"fired={sorted(fired)}"
             return state
 
-        return solve  # type: ignore[return-value]
+        return solve
 
     return sica_solver()
 
@@ -271,7 +271,7 @@ def _sica_f1_scorer() -> Scorer:
                 ),
             )
 
-        return score  # type: ignore[return-value]
+        return score
 
     return sica_scorer()
 

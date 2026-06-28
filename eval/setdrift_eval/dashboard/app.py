@@ -29,12 +29,13 @@ from __future__ import annotations
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Collapsible, DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Header
 
 from setdrift_eval.dashboard.log_panel import LogPanel
 from setdrift_eval.dashboard.widgets import MetricWidget, SkillTable
@@ -232,7 +233,7 @@ class SetdriftDashboard(App):
         now_str = datetime.now(timezone.utc).strftime("%H:%M:%S")
         self.call_from_thread(self._apply_metrics, result, now_epoch, now_str)
 
-    def _apply_metrics(self, result: object, poll_epoch: float, now_str: str) -> None:
+    def _apply_metrics(self, result: Any, poll_epoch: float, now_str: str) -> None:
         """Apply a successful poll result to reactive attrs + DataTable.
 
         Called on the Textual main thread via call_from_thread.

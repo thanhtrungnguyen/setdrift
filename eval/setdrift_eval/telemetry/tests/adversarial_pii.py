@@ -185,15 +185,15 @@ def measure_recall(use_deny_list: bool = True, dump_dir: Path | None = None) -> 
             survivors.append((cat, literal))
 
     total = sum(d["total"] for d in by_cat.values())
-    removed = sum(d["removed"] for d in by_cat.values())
+    total_removed = sum(d["removed"] for d in by_cat.values())
     if dump_dir is not None:
         dump_dir.mkdir(parents=True, exist_ok=True)
         (dump_dir / "scrubbed_events.jsonl").write_text("\n".join(scrubbed_blobs), encoding="utf-8")
     return {
         "n_events": len(events),
-        "overall": removed / total if total else 0.0,
+        "overall": total_removed / total if total else 0.0,
         "total_plants": total,
-        "removed_plants": removed,
+        "removed_plants": total_removed,
         "by_category": {c: round(d["removed"] / d["total"], 4) for c, d in sorted(by_cat.items())},
         "survivors": survivors,
     }

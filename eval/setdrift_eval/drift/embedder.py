@@ -29,8 +29,8 @@ def load_model():
     Returns:
         tuple[SentenceTransformer, AutoTokenizer]: model + tokenizer pair.
     """
-    from sentence_transformers import SentenceTransformer  # type: ignore[import]
-    from transformers import AutoTokenizer  # type: ignore[import]
+    from sentence_transformers import SentenceTransformer
+    from transformers import AutoTokenizer
 
     model = SentenceTransformer(MODEL_NAME)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -181,13 +181,13 @@ def embedder_checksum() -> str:
     Returns:
         str: 64-character lowercase hex sha256 digest.
     """
-    from sentence_transformers import SentenceTransformer  # type: ignore[import]
+    from sentence_transformers import SentenceTransformer
 
     # Load model to ensure files are cached locally
     model = SentenceTransformer(MODEL_NAME)
     # Find the config.json on disk
     config_path: Path | None = None
-    model_dir = Path(model._model_card_data.base_model if hasattr(model, "_model_card_data") and
+    Path(model._model_card_data.base_model if hasattr(model, "_model_card_data") and
                      model._model_card_data and model._model_card_data.base_model else "")
 
     # Walk through potential module paths to find config.json
@@ -195,7 +195,7 @@ def embedder_checksum() -> str:
         if hasattr(module, "auto_model"):
             # Transformer module — the model files live alongside it
             try:
-                import transformers  # type: ignore[import]
+                import transformers
                 tok = transformers.AutoTokenizer.from_pretrained(MODEL_NAME)
                 # The tokenizer knows the local path
                 if hasattr(tok, "name_or_path"):
@@ -208,7 +208,7 @@ def embedder_checksum() -> str:
 
     if config_path is None or not config_path.exists():
         # Fallback: locate the model config in the huggingface cache.
-        import huggingface_hub  # type: ignore[import]
+        import huggingface_hub
 
         local_dir = huggingface_hub.snapshot_download(
             MODEL_NAME,

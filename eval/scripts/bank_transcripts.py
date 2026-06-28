@@ -44,7 +44,7 @@ _EVAL_DIR = Path(__file__).parent.parent
 if str(_EVAL_DIR) not in sys.path:
     sys.path.insert(0, str(_EVAL_DIR))
 
-from setdrift_eval.benchmark.response_cache import load_or_call, CACHE_DIR
+from setdrift_eval.benchmark.response_cache import load_or_call, CACHE_DIR  # noqa: E402
 
 _DEFAULT_MODEL = os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6")
 _DEFAULT_CORPUS = Path("data/corpora/public/corpus.jsonl")

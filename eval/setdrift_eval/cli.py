@@ -430,7 +430,7 @@ def main() -> int:
         # Lazy import (project convention)
         from setdrift_eval.optimizer.orchestrator import run_loop_cycle
 
-        result = run_loop_cycle(
+        loop_result = run_loop_cycle(
             skill_name=args.skill,
             corpus_path=args.corpus_path,
             skills_dir=args.skills_dir,
@@ -440,11 +440,11 @@ def main() -> int:
             dry_run=args.dry_run,
             approve=args.approve,
         )
-        staged = result.promotion_decision == "promoted"
+        staged = loop_result.promotion_decision == "promoted"
         print(
-            f"[setdrift-eval] loop cycle_id={result.cycle_id} "
-            f"decision={result.promotion_decision} "
-            f"f1_delta={result.f1_delta:+.4f} "
+            f"[setdrift-eval] loop cycle_id={loop_result.cycle_id} "
+            f"decision={loop_result.promotion_decision} "
+            f"f1_delta={loop_result.f1_delta:+.4f} "
             f"staged={staged}"
         )
         return 0

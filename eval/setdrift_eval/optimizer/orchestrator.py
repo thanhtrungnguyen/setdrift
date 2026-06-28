@@ -20,7 +20,6 @@ all steps in audit.jsonl), D-38 (two-file audit split), D-43 (human-approval gat
 """
 import json
 import os
-import shutil
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -32,7 +31,7 @@ from setdrift_eval.optimizer.gepa_wrapper import propose as _propose
 from setdrift_eval.optimizer.gepa_wrapper import build_optimizer_trainset as _build_optimizer_trainset
 from setdrift_eval.optimizer.signer import sign_config
 from setdrift_eval.optimizer.verifier import verify_candidate as _verify_candidate
-from setdrift_eval.schemas.loop_manifest import AuditRecord, LoopManifest, scrub_for_genealogy
+from setdrift_eval.schemas.loop_manifest import AuditRecord, scrub_for_genealogy
 
 # --- configurable paths (env-var pattern from capture_event.py) ---
 _AUDIT_PATH = Path(os.environ.get("SETDRIFT_AUDIT_PATH", "data/audit/audit.jsonl"))
@@ -153,7 +152,6 @@ def _load_trainset(corpus_path: Path, map_path: Path) -> tuple[list, dict]:
     CRITICAL: only examples with split=='train' are included in the returned list.
     The val and test partitions are NEVER passed to the optimizer (Goodhart firewall).
     """
-    import yaml
     from setdrift_eval.telemetry.scorer import load_intent_map
 
     corpus_path = Path(corpus_path)
@@ -210,7 +208,7 @@ def run_loop_cycle(
     seed: int = 42,
     dry_run: bool = True,
     approve: bool = False,
-) -> LoopManifest:
+) -> _LoopManifestResult:
     """Run one observe→diagnose→patch→verify→promote|rollback cycle.
 
     Args:

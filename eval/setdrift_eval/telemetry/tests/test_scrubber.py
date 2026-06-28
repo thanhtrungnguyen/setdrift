@@ -73,8 +73,8 @@ def test_scrub_event_raises_not_swallow(monkeypatch):
 
 # ---- Task 3: stop_batch_scrubber ----
 
-import importlib.util
-from pathlib import Path
+import importlib.util  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 _BATCH = Path(__file__).resolve().parents[4] / "plugin" / "hooks" / "stop_batch_scrubber.py"
 
@@ -86,6 +86,7 @@ def _load_batch(monkeypatch, tmp_path):
     monkeypatch.setenv("SETDRIFT_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
     monkeypatch.setenv("SETDRIFT_TELEMETRY_AUDIT_PATH", str(tmp_path / "scrubber-audit.jsonl"))
     spec = importlib.util.spec_from_file_location("stop_batch_scrubber", _BATCH)
+    assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

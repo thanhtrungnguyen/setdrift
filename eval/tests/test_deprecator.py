@@ -428,7 +428,7 @@ def test_decision_logged_with_reason_promote(tmp_path):
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
         quarantine_skill("rehab-skill", skills_dir)
-        decision = promote_skill("rehab-skill", skills_dir)
+        promote_skill("rehab-skill", skills_dir)
         decision_log = dep_dir / "decisions.jsonl"
         assert decision_log.exists()
         lines = [json.loads(l) for l in decision_log.read_text(encoding="utf-8").strip().splitlines()]

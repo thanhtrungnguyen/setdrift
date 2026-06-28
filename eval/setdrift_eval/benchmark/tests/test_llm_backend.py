@@ -45,13 +45,14 @@ def _make_usage(input_tokens: int = 10, output_tokens: int = 5):
     """Return a fake usage object with model_dump()."""
 
     class _Usage:
-        def model_dump(self):
-            return {"input_tokens": input_tokens, "output_tokens": output_tokens}
+        def __init__(self) -> None:
+            self.input_tokens = input_tokens
+            self.output_tokens = output_tokens
 
-    u = _Usage()
-    u.input_tokens = input_tokens
-    u.output_tokens = output_tokens
-    return u
+        def model_dump(self):
+            return {"input_tokens": self.input_tokens, "output_tokens": self.output_tokens}
+
+    return _Usage()
 
 
 def _make_fake_openai(tool_calls, finish_reason: str = "tool_calls"):

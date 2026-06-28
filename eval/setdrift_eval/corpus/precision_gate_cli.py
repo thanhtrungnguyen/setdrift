@@ -10,7 +10,6 @@ violation so it can block CI and the Phase-2 exit:
         --experiments-dir experiments/
 """
 import argparse
-import sys
 from pathlib import Path
 
 from setdrift_eval.corpus.precision_gate import (

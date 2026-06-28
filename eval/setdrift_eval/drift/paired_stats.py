@@ -18,9 +18,7 @@ Goodhart firewall:
 
 References: REQ-DRIFT-03, §7-2 (yoking discipline), D-59, RESEARCH.md Pattern 5.
 """
-import math
 import statistics
-from typing import Any
 
 import duckdb
 from pydantic import BaseModel, ConfigDict, Field, field_validator

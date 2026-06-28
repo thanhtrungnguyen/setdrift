@@ -45,7 +45,7 @@ def _load_intent_map(map_path: Path) -> dict:
 
 def _score_single_prompt(prompt: str, tools: list[dict], mapping: dict,
                           ground_truth: set[str], cache_dir: Path | None = None,
-                          model: str | None = None) -> float:
+                          model: str | None = None) -> tuple[float, set, set]:
     """Compute per-prompt F1 for one ablation configuration.
 
     Uses _arm_runner.run_arm with provided tools, projects fired skills to intents
@@ -225,7 +225,7 @@ def build_ablation_table(
 
     # --- Flag root cause: the row(s) with the largest negative delta ---
     # Skip the full-config row (delta=0 by definition) when finding root cause
-    non_full_rows = [r for r in rows if r["delta_vs_full"] != 0.0 or rows.index(r) > 0]
+    [r for r in rows if r["delta_vs_full"] != 0.0 or rows.index(r) > 0]
     # Actually use all rows except index 0 for root cause determination
     ablation_rows = rows[1:]  # rows 1-5 are the ablations
     if ablation_rows:

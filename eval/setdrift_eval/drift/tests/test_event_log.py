@@ -148,6 +148,7 @@ def test_bank_transcripts_produces_cache_hit(tmp_path, monkeypatch):
         pytest.skip(f"bank_transcripts.py not yet created at {script_path}")
 
     spec = importlib.util.spec_from_file_location("bank_transcripts", script_path)
+    assert spec is not None and spec.loader is not None
     bt = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bt)
 

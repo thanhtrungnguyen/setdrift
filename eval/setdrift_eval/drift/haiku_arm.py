@@ -31,7 +31,6 @@ import duckdb
 
 from setdrift_eval.benchmark.arm_runner import load_skill_tools, run_arm
 from setdrift_eval.benchmark.response_cache import load_or_call
-from setdrift_eval.schemas.drift_manifest import DriftManifest
 
 # FROZEN RULER — import only; never re-implement these functions.
 # Modifying scorer.py to support Phase 4 is an architectural violation.

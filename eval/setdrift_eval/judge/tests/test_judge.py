@@ -290,7 +290,7 @@ class TestComputeKappa:
         from setdrift_eval.judge.kappa import KappaCell
 
         with pytest.raises(ValidationError):
-            KappaCell(
+            KappaCell(  # type: ignore[call-arg]
                 bias_mode="verbosity",
                 family_pair="claude_vs_gpt4",
                 kappa=0.75,

@@ -77,7 +77,6 @@ def _estimate_cost_usd(result: object) -> float:
     token_cost_total is zero/unavailable (pre-Phase-3 state).
     """
     try:
-        from setdrift_eval.figures.cost import tokens_to_cost  # lazy import (figures extra)
         # F1Result does not carry token_cost_total (that is on ExperimentManifest).
         # Return 0.0 here; the dashboard reads the most-recent experiments/*.json
         # manifest for cost when available.

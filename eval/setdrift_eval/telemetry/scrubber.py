@@ -131,7 +131,7 @@ def scrub_text(text: str) -> tuple[str, list["RedactionRecord"]]:
         records.append(
             RedactionRecord(layer, r.entity_type, r.start, r.end, float(r.score), _hash(working[r.start:r.end]))
         )
-    scrubbed = _ANONYMIZER.anonymize(text=working, analyzer_results=results).text
+    scrubbed = _ANONYMIZER.anonymize(text=working, analyzer_results=results).text  # type: ignore[arg-type]
     return scrubbed, records
 
 

@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import types
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 
@@ -22,7 +23,7 @@ from unittest.mock import MagicMock, patch
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_f1_result(macro_f1_mean: float = 0.72) -> object:
+def _make_f1_result(macro_f1_mean: float = 0.72) -> Any:
     """Build a minimal F1Result-like namespace for mocking."""
     return types.SimpleNamespace(
         arm="B",
@@ -289,9 +290,7 @@ def test_metric_widget_set_value_uses_update(monkeypatch):
     # Patch Static.__init__ to avoid full Textual initialization
     from textual.widgets import Static
 
-    update_calls = []
 
-    original_init = Static.__init__
 
     def mock_init(self_inner, *args, **kwargs):
         # Minimal init bypass
@@ -391,8 +390,8 @@ def test_skill_table_show_no_data_when_empty():
 # Textual's run_test() is an async context manager that works with plain asyncio.
 # ---------------------------------------------------------------------------
 
-import asyncio
-import pytest
+import asyncio  # noqa: E402
+import pytest  # noqa: E402
 
 
 def test_app_compose_headless():
@@ -403,13 +402,13 @@ def test_app_compose_headless():
 
     async def _run():
         # Patch _poll_metrics worker so no real corpus/experiments files are needed
-        fake_result = _make_f1_result()
+        _make_f1_result()
         app = SetdriftDashboard(
             corpus_path=Path("/nonexistent/corpus.jsonl"),
             arm="B",
         )
         # Patch the internal method so the worker never calls run_health
-        app._start_poll_worker = lambda: None
+        app._start_poll_worker = lambda: None  # type: ignore[method-assign]
 
         async with app.run_test(size=(120, 40)) as pilot:
             await pilot.pause()
@@ -432,7 +431,7 @@ def test_app_log_toggle_keybinding():
             arm="B",
         )
         # Suppress polling so no filesystem access occurs
-        app._start_poll_worker = lambda: None
+        app._start_poll_worker = lambda: None  # type: ignore[method-assign]
 
         async with app.run_test(size=(120, 40)) as pilot:
             await pilot.pause()

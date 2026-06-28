@@ -34,7 +34,6 @@ import dspy
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from setdrift_eval.benchmark import arm_runner
 from setdrift_eval.optimizer.fence import ALLOWED_PREFIXES  # read-only: proposal-target validation
 from setdrift_eval.telemetry.scorer import project_to_intents, scored_intents
 

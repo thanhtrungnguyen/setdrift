@@ -64,12 +64,12 @@ def test_build_corpus_handles_empty_dir(tmp_path: Path):
 
 
 # ── Plan 02-02 Task 3: multi-source + split freeze + negative floor ──────────
-import hashlib
+import hashlib  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
-from setdrift_eval.corpus.builder import freeze_split
-from setdrift_eval.corpus.schemas import BugSource, LabeledPrompt
+from setdrift_eval.corpus.builder import freeze_split  # noqa: E402
+from setdrift_eval.corpus.schemas import BugSource, LabeledPrompt  # noqa: E402
 
 # Defects4J .src.patch (SVN reverse patch) — a benign rename, labeler → [NONE].
 _D4J_PATCH = (

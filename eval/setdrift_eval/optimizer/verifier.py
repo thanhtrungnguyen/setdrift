@@ -76,13 +76,13 @@ def verify_candidate(
     Raises:
         ScorerError: if the precision gate has not cleared (run_health already guards this).
     """
-    from setdrift_eval.telemetry.scorer import noise_band, run_health, val_only_prompts
+    from setdrift_eval.telemetry.scorer import noise_band, run_health
 
     corpus_path = Path(corpus_path)
     experiments_dir = Path(experiments_dir)
 
     # Resolve the candidate skills_dir from the proposal
-    candidate_skills_dir = Path(proposal.get("skills_dir") or skills_dir)
+    candidate_skills_dir = Path(proposal.get("skills_dir") or skills_dir)  # type: ignore[arg-type]
 
     # Resolve map_path
     from setdrift_eval.telemetry.scorer import _DEFAULT_MAP

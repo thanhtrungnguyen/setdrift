@@ -78,7 +78,7 @@ def test_compute_drift_index_range():
     from setdrift_eval.drift.embedder import compute_drift_index
 
     # Use short strings so the real model loads (may be skipped if [drift] not installed)
-    sentence_transformers = pytest.importorskip("sentence_transformers")
+    pytest.importorskip("sentence_transformers")
 
     config_text = "spring boot endpoint skill"
     identical_window = [config_text] * 3

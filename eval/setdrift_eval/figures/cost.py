@@ -95,7 +95,7 @@ def plot_cost_delta(
 
     fig, ax_kwh = plt.subplots()
 
-    bars = ax_kwh.bar(
+    ax_kwh.bar(
         x,
         kwh_values,
         color=PRIMARY_BLUE,

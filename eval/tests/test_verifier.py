@@ -112,7 +112,6 @@ def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
     # Candidate (arm A) returns F1 = [0.9, 0.9, 0.9, 0.9, 0.9] → mean=0.9 > 0.4+2σ
     call_count = {"n": 0}
 
-    original_run_health = scorer.run_health
 
     def mock_run_health(corpus_path, arm, **kw):
         call_count["n"] += 1
@@ -270,9 +269,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
 
     # Track which prompt_ids actually reach scoring
     scored_prompt_ids: list[str] = []
-    all_scored_prompts: list[list] = []
 
-    original_run_health = scorer.run_health
 
     def capture_run_health(corpus_path, arm, **kw):
         # Inspect the corpus_path to see which prompts would be scored
@@ -295,7 +292,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     monkeypatch.setattr(scorer, "run_health", capture_run_health)
 
     proposal = _make_proposal(sd)
-    result = verify_candidate(
+    verify_candidate(
         proposal=proposal,
         corpus_path=cp,
         experiments_dir=exp,
@@ -305,7 +302,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
 
     # The verifier must have used val_only_prompts — test prompt_ids must NOT appear
     # in the corpus passed to scoring
-    val_prompts_in_full_corpus = [
+    [
         p for p in [
             _row("p_val1", "val prompt 1", ["spring-annotation-fix"]),
             _row("p_val2", "val prompt 2", ["none"]),

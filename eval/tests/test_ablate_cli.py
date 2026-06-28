@@ -165,7 +165,6 @@ def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
     cp = _make_corpus(tmp_path)
     mp = _make_map(tmp_path)
 
-    call_count = {"n": 0}
 
     def fake_run_arm(prompt, tools, **kw):
         # Full config (2 tools): spring_boot_endpoint fires → correct prediction

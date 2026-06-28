@@ -333,7 +333,7 @@ def test_paired_diff_result_reason_always_populated(tmp_path: Path) -> None:
 
     # ConfigDict(extra="forbid") — unknown fields must raise
     with pytest.raises(ValidationError):
-        PairedDiffResult(
+        PairedDiffResult(  # type: ignore[call-arg]
             revision="early",
             model="claude-sonnet-4-6",
             mean_A=0.70,
