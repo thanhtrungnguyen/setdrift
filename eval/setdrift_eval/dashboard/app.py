@@ -24,6 +24,7 @@ Launch via:
 or:
     setdrift-eval health --live --arm B
 """
+
 from __future__ import annotations
 
 import time
@@ -110,25 +111,25 @@ class SetdriftDashboard(App):
     SUB_TITLE = "Phase 5 — Reporting & Triangulation"
 
     BINDINGS = [
-        Binding("q",     "quit",        "Quit",         priority=True),
-        Binding("r",     "refresh",     "Refresh now"),
-        Binding("j",     "cursor_down", "Next skill"),
-        Binding("k",     "cursor_up",   "Prev skill"),
-        Binding("l",     "toggle_log",  "Toggle log"),
-        Binding("?",     "toggle_help", "Help"),
-        Binding("ctrl+c", "quit",       "Quit",         show=False, priority=True),
+        Binding("q", "quit", "Quit", priority=True),
+        Binding("r", "refresh", "Refresh now"),
+        Binding("j", "cursor_down", "Next skill"),
+        Binding("k", "cursor_up", "Prev skill"),
+        Binding("l", "toggle_log", "Toggle log"),
+        Binding("?", "toggle_help", "Help"),
+        Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
     ]
 
     # ── Reactive attributes (changes auto-trigger watch_* methods) ──────────
-    f1_current:   reactive[float] = reactive(0.0)
-    f1_band_lo:   reactive[float] = reactive(0.0)
-    f1_band_hi:   reactive[float] = reactive(0.0)
-    pass_rate:    reactive[float] = reactive(0.0)
-    cost_usd:     reactive[float] = reactive(0.0)
-    drift_index:  reactive[float] = reactive(0.0)
-    event_count:  reactive[int]   = reactive(0)
-    loop_status:  reactive[str]   = reactive("idle")
-    last_refresh: reactive[str]   = reactive("—")
+    f1_current: reactive[float] = reactive(0.0)
+    f1_band_lo: reactive[float] = reactive(0.0)
+    f1_band_hi: reactive[float] = reactive(0.0)
+    pass_rate: reactive[float] = reactive(0.0)
+    cost_usd: reactive[float] = reactive(0.0)
+    drift_index: reactive[float] = reactive(0.0)
+    event_count: reactive[int] = reactive(0)
+    loop_status: reactive[str] = reactive("idle")
+    last_refresh: reactive[str] = reactive("—")
 
     def __init__(
         self,
@@ -160,15 +161,15 @@ class SetdriftDashboard(App):
         with Horizontal(id="main-row"):
             with VerticalScroll(id="metrics-scroll"):
                 # IDs must NOT include '#' — that is CSS selector syntax only
-                yield MetricWidget("F1 (current)",    "f1-current")
-                yield MetricWidget("Band lo",         "f1-band-lo")
-                yield MetricWidget("Band hi",         "f1-band-hi")
-                yield MetricWidget("Pass rate",       "pass-rate")
-                yield MetricWidget("Cost $",          "cost-usd")
-                yield MetricWidget("Drift index",     "drift-idx")
-                yield MetricWidget("Events (total)",  "event-count")
-                yield MetricWidget("Loop status",     "loop-status")
-                yield MetricWidget("Last refresh",    "last-refresh")
+                yield MetricWidget("F1 (current)", "f1-current")
+                yield MetricWidget("Band lo", "f1-band-lo")
+                yield MetricWidget("Band hi", "f1-band-hi")
+                yield MetricWidget("Pass rate", "pass-rate")
+                yield MetricWidget("Cost $", "cost-usd")
+                yield MetricWidget("Drift index", "drift-idx")
+                yield MetricWidget("Events (total)", "event-count")
+                yield MetricWidget("Loop status", "loop-status")
+                yield MetricWidget("Last refresh", "last-refresh")
             yield DataTable(id="skill-table", cursor_type="row")
         yield LogPanel(id="log-collapsible")
         yield Footer()
@@ -204,6 +205,7 @@ class SetdriftDashboard(App):
         """
         # Lazy import: FROZEN RULER — import only, never recompute (D-04)
         from setdrift_eval.telemetry.scorer import ScorerError  # noqa: F401
+
         try:
             from setdrift_eval.telemetry.scorer import run_health
         except ImportError as exc:
@@ -241,15 +243,21 @@ class SetdriftDashboard(App):
         self._last_poll_epoch = poll_epoch
 
         # Update reactive attrs — watchers will call widget.update() (never .renderable)
-        self.f1_current  = result.macro_f1_mean
-        self.f1_band_lo  = result.noise_band_low
-        self.f1_band_hi  = result.noise_band_high
-        self.pass_rate   = result.coverage_pct
+        self.f1_current = result.macro_f1_mean
+        self.f1_band_lo = result.noise_band_low
+        self.f1_band_hi = result.noise_band_high
+        self.pass_rate = result.coverage_pct
         self.last_refresh = now_str
 
         # Reset any error borders on metric widgets
-        for wid in ("#f1-current", "#f1-band-lo", "#f1-band-hi", "#pass-rate",
-                    "#loop-status", "#last-refresh"):
+        for wid in (
+            "#f1-current",
+            "#f1-band-lo",
+            "#f1-band-hi",
+            "#pass-rate",
+            "#loop-status",
+            "#last-refresh",
+        ):
             try:
                 self.query_one(wid, MetricWidget).reset_border()
             except Exception:

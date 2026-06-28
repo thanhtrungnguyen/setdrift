@@ -6,6 +6,7 @@ rollback against a tampered audit entry fails loud (no write).
 
 All tests are offline. SETDRIFT_SIGNING_KEY and key paths are redirected to tmp_path.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ from setdrift_eval.optimizer.signer import generate_key
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def tmp_env(tmp_path, monkeypatch):
@@ -32,6 +34,7 @@ def tmp_env(tmp_path, monkeypatch):
     monkeypatch.setenv("SETDRIFT_SIGNING_KEY", str(key_file))
 
     import setdrift_eval.optimizer.signer as signer_mod
+
     signer_mod._KEY_PATH = key_file
 
     return {
@@ -73,6 +76,7 @@ def _make_audit_entry(descriptions: dict, sig: str, config_hash: str, audit_log:
 # init-keys tests
 # ---------------------------------------------------------------------------
 
+
 def test_init_keys_generates_key_when_absent(tmp_env, monkeypatch, capsys):
     """init-keys writes the HMAC key when no key exists yet."""
     key_file = tmp_env["key_file"]
@@ -80,6 +84,7 @@ def test_init_keys_generates_key_when_absent(tmp_env, monkeypatch, capsys):
 
     monkeypatch.setattr(sys, "argv", ["setdrift-eval", "init-keys"])
     from setdrift_eval.cli import main
+
     exit_code = main()
 
     assert exit_code == 0
@@ -98,6 +103,7 @@ def test_init_keys_refuses_to_overwrite_existing_key(tmp_env, monkeypatch, capsy
 
     monkeypatch.setattr(sys, "argv", ["setdrift-eval", "init-keys"])
     from setdrift_eval.cli import main
+
     main()
 
     # Key must be unchanged
@@ -110,6 +116,7 @@ def test_init_keys_refuses_to_overwrite_existing_key(tmp_env, monkeypatch, capsy
 # ---------------------------------------------------------------------------
 # rollback tests
 # ---------------------------------------------------------------------------
+
 
 def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, capsys):
     """rollback with a valid hash restores and prints verified=True."""
@@ -142,22 +149,32 @@ def test_rollback_restores_and_prints_verified(tmp_env, tmp_path, monkeypatch, c
 
     def patched_restore(skill_descriptions, expected_sig, targets):
         import setdrift_eval.optimizer.applier as applier_mod
+
         # Replace targets with our tmp skill_file
         real_targets = {k: skill_file for k in skill_descriptions}
         # Import the real restore_config
         from setdrift_eval.optimizer.applier import restore_config as _real_restore
+
         _real_restore(skill_descriptions, expected_sig, real_targets)
 
     monkeypatch.setattr("setdrift_eval.cli._rollback_restore", patched_restore, raising=False)
 
-    monkeypatch.setattr(sys, "argv", [
-        "setdrift-eval", "rollback",
-        "--to", config_hash,
-        "--audit-log", str(audit_log),
-    ])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "setdrift-eval",
+            "rollback",
+            "--to",
+            config_hash,
+            "--audit-log",
+            str(audit_log),
+        ],
+    )
 
     from importlib import reload
     import setdrift_eval.cli as cli_mod
+
     # Don't reload — just call main() with patched argv
     exit_code = cli_mod.main()
 
@@ -191,21 +208,30 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
     def patched_restore(skill_descriptions, expected_sig, targets):
         real_targets = {k: skill_file for k in skill_descriptions}
         from setdrift_eval.optimizer.applier import restore_config as _real_restore
+
         _real_restore(skill_descriptions, expected_sig, real_targets)
 
     monkeypatch.setattr("setdrift_eval.cli._rollback_restore", patched_restore, raising=False)
 
-    monkeypatch.setattr(sys, "argv", [
-        "setdrift-eval", "rollback",
-        "--to", config_hash,
-        "--audit-log", str(audit_log),
-    ])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "setdrift-eval",
+            "rollback",
+            "--to",
+            config_hash,
+            "--audit-log",
+            str(audit_log),
+        ],
+    )
 
     import setdrift_eval.cli as cli_mod
+
     # Should raise or return non-zero (bad sig)
     try:
         cli_mod.main()
-    except (ValueError, Exception):
+    except ValueError, Exception:
         pass
 
     # The file must remain untouched
@@ -216,9 +242,11 @@ def test_rollback_with_tampered_entry_fails_loud(tmp_env, tmp_path, monkeypatch,
 # Backward compatibility: existing health dispatch still works
 # ---------------------------------------------------------------------------
 
+
 def test_health_dispatch_still_present():
     """health dispatch is backward-compatible (grep for args.cmd == 'health')."""
     import inspect
     import setdrift_eval.cli as cli_mod
+
     src = inspect.getsource(cli_mod)
     assert 'args.cmd == "health"' in src

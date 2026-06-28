@@ -23,6 +23,7 @@ Goodhart firewall:
 References: 05-PATTERNS.md §figures/triangulation.py, 05-RESEARCH.md Pattern 5 +
 Pitfall 7, 05-UI-SPEC.md §B.1/B.5, PLAN 05-06 Task 2, D-15.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -42,6 +43,7 @@ _PERMUTATION_THRESHOLD = 10
 # ---------------------------------------------------------------------------
 # Core triangulation statistic (D-15 pre-registered)
 # ---------------------------------------------------------------------------
+
 
 def triangulate(f1_series: list[float], pass_rate_series: list[float]) -> dict:
     """Spearman ρ + sign test on paired deltas (D-15 pre-registered statistic).
@@ -103,13 +105,9 @@ def triangulate(f1_series: list[float], pass_rate_series: list[float]) -> dict:
     pr_deltas = [b - a for a, b in zip(pass_rate_series, pass_rate_series[1:])]
     # Concordant: both move in the same direction (both nonzero to exclude ties)
     concordant = sum(
-        1 for f, p in zip(f1_deltas, pr_deltas)
-        if (f > 0) == (p > 0) and f != 0 and p != 0
+        1 for f, p in zip(f1_deltas, pr_deltas) if (f > 0) == (p > 0) and f != 0 and p != 0
     )
-    n_pairs = sum(
-        1 for f, p in zip(f1_deltas, pr_deltas)
-        if f != 0 and p != 0
-    )
+    n_pairs = sum(1 for f, p in zip(f1_deltas, pr_deltas) if f != 0 and p != 0)
     if n_pairs > 0:
         sign_result = binomtest(concordant, n_pairs, p=0.5, alternative="greater")
         sign_test_pvalue = float(sign_result.pvalue)
@@ -136,10 +134,12 @@ def triangulate(f1_series: list[float], pass_rate_series: list[float]) -> dict:
 # Figure: scatter + 3-axis summary (UI-SPEC §B.1 / §B.5)
 # ---------------------------------------------------------------------------
 
+
 def _annotate_null_result(ax) -> None:
     """Annotate the null-result finding on the axes (UI-SPEC §B.5, T-05-20)."""
     ax.text(
-        0.5, 0.5,
+        0.5,
+        0.5,
         "No improvement detected (null result — reported per pre-registration §6)",
         transform=ax.transAxes,
         ha="center",
@@ -181,8 +181,14 @@ def plot_triangulation(
 
     # Version labels
     for i, (x, y) in enumerate(zip(f1_series, pass_rate_series)):
-        ax.annotate(f"v{i + 1}", (x, y), textcoords="offset points",
-                    xytext=(4, 4), fontsize=7, color="#555555")
+        ax.annotate(
+            f"v{i + 1}",
+            (x, y),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=7,
+            color="#555555",
+        )
 
     ax.set_xlabel("Skill-trigger F1 (macro)")
     ax.set_ylabel("Benchmark pass-rate")
@@ -199,8 +205,7 @@ def plot_triangulation(
     method = stats.get("pvalue_method", "")
     n = stats.get("n_versions", len(f1_series))
     ax.set_title(
-        f"F1 × Pass-rate Triangulation (Spearman ρ={rho:.3f}, p={p:.3f}, "
-        f"N={n}, method={method})",
+        f"F1 × Pass-rate Triangulation (Spearman ρ={rho:.3f}, p={p:.3f}, N={n}, method={method})",
         fontsize=9,
     )
 

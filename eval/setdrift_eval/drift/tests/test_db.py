@@ -1,4 +1,5 @@
 """Tests for DuckDB grid schema DDL + connect() (REQ-DRIFT-02, Plan 04-01 Task 3)."""
+
 import duckdb
 import pytest
 
@@ -6,6 +7,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _fake_db(tmp_path):
     """Connect to a temporary DuckDB file and run DDL; return the connection."""
@@ -18,6 +20,7 @@ def _fake_db(tmp_path):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_connect_creates_all_tables(tmp_path):
     """Test 1: connect(tmp_path/"t.ddb") creates grid_cells, drift_series, drift_events tables."""

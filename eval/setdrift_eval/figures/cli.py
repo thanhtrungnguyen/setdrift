@@ -12,6 +12,7 @@ What it does NOT do:
   - Never passes fixture figures to the dissertation path (D-09)
   - Never touches FROZEN files (scorer.py, arm_runner.py, experiment.py, response_cache.py)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,7 @@ def main(args: argparse.Namespace) -> int:
     """
     # Apply shared rcParams + Agg backend BEFORE any figure function (D-10)
     from setdrift_eval.figures.rcparams import apply as apply_rcparams  # lazy import
+
     apply_rcparams()
 
     output_dir = Path(args.output_dir)
@@ -71,15 +73,16 @@ def main(args: argparse.Namespace) -> int:
 
         if cost_data_path.exists():
             import json as _json
+
             raw = _json.loads(cost_data_path.read_text(encoding="utf-8"))
             per_version = {str(k): int(v) for k, v in raw.items()}
             fixture_mode = False
         elif allow_fixtures:
             # Fixture data — watermark will be applied (D-09)
             per_version = {
-                "v1-baseline":  100_000,
+                "v1-baseline": 100_000,
                 "v2-candidate": 120_000,
-                "v3-promoted":  110_000,
+                "v3-promoted": 110_000,
             }
             fixture_mode = True
         else:
@@ -150,15 +153,18 @@ def main(args: argparse.Namespace) -> int:
 
         stats = triangulate(f1_series, pass_rate_series)
         triangulation_out = output_dir / "triangulation"
-        plot_triangulation(f1_series, pass_rate_series, stats, triangulation_out,
-                           fixture=fixture_mode)
+        plot_triangulation(
+            f1_series, pass_rate_series, stats, triangulation_out, fixture=fixture_mode
+        )
 
         # Persist the triangulate() result dict as companion JSON (D-15: null result is recorded)
         companion_path = output_dir / "triangulation-stats.json"
         companion_path.write_text(_json.dumps(stats, indent=2), encoding="utf-8")
 
         watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
-        null_note = " [NULL RESULT — reported per pre-registration]" if stats.get("null_result") else ""
+        null_note = (
+            " [NULL RESULT — reported per pre-registration]" if stats.get("null_result") else ""
+        )
         print(
             f"[setdrift-eval figures] triangulation -> {triangulation_out}.pdf + .png"
             f"{watermark_note}{null_note}"
@@ -186,17 +192,19 @@ def main(args: argparse.Namespace) -> int:
                 for j, fp in enumerate(family_pairs):
                     kappa_val = round(0.5 + i * 0.05 + j * 0.03, 3)
                     esc = kappa_val < 0.6
-                    kappa_cells.append(KappaCell(
-                        bias_mode=bm,
-                        family_pair=fp,
-                        kappa=kappa_val,
-                        n_prompts=100,
-                        escalation_required=esc,
-                        reason=(
-                            f"[FIXTURE] Cell ({bm}/{fp}): kappa={kappa_val:.3f} "
-                            f"— {'ESCALATION REQUIRED' if esc else 'κ ≥ 0.6 floor'} (D-11)"
-                        ),
-                    ))
+                    kappa_cells.append(
+                        KappaCell(
+                            bias_mode=bm,
+                            family_pair=fp,
+                            kappa=kappa_val,
+                            n_prompts=100,
+                            escalation_required=esc,
+                            reason=(
+                                f"[FIXTURE] Cell ({bm}/{fp}): kappa={kappa_val:.3f} "
+                                f"— {'ESCALATION REQUIRED' if esc else 'κ ≥ 0.6 floor'} (D-11)"
+                            ),
+                        )
+                    )
             fixture_mode = True
         else:
             raise FigureDataError(

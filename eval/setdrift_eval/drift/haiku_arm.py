@@ -24,6 +24,7 @@ References: REQ-DRIFT-03, D-58 (Haiku sensitivity), D-59 (test-only partition),
             D-60 (cost_usd secondary metric), A3 (full versioned model id),
             Open Question 1 option (b), Open Question 3.
 """
+
 import json
 from pathlib import Path
 
@@ -55,13 +56,14 @@ ARMS = ("A", "B")
 # Input: $0.80/M tokens = $8e-7/token. Output: $4.00/M tokens = $4e-6/token.
 # D-60: cost_usd is a secondary metric only — no hard spend cap enforced.
 # Update this constant if Anthropic revises pricing (dated for reproducibility: 2026-05-22).
-_HAIKU_INPUT_USD_PER_TOKEN = 8e-7   # $0.80 per million input tokens
+_HAIKU_INPUT_USD_PER_TOKEN = 8e-7  # $0.80 per million input tokens
 _HAIKU_OUTPUT_USD_PER_TOKEN = 4e-6  # $4.00 per million output tokens
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_test_prompts(corpus_path: Path) -> list[dict]:
     """Return only prompts with split == "test" from corpus_path.
@@ -102,15 +104,13 @@ def _compute_cost_usd(
         usage = data.get("usage", {})
         total_input += usage.get("input_tokens", 0)
         total_output += usage.get("output_tokens", 0)
-    return (
-        total_input * _HAIKU_INPUT_USD_PER_TOKEN
-        + total_output * _HAIKU_OUTPUT_USD_PER_TOKEN
-    )
+    return total_input * _HAIKU_INPUT_USD_PER_TOKEN + total_output * _HAIKU_OUTPUT_USD_PER_TOKEN
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def run_haiku_sensitivity(
     corpus_path: Path,
@@ -164,7 +164,7 @@ def run_haiku_sensitivity(
 
     # FROZEN RULER — load intent map (import-only, never re-implemented)
     mapping, map_sha = load_intent_map(map_path)  # FROZEN RULER
-    scored = scored_intents(mapping)               # FROZEN RULER
+    scored = scored_intents(mapping)  # FROZEN RULER
     labels = sorted(scored)
 
     f1_runs: dict[str, list[float]] = {"A": [], "B": []}
@@ -183,15 +183,15 @@ def run_haiku_sensitivity(
                 # Call run_arm directly on the test-only prompt list
                 # model=HAIKU_MODEL ensures cache key includes the full versioned id (A6)
                 fired = run_arm(p["prompt"], tools, model=HAIKU_MODEL, cache_dir=cache_dir)
-                gt_intents = project_to_intents(gt, mapping) & scored   # FROZEN RULER
+                gt_intents = project_to_intents(gt, mapping) & scored  # FROZEN RULER
                 pred_intents = project_to_intents(fired, mapping) & scored  # FROZEN RULER
                 y_true_sets.append(gt_intents)
                 y_pred_sets.append(pred_intents)
 
             # FROZEN RULER — do not re-implement binarize / macro_f1
-            yt = binarize(y_true_sets, labels)   # FROZEN RULER
-            yp = binarize(y_pred_sets, labels)   # FROZEN RULER
-            f1_val = macro_f1(yt, yp)            # FROZEN RULER
+            yt = binarize(y_true_sets, labels)  # FROZEN RULER
+            yp = binarize(y_pred_sets, labels)  # FROZEN RULER
+            f1_val = macro_f1(yt, yp)  # FROZEN RULER
             f1_runs[arm].append(f1_val)
 
         # Compute cost for this arm's prompts (using cached responses — D-60)
@@ -252,14 +252,14 @@ def run_haiku_sensitivity(
                     "haiku_sensitivity",  # revision label for the sensitivity arm
                     run_idx,
                     cfg_hash,
-                    "",          # snapshot_hash — sensitivity arm uses live config
+                    "",  # snapshot_hash — sensitivity arm uses live config
                     map_sha,
-                    "",          # split_hash — not computed in sensitivity arm
-                    run_idx,     # rng_seed = run_idx (deterministic, simple)
+                    "",  # split_hash — not computed in sensitivity arm
+                    run_idx,  # rng_seed = run_idx (deterministic, simple)
                     f1_val,
-                    0,           # token_cost (integer count — not tracked here)
+                    0,  # token_cost (integer count — not tracked here)
                     arm_cost / N_RUNS,  # cost_usd per run (D-60)
-                    yoke_min,    # same for A and B (yoking discipline)
+                    yoke_min,  # same for A and B (yoking discipline)
                     _now_iso(),
                 ],
             )

@@ -8,13 +8,16 @@ These rules are intentionally simple and conservative. Precision matters more
 than recall here because the labels feed into the 20% manual verification pass
 (sampler.py); high recall with low precision wastes the verifier's time.
 """
+
 import re
 
 from setdrift_eval.corpus.fetcher import BugRecord
 from setdrift_eval.corpus.schemas import SkillLabel
 
 _POM_VERSION_RE = re.compile(r"^[-+].*<version>.*</version>", re.MULTILINE)
-_NULL_CHECK_RE = re.compile(r"^\+.*(?:!= null|== null|Optional\.|Objects\.requireNonNull)", re.MULTILINE)
+_NULL_CHECK_RE = re.compile(
+    r"^\+.*(?:!= null|== null|Optional\.|Objects\.requireNonNull)", re.MULTILINE
+)
 _SPRING_ANNOTATION_RE = re.compile(
     r"^\+.*@(?:Component|Service|Repository|Controller|RestController|Autowired|Configuration|Bean)\b",
     re.MULTILINE,

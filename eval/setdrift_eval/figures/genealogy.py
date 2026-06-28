@@ -24,6 +24,7 @@ Goodhart firewall:
 References: 05-PATTERNS.md §figures/genealogy.py, 05-RESEARCH.md Pattern 6,
 05-UI-SPEC.md §B.6, PLAN 05-06 Task 1, REQ-DELIV-01.
 """
+
 from __future__ import annotations
 
 import json
@@ -39,6 +40,7 @@ from setdrift_eval.telemetry.scorer import macro_f1  # noqa: F401 — guard impo
 # Data gate error (D-09 / RESEARCH Pitfall 4)
 # ---------------------------------------------------------------------------
 
+
 class FigureDataError(RuntimeError):
     """Raised when required Phase-3 output data is absent (D-09 gate).
 
@@ -51,6 +53,7 @@ class FigureDataError(RuntimeError):
 # ---------------------------------------------------------------------------
 # DAG builder
 # ---------------------------------------------------------------------------
+
 
 def build_genealogy_dag(audit_path: Path) -> nx.DiGraph:
     """Load optimizer promotion history and build a validated DiGraph.
@@ -85,8 +88,7 @@ def build_genealogy_dag(audit_path: Path) -> nx.DiGraph:
         )
 
     raw_lines = [
-        line for line in audit_path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
+        line for line in audit_path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
     try:
         records = [json.loads(line) for line in raw_lines]
@@ -140,6 +142,7 @@ def build_genealogy_dag(audit_path: Path) -> nx.DiGraph:
 # Mermaid serialiser (UI-SPEC §B.6)
 # ---------------------------------------------------------------------------
 
+
 def dag_to_mermaid(G: nx.DiGraph, *, fixture: bool = False) -> str:
     """Serialise the genealogy DiGraph to Mermaid LR graph source.
 
@@ -166,17 +169,13 @@ def dag_to_mermaid(G: nx.DiGraph, *, fixture: bool = False) -> str:
         f1_val = d.get("f1", 0.0)
         status = d.get("status", "archived")
         # Node label: version_id["label"]:::classDef
-        lines.append(
-            f'    {n}["{n}\\n{skill}\\nF1: {f1_val:.3f}"]:::{status}'
-        )
+        lines.append(f'    {n}["{n}\\n{skill}\\nF1: {f1_val:.3f}"]:::{status}')
 
     for u, v, d in G.edges(data=True):
         relation = d.get("relation", "promoted")
         date = d.get("date", "")
         edge_style = "-->" if relation == "promoted" else ".->"
-        lines.append(
-            f'    {u} {edge_style}|"{relation} {date}"| {v}'
-        )
+        lines.append(f'    {u} {edge_style}|"{relation} {date}"| {v}')
 
     # classDef color block (UI-SPEC §B.6 — pre-registered sentinel colors)
     lines += [

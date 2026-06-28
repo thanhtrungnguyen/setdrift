@@ -16,6 +16,7 @@ material would be derivable from a committed signature).
 
 Requirements: REQ-SAFETY-02 (genealogy + HMAC signing chain).
 """
+
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -54,9 +55,7 @@ class AuditRecord(BaseModel):
     decision: str = Field(
         description="Short decision token, e.g. 'promoted', 'rejected', 'patch_proposed'"
     )
-    reason: str = Field(
-        description="Human-readable rationale for the decision (logged to audit)"
-    )
+    reason: str = Field(description="Human-readable rationale for the decision (logged to audit)")
     model: str = Field(description="Pinned model id used this cycle, e.g. claude-sonnet-4-6")
     seed: int = Field(description="RNG seed used in this cycle run")
     hmac_sig: str = Field(
@@ -81,9 +80,7 @@ class LoopManifest(ExperimentManifest):
     parent_hash: str = Field(
         description="config_hash of the parent config this cycle derives from (genealogy)"
     )
-    cycle_id: str = Field(
-        description="UUID4 shared across all audit steps for this cycle"
-    )
+    cycle_id: str = Field(description="UUID4 shared across all audit steps for this cycle")
     optimizer_backend: Literal["gepa", "miprov2"] = Field(
         default="gepa",
         description="Which optimizer backend produced this cycle's proposal",

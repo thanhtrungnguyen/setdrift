@@ -9,6 +9,7 @@ The conversion is deliberately simple:
 - Otherwise, transform 'fix: X' commit messages into 'Help me X' phrasing.
 - Cap the final string at MAX_PROMPT_CHARS so no single prompt dominates the corpus.
 """
+
 import re
 
 from setdrift_eval.corpus.fetcher import BugRecord
@@ -32,5 +33,7 @@ def _commit_message_to_request(commit_message: str) -> str:
     msg = (commit_message or "").strip()
     if not msg:
         return "Help me debug this issue."
-    stripped = re.sub(r"^(fix|chore|feat|refactor)(\([^)]+\))?:\s*", "", msg, count=1, flags=re.IGNORECASE)
+    stripped = re.sub(
+        r"^(fix|chore|feat|refactor)(\([^)]+\))?:\s*", "", msg, count=1, flags=re.IGNORECASE
+    )
     return f"Help me {stripped.rstrip('.')}."

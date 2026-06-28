@@ -19,6 +19,7 @@ What it does NOT do:
 
 Eval-side fail-loud: exceptions propagate (no bare except).
 """
+
 import json
 import os
 from pathlib import Path
@@ -35,7 +36,9 @@ HARD_CUT_DATE = "2026-07-15"
 # Env-var-overridable paths (mirrors orchestrator.py pattern)
 # ---------------------------------------------------------------------------
 _RAW_EVENTS = Path(os.environ.get("SETDRIFT_DRIFT_RAW_EVENTS", "data/drift/events-raw.jsonl"))
-_PUBLIC_EVENTS = Path(os.environ.get("SETDRIFT_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl"))
+_PUBLIC_EVENTS = Path(
+    os.environ.get("SETDRIFT_DRIFT_PUBLIC_EVENTS", "experiments/drift-event-log.jsonl")
+)
 
 
 def _read_raw_path() -> Path:
@@ -50,6 +53,7 @@ def _read_public_path() -> Path:
 # DriftEvent schema
 # ---------------------------------------------------------------------------
 
+
 class DriftEvent(BaseModel):
     """One qualifying drift event record (D-50).
 
@@ -63,9 +67,7 @@ class DriftEvent(BaseModel):
     event_id: str = Field(
         description="Unique identifier for this drift event (UUID4 or human-readable slug)"
     )
-    ts: str = Field(
-        description="ISO-8601 UTC timestamp when this drift event was recorded"
-    )
+    ts: str = Field(description="ISO-8601 UTC timestamp when this drift event was recorded")
     drift_type: Literal["codebase_head_shift", "model_release"] = Field(
         description=(
             "D-50 type tag: 'codebase_head_shift' for target-codebase HEAD advances "
@@ -114,6 +116,7 @@ class DriftEvent(BaseModel):
 # Scrub function (Security Domain rule, T-04-13)
 # ---------------------------------------------------------------------------
 
+
 def scrub_for_public(event: DriftEvent) -> dict:
     """Return the data-wall-clean subset of a DriftEvent for the committed log.
 
@@ -137,6 +140,7 @@ def scrub_for_public(event: DriftEvent) -> dict:
 # ---------------------------------------------------------------------------
 # Dual-write append (mirrors orchestrator._append_audit pattern)
 # ---------------------------------------------------------------------------
+
 
 def append_drift_event(event: DriftEvent) -> None:
     """Write FULL record to data/drift/events-raw.jsonl + SCRUBBED record to experiments/.
@@ -167,6 +171,7 @@ def append_drift_event(event: DriftEvent) -> None:
 # ---------------------------------------------------------------------------
 # Count helper (used by the D-51 cut decision)
 # ---------------------------------------------------------------------------
+
 
 def count_qualifying_events(public_path: Path | None = None) -> int:
     """Count the number of qualifying drift events in the public (committed) log.

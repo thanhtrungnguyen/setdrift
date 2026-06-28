@@ -9,6 +9,7 @@ or modifies the frozen Phase-2 ruler.
 
 Eval-side fail-loud: DuckDB errors propagate (no bare except).
 """
+
 import os
 from pathlib import Path
 

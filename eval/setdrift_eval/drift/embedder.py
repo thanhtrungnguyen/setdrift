@@ -11,6 +11,7 @@ loads without requiring the [drift] extra to be installed.
 
 Eval-side fail-loud: errors propagate (no bare except).
 """
+
 import hashlib
 import os
 from pathlib import Path
@@ -187,8 +188,13 @@ def embedder_checksum() -> str:
     model = SentenceTransformer(MODEL_NAME)
     # Find the config.json on disk
     config_path: Path | None = None
-    Path(model._model_card_data.base_model if hasattr(model, "_model_card_data") and
-                     model._model_card_data and model._model_card_data.base_model else "")
+    Path(
+        model._model_card_data.base_model
+        if hasattr(model, "_model_card_data")
+        and model._model_card_data
+        and model._model_card_data.base_model
+        else ""
+    )
 
     # Walk through potential module paths to find config.json
     for module in model.modules():
@@ -196,6 +202,7 @@ def embedder_checksum() -> str:
             # Transformer module — the model files live alongside it
             try:
                 import transformers
+
                 tok = transformers.AutoTokenizer.from_pretrained(MODEL_NAME)
                 # The tokenizer knows the local path
                 if hasattr(tok, "name_or_path"):

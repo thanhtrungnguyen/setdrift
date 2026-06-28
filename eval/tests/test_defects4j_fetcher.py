@@ -4,6 +4,7 @@ Implements the 02-01 spike's `.src.patch` extraction path (commit-db +
 patches/<id>.src.patch), NOT the pre-spike active-bugs.csv + git-diff approach —
 the spike (DEFECTS4J-VIABLE) proved patch-file reading needs no init/project_repos.
 """
+
 import pytest
 
 from setdrift_eval.corpus import fetcher
@@ -27,9 +28,7 @@ _SAMPLE_PATCH = (
 def _make_d4j(tmp_path, project, rows, patches):
     root = tmp_path / "framework" / "projects" / project
     (root / "patches").mkdir(parents=True)
-    (root / "commit-db").write_text(
-        "\n".join(",".join(r) for r in rows) + "\n", encoding="utf-8"
-    )
+    (root / "commit-db").write_text("\n".join(",".join(r) for r in rows) + "\n", encoding="utf-8")
     for bug_num, text in patches.items():
         (root / "patches" / f"{bug_num}.src.patch").write_text(text, encoding="utf-8")
     return tmp_path
@@ -53,9 +52,7 @@ def test_missing_framework_raises_fail_loud(tmp_path):
 
 def test_missing_patch_file_is_skipped(tmp_path):
     """A commit-db row with no .src.patch is skipped (continue), not raised."""
-    d = _make_d4j(
-        tmp_path, "Math", [("1", "a", "b"), ("2", "c", "d")], {"1": _SAMPLE_PATCH}
-    )
+    d = _make_d4j(tmp_path, "Math", [("1", "a", "b"), ("2", "c", "d")], {"1": _SAMPLE_PATCH})
     recs = list(iter_bug_records(d))
     assert [r.bug_id for r in recs] == ["d4j-Math-1"]  # bug 2 (no patch) skipped
 

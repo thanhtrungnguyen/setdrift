@@ -8,6 +8,7 @@ WSL2 cron), NOT a Claude Code SessionEnd hook — SessionEnd async work is kille
 before completion (Pitfall 4 / GitHub #41577). See 01-04-SUMMARY for the
 scheduled-task wiring.
 """
+
 import os
 from datetime import date
 from pathlib import Path
@@ -53,6 +54,6 @@ def rotate_if_over_budget(budget_bytes: int = DEFAULT_BUDGET_BYTES) -> bool:
         if total_bytes() < budget_bytes:
             break
         _archive_to_parquet([f])  # compressed copy retained in-wall
-        f.unlink()                # prune the JSONL → frees bytes
+        f.unlink()  # prune the JSONL → frees bytes
         acted = True
     return acted

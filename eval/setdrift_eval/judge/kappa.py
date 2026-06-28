@@ -16,6 +16,7 @@ Goodhart firewall:
 
 References: 05-AI-SPEC.md §4b.3, 05-PATTERNS.md §judge/kappa.py, D-11.
 """
+
 from __future__ import annotations
 
 from sklearn.metrics import cohen_kappa_score
@@ -36,6 +37,7 @@ KAPPA_FLOOR = 0.6  # pre-registered D-11; change requires dated design-doc amend
 # Result model
 # ---------------------------------------------------------------------------
 
+
 class KappaCell(BaseModel):
     """Result of one (bias_mode, family_pair) kappa computation.
 
@@ -49,9 +51,7 @@ class KappaCell(BaseModel):
     family_pair: str = Field(
         description="Judge family pair, e.g. 'claude_vs_gpt4' (always lower-case, ordered)"
     )
-    kappa: float = Field(
-        description="Cohen's kappa for this cell (via sklearn; de-aliased labels)"
-    )
+    kappa: float = Field(description="Cohen's kappa for this cell (via sklearn; de-aliased labels)")
     n_prompts: int = Field(
         description="Number of prompts in the slice that produced verdicts for this cell"
     )
@@ -80,6 +80,7 @@ class KappaCell(BaseModel):
 # ---------------------------------------------------------------------------
 # Core utilities
 # ---------------------------------------------------------------------------
+
 
 def compute_kappa(verdicts_a: list[str], verdicts_b: list[str]) -> float:
     """Cohen's kappa between two judge families over the same prompt slice.

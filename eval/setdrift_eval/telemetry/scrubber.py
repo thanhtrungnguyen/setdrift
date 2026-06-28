@@ -21,6 +21,7 @@ return partial/unscrubbed output. The batch scrubber catches and QUARANTINES.
 Audit records carry only a sha256[:16] hash of the original span — never the
 original text.
 """
+
 import hashlib
 import json
 import re
@@ -53,7 +54,11 @@ _PII_PATTERNS = [
     # 3-2-4 SSN.
     Pattern(name="us_ssn_shape", regex=r"\b\d{3}-\d{2}-\d{4}\b", score=0.9),
     # Phone: optional +country, 3-3-4 with at least separators between the trailing groups.
-    Pattern(name="phone_shape", regex=r"(?:\+\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}", score=0.85),
+    Pattern(
+        name="phone_shape",
+        regex=r"(?:\+\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}",
+        score=0.85,
+    ),
 ]
 _PII_RECOGNIZER = PatternRecognizer(supported_entity="PII_SHAPE", patterns=_PII_PATTERNS)
 
@@ -70,12 +75,16 @@ _DENY_ENTITY = "CUSTOM_DENY"
 # Fail-safe: a run of 20+ secret-ish chars on a detect-secrets-flagged line.
 _ENTROPY_TOKEN = re.compile(r"[A-Za-z0-9+/=_\-]{20,}")
 
-_LAYER_BY_ENTITY = {_DENY_ENTITY: "custom_deny", "SECRET": "secret_pattern", "PII_SHAPE": "pii_shape"}
+_LAYER_BY_ENTITY = {
+    _DENY_ENTITY: "custom_deny",
+    "SECRET": "secret_pattern",
+    "PII_SHAPE": "pii_shape",
+}
 
 
 @dataclass
 class RedactionRecord:
-    layer: str          # "presidio" | "secret_pattern" | "detect_secrets" | "custom_deny"
+    layer: str  # "presidio" | "secret_pattern" | "detect_secrets" | "custom_deny"
     entity_type: str
     start: int
     end: int
@@ -96,7 +105,9 @@ def add_deny_terms(terms) -> None:
     _DENY_TERMS.extend(fresh)
     # A PatternRecognizer with an empty deny_list raises; (re)register only when non-empty.
     _ANALYZER.registry.add_recognizer(
-        PatternRecognizer(supported_entity=_DENY_ENTITY, deny_list=list(_DENY_TERMS), deny_list_score=0.85)
+        PatternRecognizer(
+            supported_entity=_DENY_ENTITY, deny_list=list(_DENY_TERMS), deny_list_score=0.85
+        )
     )
 
 
@@ -116,7 +127,9 @@ def scrub_text(text: str) -> tuple[str, list["RedactionRecord"]]:
             if line_secrets:
                 for sec in line_secrets:
                     records.append(
-                        RedactionRecord("detect_secrets", sec.type, lineno, lineno, 0.8, _hash(line))
+                        RedactionRecord(
+                            "detect_secrets", sec.type, lineno, lineno, 0.8, _hash(line)
+                        )
                     )
                 # Mask high-entropy tokens so the secret leaves the text even if the
                 # SECRET regex below doesn't recognize this exact format.
@@ -129,7 +142,14 @@ def scrub_text(text: str) -> tuple[str, list["RedactionRecord"]]:
     for r in results:
         layer = _LAYER_BY_ENTITY.get(r.entity_type, "presidio")
         records.append(
-            RedactionRecord(layer, r.entity_type, r.start, r.end, float(r.score), _hash(working[r.start:r.end]))
+            RedactionRecord(
+                layer,
+                r.entity_type,
+                r.start,
+                r.end,
+                float(r.score),
+                _hash(working[r.start : r.end]),
+            )
         )
     scrubbed = _ANONYMIZER.anonymize(text=working, analyzer_results=results).text  # type: ignore[arg-type]
     return scrubbed, records

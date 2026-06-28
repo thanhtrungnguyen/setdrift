@@ -13,6 +13,7 @@ Model is pinned via SETDRIFT_MODEL (default claude-sonnet-4-6). The tool_choice 
 empty-toolset decision lives entirely in response_cache.load_or_call — this
 module never builds the create kwargs itself.
 """
+
 import os
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def run_arm(
 def run_arm_c(prompt: str, *, model: str = MODEL, cache_dir: Path = CACHE_DIR) -> set[str]:
     """Arm C: empty toolset → always-NONE floor. Provably fires nothing."""
     data = load_or_call(model=model, prompt=prompt, tools=[], cache_dir=cache_dir)
-    assert not any(
-        b.get("type") == "tool_use" for b in data["content"]
-    ), "Arm C must never fire a tool_use block (empty toolset)"
+    assert not any(b.get("type") == "tool_use" for b in data["content"]), (
+        "Arm C must never fire a tool_use block (empty toolset)"
+    )
     return set()

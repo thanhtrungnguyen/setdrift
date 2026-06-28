@@ -12,6 +12,7 @@ What it does NOT do:
 
 Goodhart firewall: ExperimentManifest imported as read-only schema reference only.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,9 +25,9 @@ from setdrift_eval.schemas.experiment import ExperimentManifest  # noqa: F401 �
 # Source: energycosts.co.uk/articles/anthropic-claude-ai-energy (accessed 2026-06-15)
 # Uncertainty: ±50% (range 0.0001–0.002 Wh/token across model sizes).
 # Dissertation caption MUST state these are estimates, not authoritative figures.
-KWHR_PER_TOKEN: float = 0.000003       # [ASSUMED] kWh per token, Claude Sonnet class
-USD_PER_KWHR: float = 0.08             # [ASSUMED] US average grid price (US EIA 2024)
-GRID_CO2_KG_PER_KWHR: float = 0.386   # [ASSUMED] US average carbon intensity (EPA eGRID 2023)
+KWHR_PER_TOKEN: float = 0.000003  # [ASSUMED] kWh per token, Claude Sonnet class
+USD_PER_KWHR: float = 0.08  # [ASSUMED] US average grid price (US EIA 2024)
+GRID_CO2_KG_PER_KWHR: float = 0.386  # [ASSUMED] US average carbon intensity (EPA eGRID 2023)
 
 # Uncertainty factor for error bars (±50% per RESEARCH Pitfall 3)
 _UNCERTAINTY_FACTOR: float = 0.50
@@ -139,7 +140,8 @@ def plot_cost_delta(
         fontsize=10,
     )
     fig.text(
-        0.5, -0.02,
+        0.5,
+        -0.02,
         "[ASSUMED] Energy-per-token estimates (±50% uncertainty); Anthropic publishes no official figures.\n"
         "Sources: energycosts.co.uk, EPA eGRID 2023, US EIA 2024. API token cost not included.",
         ha="center",

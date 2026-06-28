@@ -1,10 +1,15 @@
 """Content-addressed cache tests (Plan 02-04 Task 2, D-32). Fully offline."""
+
 import json
 
 from setdrift_eval.benchmark.response_cache import cache_key, load_or_call
 
 _TOOLS = [
-    {"name": "spring_boot_endpoint", "description": "d", "input_schema": {"type": "object", "properties": {}, "required": []}}
+    {
+        "name": "spring_boot_endpoint",
+        "description": "d",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    }
 ]
 
 

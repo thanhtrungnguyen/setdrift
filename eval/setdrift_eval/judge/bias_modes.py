@@ -12,6 +12,7 @@ What it does NOT do:
 
 References: 05-AI-SPEC.md §4b.5, 05-PATTERNS.md §judge/bias_modes.py, D-11.
 """
+
 from __future__ import annotations
 
 # Five pre-registered bias modes (D-11). Operationalization strings from AI-SPEC §4b.5.
@@ -40,7 +41,5 @@ def bias_mode_instruction(mode: str) -> str:
         ValueError: On unknown mode — fail-loud (eval-side pattern).
     """
     if mode not in _VALID_MODES:
-        raise ValueError(
-            f"Unknown bias_mode={mode!r}. Valid modes: {sorted(_VALID_MODES)}"
-        )
+        raise ValueError(f"Unknown bias_mode={mode!r}. Valid modes: {sorted(_VALID_MODES)}")
     return _BIAS_INSTRUCTIONS[mode]

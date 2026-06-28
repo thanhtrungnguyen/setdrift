@@ -1,4 +1,5 @@
 """Sanity-check + rotation logic tests (Plan 01-04 Task 2)."""
+
 import importlib
 import json
 
@@ -7,6 +8,7 @@ def _reload(mod_name, tmp_path, monkeypatch):
     monkeypatch.setenv("SETDRIFT_TELEMETRY_DIR", str(tmp_path))
     monkeypatch.setenv("SETDRIFT_TELEMETRY_QUARANTINE_DIR", str(tmp_path / "quarantine"))
     import importlib as _il
+
     mod = _il.import_module(mod_name)
     _il.reload(mod)
     return mod
@@ -15,13 +17,15 @@ def _reload(mod_name, tmp_path, monkeypatch):
 def _write_events(tmp_path, session, n, quarantined=0):
     (tmp_path).mkdir(parents=True, exist_ok=True)
     (tmp_path / f"{session}.events.jsonl").write_text(
-        "\n".join(json.dumps({"_session": session, "i": i}) for i in range(n)) + "\n", encoding="utf-8"
+        "\n".join(json.dumps({"_session": session, "i": i}) for i in range(n)) + "\n",
+        encoding="utf-8",
     )
     if quarantined:
         qd = tmp_path / "quarantine"
         qd.mkdir(parents=True, exist_ok=True)
         (qd / f"{session}.jsonl").write_text(
-            "\n".join(json.dumps({"_session": session, "q": i}) for i in range(quarantined)) + "\n", encoding="utf-8"
+            "\n".join(json.dumps({"_session": session, "q": i}) for i in range(quarantined)) + "\n",
+            encoding="utf-8",
         )
 
 

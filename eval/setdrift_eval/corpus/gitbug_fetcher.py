@@ -11,6 +11,7 @@ Per-file JSONs are either a single bug object or JSON-Lines (one bug per line).
 Bugs with an empty ``bug_patch`` (test-only / non-code-only changes) are skipped —
 the corpus needs a source diff to label.
 """
+
 import json
 import os
 from collections.abc import Iterator

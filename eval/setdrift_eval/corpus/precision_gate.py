@@ -10,6 +10,7 @@ column), so source is recovered by joining the filled CSV to the corpus JSONL on
 prompt_id. Fail-loud: a verified label outside the 8-value taxonomy raises.
 The committed report carries only ids/aggregates — never prompt or diff text.
 """
+
 import csv
 import json
 from collections import defaultdict
@@ -80,7 +81,7 @@ def _kappa(rows: list[dict]) -> float:
 def _label_distribution(rows: list[dict]) -> dict[str, int]:
     dist: dict[str, int] = defaultdict(int)
     for r in rows:
-        for label in (r["verified"] or {SkillLabel.NONE.value}):
+        for label in r["verified"] or {SkillLabel.NONE.value}:
             dist[label] += 1
     return dict(dist)
 

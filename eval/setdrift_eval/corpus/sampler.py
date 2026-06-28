@@ -9,6 +9,7 @@ With ``stratify_by_source=True`` (D-35), the sample is stratified by
 ``min_per_source`` floor (Pitfall 6) — preventing a large source from drowning
 out a small one in the manual batch.
 """
+
 import csv
 import json
 import math

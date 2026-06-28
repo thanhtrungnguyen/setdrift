@@ -10,6 +10,7 @@ What it does NOT do:
 
 References: 05-AI-SPEC.md §4b.1, 05-PATTERNS.md §judge/schema.py, D5-7.
 """
+
 from __future__ import annotations
 
 from typing import Literal

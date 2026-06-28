@@ -3,6 +3,7 @@
 Injects events (default 1000, incl 50 >1MB; override with SETDRIFT_PERF_EVENTS for a
 quick run) through the REAL hot path, then computes p99 of _hook_runtime_ms.
 """
+
 import os
 from pathlib import Path
 

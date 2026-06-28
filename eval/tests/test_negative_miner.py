@@ -1,4 +1,5 @@
 """Negative miner tests (Plan 02-02 Task 2). Offline — git is monkeypatched."""
+
 import pytest
 
 from setdrift_eval.corpus import negative_miner
@@ -30,7 +31,7 @@ def test_load_constructed_negatives_failloud_on_malformed(tmp_path):
 def test_mine_non_fix_negatives_tags_and_filters(tmp_path, monkeypatch):
     """Fix commits excluded; a non-fix that the labeler labels non-NONE is dropped."""
     log_out = (
-        "aaaaaaaaaaaa\tfix: handle npe\n"          # a fix SHA → excluded
+        "aaaaaaaaaaaa\tfix: handle npe\n"  # a fix SHA → excluded
         "bbbbbbbbbbbb\trefactor: extract method\n"  # clean non-fix → kept
         "cccccccccccc\trefactor: add null guard\n"  # non-fix but diff fires a rule → dropped
     )
@@ -38,6 +39,7 @@ def test_mine_non_fix_negatives_tags_and_filters(tmp_path, monkeypatch):
     def fake_run(cmd, **kwargs):
         class _R:
             stdout = ""
+
         r = _R()
         if "log" in cmd:
             r.stdout = log_out

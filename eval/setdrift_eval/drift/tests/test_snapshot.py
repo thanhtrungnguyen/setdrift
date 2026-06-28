@@ -5,6 +5,7 @@ Also covers the CR-03 / WR-04 review fixes:
   - checkout_snapshot never mutates the source repo's index/work-tree (WR-04)
   - an advancing ref never silently returns a stale snapshot (CR-03)
 """
+
 import subprocess
 
 
@@ -45,6 +46,7 @@ def _make_git_repo_two_commits(tmp_path):
     _git(repo, "commit", "-m", "c2")
     return repo
 
+
 def _make_java_tree(tmp_path, files: dict[str, str]):
     """Create a fake directory tree with Java files; return the root path.
 
@@ -68,14 +70,18 @@ def _make_java_tree(tmp_path, files: dict[str, str]):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 def test_content_manifest_deterministic(tmp_path):
     """Test 5a: _content_manifest over the same directory tree returns the same sha256 twice."""
     from setdrift_eval.drift.snapshot import _content_manifest
 
-    repo_dir = _make_java_tree(tmp_path, {
-        "src/Main.java": "public class Main { }",
-        "src/Util.java": "public class Util { }",
-    })
+    repo_dir = _make_java_tree(
+        tmp_path,
+        {
+            "src/Main.java": "public class Main { }",
+            "src/Util.java": "public class Util { }",
+        },
+    )
     hash1 = _content_manifest(repo_dir)
     hash2 = _content_manifest(repo_dir)
     assert hash1 == hash2, f"_content_manifest not deterministic: {hash1} != {hash2}"
@@ -87,9 +93,12 @@ def test_content_manifest_changes_with_file_content(tmp_path):
     """Test 5b: changing a file content changes the _content_manifest hash."""
     from setdrift_eval.drift.snapshot import _content_manifest
 
-    repo_dir = _make_java_tree(tmp_path, {
-        "src/Main.java": "public class Main { int x = 1; }",
-    })
+    repo_dir = _make_java_tree(
+        tmp_path,
+        {
+            "src/Main.java": "public class Main { int x = 1; }",
+        },
+    )
     hash_before = _content_manifest(repo_dir)
 
     # Modify the Java file
@@ -97,9 +106,7 @@ def test_content_manifest_changes_with_file_content(tmp_path):
         "public class Main { int x = 2; }", encoding="utf-8"
     )
     hash_after = _content_manifest(repo_dir)
-    assert hash_before != hash_after, (
-        "_content_manifest should change when file content changes"
-    )
+    assert hash_before != hash_after, "_content_manifest should change when file content changes"
 
 
 def test_content_manifest_only_java_files(tmp_path):
@@ -107,17 +114,23 @@ def test_content_manifest_only_java_files(tmp_path):
     from setdrift_eval.drift.snapshot import _content_manifest
 
     # Directory with only Java files
-    repo_dir_java = _make_java_tree(tmp_path / "java_only", {
-        "src/Main.java": "public class Main { }",
-    })
+    repo_dir_java = _make_java_tree(
+        tmp_path / "java_only",
+        {
+            "src/Main.java": "public class Main { }",
+        },
+    )
     hash_java_only = _content_manifest(repo_dir_java)
 
     # Same Java file + extra non-Java file (should produce identical hash)
-    repo_dir_mixed = _make_java_tree(tmp_path / "mixed", {
-        "src/Main.java": "public class Main { }",
-        "src/README.txt": "This should be ignored",
-        "src/config.xml": "<config/>",
-    })
+    repo_dir_mixed = _make_java_tree(
+        tmp_path / "mixed",
+        {
+            "src/Main.java": "public class Main { }",
+            "src/README.txt": "This should be ignored",
+            "src/config.xml": "<config/>",
+        },
+    )
     hash_mixed = _content_manifest(repo_dir_mixed)
     assert hash_java_only == hash_mixed, (
         "_content_manifest should ignore non-.java files; "

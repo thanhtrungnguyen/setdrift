@@ -15,6 +15,7 @@ Tests cover:
   3. extra_body provider-lock: order=["Anthropic"], allow_fallbacks=False;
      tool_choice="auto" when tools non-empty, absent when tools=[].
 """
+
 import types
 
 import setdrift_eval.benchmark.llm_backend as lb
@@ -34,6 +35,7 @@ _TOOLS = [
 # ---------------------------------------------------------------------------
 # Fake OpenAI client helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_tool_call(name: str, arguments: str = "{}"):
     """Return a minimal fake tool-call object."""
@@ -94,6 +96,7 @@ def _make_fake_openai(tool_calls, finish_reason: str = "tool_calls"):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 def test_anthropic_to_openai_tool_conversion(monkeypatch):
     """Anthropic tool spec converts to OpenAI function spec shape."""
     monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
@@ -128,9 +131,7 @@ def test_tool_calls_map_to_tool_use_blocks(monkeypatch):
     )
     monkeypatch.setattr(lb, "openai", fake_openai1)
     result = lb.call_model("anthropic/claude-sonnet-4.6", "add endpoint", _TOOLS)
-    assert result["content"] == [
-        {"type": "tool_use", "name": "spring_boot_endpoint", "input": {}}
-    ]
+    assert result["content"] == [{"type": "tool_use", "name": "spring_boot_endpoint", "input": {}}]
     assert result["stop_reason"] == "tool_use"
 
     # --- case 2: tool_calls=None -> empty content ---
@@ -153,9 +154,7 @@ def test_provider_lock_in_extra_body(monkeypatch):
 
     assert len(recorded1) == 1
     kwargs1 = recorded1[0]
-    assert kwargs1["extra_body"] == {
-        "provider": {"order": ["Anthropic"], "allow_fallbacks": False}
-    }
+    assert kwargs1["extra_body"] == {"provider": {"order": ["Anthropic"], "allow_fallbacks": False}}
     assert kwargs1.get("tool_choice") == "auto"
 
     # --- case 2: tools empty -> NO tool_choice ---
@@ -165,9 +164,7 @@ def test_provider_lock_in_extra_body(monkeypatch):
 
     assert len(recorded2) == 1
     kwargs2 = recorded2[0]
-    assert kwargs2["extra_body"] == {
-        "provider": {"order": ["Anthropic"], "allow_fallbacks": False}
-    }
+    assert kwargs2["extra_body"] == {"provider": {"order": ["Anthropic"], "allow_fallbacks": False}}
     assert "tool_choice" not in kwargs2
 
 
@@ -190,17 +187,20 @@ def test_call_model_accepts_per_call_max_tokens(monkeypatch):
 def test_call_openrouter_fail_loud_on_empty_choices(monkeypatch):
     """D-13b: _call_openrouter raises RuntimeError (not TypeError) on empty choices."""
     import pytest
+
     monkeypatch.setenv("SETDRIFT_LLM_BACKEND", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test")
 
-    fake_response = types.SimpleNamespace(choices=[], usage=_make_usage(),
-                                          model_extra={})
+    fake_response = types.SimpleNamespace(choices=[], usage=_make_usage(), model_extra={})
 
     class _Completions:
         @staticmethod
-        def create(**kwargs): return fake_response
+        def create(**kwargs):
+            return fake_response
+
     class _Chat:
         completions = _Completions()
+
     class _Client:
         chat = _Chat()
 

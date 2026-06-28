@@ -9,6 +9,7 @@ Covers:
 - promote_skill restores the skill back to load_skill_tools
 - every decision is logged with a non-empty reason
 """
+
 import json
 from pathlib import Path
 
@@ -76,7 +77,13 @@ def test_count_idle_sessions_below_N(tmp_path):
     events_path = tmp_path / "events.jsonl"
     # 5 sessions, the skill never fired in any of them (only other tools fired)
     events = [
-        {"ts": "2026-01-01T00:00:00Z", "tool": "other_tool", "ok": True, "session": f"sess-{i}", "cwd": "/x"}
+        {
+            "ts": "2026-01-01T00:00:00Z",
+            "tool": "other_tool",
+            "ok": True,
+            "session": f"sess-{i}",
+            "cwd": "/x",
+        }
         for i in range(5)
     ]
     _make_events_jsonl(events_path, events)
@@ -91,12 +98,19 @@ def test_count_idle_sessions_at_N(tmp_path, monkeypatch):
     monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
     import setdrift_eval.optimizer.deprecator as dep_mod
+
     reload(dep_mod)
 
     events_path = tmp_path / "events.jsonl"
     # 3 sessions, skill never fired
     events = [
-        {"ts": "2026-01-01T00:00:00Z", "tool": "other_tool", "ok": True, "session": f"s{i}", "cwd": "/x"}
+        {
+            "ts": "2026-01-01T00:00:00Z",
+            "tool": "other_tool",
+            "ok": True,
+            "session": f"s{i}",
+            "cwd": "/x",
+        }
         for i in range(3)
     ]
     _make_events_jsonl(events_path, events)
@@ -111,9 +125,35 @@ def test_count_idle_sessions_skill_fired_resets_idle(tmp_path):
     # session 5: my_skill fires
     # sessions 6-9: other tool fires again (4 idle sessions after the last firing)
     events = (
-        [{"ts": "2026-01-01T00:00:00Z", "tool": "other_tool", "ok": True, "session": f"s{i}", "cwd": "/x"} for i in range(5)]
-        + [{"ts": "2026-01-02T00:00:00Z", "tool": "my_skill", "ok": True, "session": "s5", "cwd": "/x"}]
-        + [{"ts": "2026-01-03T00:00:00Z", "tool": "other_tool", "ok": True, "session": f"s{i}", "cwd": "/x"} for i in range(6, 10)]
+        [
+            {
+                "ts": "2026-01-01T00:00:00Z",
+                "tool": "other_tool",
+                "ok": True,
+                "session": f"s{i}",
+                "cwd": "/x",
+            }
+            for i in range(5)
+        ]
+        + [
+            {
+                "ts": "2026-01-02T00:00:00Z",
+                "tool": "my_skill",
+                "ok": True,
+                "session": "s5",
+                "cwd": "/x",
+            }
+        ]
+        + [
+            {
+                "ts": "2026-01-03T00:00:00Z",
+                "tool": "other_tool",
+                "ok": True,
+                "session": f"s{i}",
+                "cwd": "/x",
+            }
+            for i in range(6, 10)
+        ]
     )
     _make_events_jsonl(events_path, events)
     result = count_idle_sessions("my_skill", events_path)
@@ -137,6 +177,7 @@ def test_record_firing_appends_record(tmp_path):
     """record_firing appends a JSONL record to the deprecation dir."""
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -164,17 +205,22 @@ def test_rejection_rate_below_threshold(tmp_path):
     dep_dir.mkdir()
     records = []
     for i in range(10):
-        records.append({
-            "skill_name": "sk", "session_id": f"s{i}",
-            "fired": True, "rejected": (i < 3),
-            "ts": "2026-01-01T00:00:00Z",
-        })
+        records.append(
+            {
+                "skill_name": "sk",
+                "session_id": f"s{i}",
+                "fired": True,
+                "rejected": (i < 3),
+                "ts": "2026-01-01T00:00:00Z",
+            }
+        )
     skill_log = dep_dir / "sk.jsonl"
     with skill_log.open("w", encoding="utf-8") as fh:
         for r in records:
             fh.write(json.dumps(r) + "\n")
 
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -194,17 +240,22 @@ def test_rejection_rate_above_threshold(tmp_path):
     dep_dir.mkdir()
     records = []
     for i in range(10):
-        records.append({
-            "skill_name": "bad_skill", "session_id": f"s{i}",
-            "fired": True, "rejected": (i < 9),
-            "ts": "2026-01-01T00:00:00Z",
-        })
+        records.append(
+            {
+                "skill_name": "bad_skill",
+                "session_id": f"s{i}",
+                "fired": True,
+                "rejected": (i < 9),
+                "ts": "2026-01-01T00:00:00Z",
+            }
+        )
     skill_log = dep_dir / "bad_skill.jsonl"
     with skill_log.open("w", encoding="utf-8") as fh:
         for r in records:
             fh.write(json.dumps(r) + "\n")
 
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -223,6 +274,7 @@ def test_rejection_rate_no_firing_log(tmp_path):
     dep_dir = tmp_path / "deprecation"
     dep_dir.mkdir()
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -248,6 +300,7 @@ def test_quarantine_moves_skill_outside_glob(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -286,6 +339,7 @@ def test_quarantined_skill_not_loaded_by_load_skill_tools(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -323,6 +377,7 @@ def test_promote_skill_restores_to_load_glob(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -356,6 +411,7 @@ def test_promote_non_quarantined_skill_raises(tmp_path):
     _make_skill_dir(skills_dir, "normal-skill")
 
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(tmp_path / "deprecation")
     try:
@@ -382,7 +438,13 @@ def test_decision_model_requires_reason():
 def test_decision_model_extra_forbid():
     """Decision model must reject unknown extra fields (extra='forbid')."""
     with pytest.raises(Exception):
-        Decision(skill_name="sk", decision="archive", reason="idle", ts="2026-01-01T00:00:00Z", unknown_field="x")
+        Decision(
+            skill_name="sk",
+            decision="archive",
+            reason="idle",
+            ts="2026-01-01T00:00:00Z",
+            unknown_field="x",
+        )
 
 
 def test_decision_logged_with_reason_quarantine(tmp_path):
@@ -393,6 +455,7 @@ def test_decision_logged_with_reason_quarantine(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -400,7 +463,9 @@ def test_decision_logged_with_reason_quarantine(tmp_path):
         # The decision record must be logged to the deprecation dir
         decision_log = dep_dir / "decisions.jsonl"
         assert decision_log.exists(), "decisions.jsonl must be created"
-        lines = [json.loads(l) for l in decision_log.read_text(encoding="utf-8").strip().splitlines()]
+        lines = [
+            json.loads(l) for l in decision_log.read_text(encoding="utf-8").strip().splitlines()
+        ]
         assert len(lines) >= 1
         last = lines[-1]
         assert last["skill_name"] == "noisy-skill"
@@ -424,6 +489,7 @@ def test_decision_logged_with_reason_promote(tmp_path):
 
     dep_dir = tmp_path / "deprecation"
     import os
+
     original = os.environ.get("SETDRIFT_DEPRECATION_DIR")
     os.environ["SETDRIFT_DEPRECATION_DIR"] = str(dep_dir)
     try:
@@ -431,7 +497,9 @@ def test_decision_logged_with_reason_promote(tmp_path):
         promote_skill("rehab-skill", skills_dir)
         decision_log = dep_dir / "decisions.jsonl"
         assert decision_log.exists()
-        lines = [json.loads(l) for l in decision_log.read_text(encoding="utf-8").strip().splitlines()]
+        lines = [
+            json.loads(l) for l in decision_log.read_text(encoding="utf-8").strip().splitlines()
+        ]
         promote_lines = [l for l in lines if l["decision"] == "promote"]
         assert len(promote_lines) >= 1
         assert promote_lines[-1]["reason"], "promote decision reason must be non-empty"
@@ -452,6 +520,7 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
     import setdrift_eval.optimizer.deprecator as dep_mod
+
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -461,7 +530,13 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     events_path = tmp_path / "events.jsonl"
     # 3 sessions with other tools; idle-skill never fires
     events = [
-        {"ts": "2026-01-01T00:00:00Z", "tool": "other_tool", "ok": True, "session": f"s{i}", "cwd": "/x"}
+        {
+            "ts": "2026-01-01T00:00:00Z",
+            "tool": "other_tool",
+            "ok": True,
+            "session": f"s{i}",
+            "cwd": "/x",
+        }
         for i in range(3)
     ]
     _make_events_jsonl(events_path, events)
@@ -483,6 +558,7 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
     import setdrift_eval.optimizer.deprecator as dep_mod
+
     reload(dep_mod)
 
     skills_dir = tmp_path / "skills"
@@ -492,7 +568,13 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     events_path = tmp_path / "events.jsonl"
     # 2 sessions, skill fires in both → 0 idle sessions (below threshold of 3)
     events = [
-        {"ts": "2026-01-01T00:00:00Z", "tool": "active_skill", "ok": True, "session": f"s{i}", "cwd": "/x"}
+        {
+            "ts": "2026-01-01T00:00:00Z",
+            "tool": "active_skill",
+            "ok": True,
+            "session": f"s{i}",
+            "cwd": "/x",
+        }
         for i in range(2)
     ]
     _make_events_jsonl(events_path, events)
@@ -502,7 +584,9 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)
-    archive_for_active = [d for d in decisions if d.skill_name == "active-skill" and d.decision == "archive"]
+    archive_for_active = [
+        d for d in decisions if d.skill_name == "active-skill" and d.decision == "archive"
+    ]
     assert len(archive_for_active) == 0, "active skill must NOT be flagged for archive"
 
 
@@ -516,7 +600,13 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
     dep_dir.mkdir()
     # Write firing records: 9/10 rejected
     records = [
-        {"skill_name": "rejected-skill", "session_id": f"s{i}", "fired": True, "rejected": (i < 9), "ts": "2026-01-01T00:00:00Z"}
+        {
+            "skill_name": "rejected-skill",
+            "session_id": f"s{i}",
+            "fired": True,
+            "rejected": (i < 9),
+            "ts": "2026-01-01T00:00:00Z",
+        }
         for i in range(10)
     ]
     skill_log = dep_dir / "rejected-skill.jsonl"
@@ -525,17 +615,29 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
             fh.write(json.dumps(r) + "\n")
 
     events_path = tmp_path / "events.jsonl"
-    _make_events_jsonl(events_path, [
-        {"ts": "2026-01-01T00:00:00Z", "tool": "rejected_skill", "ok": True, "session": f"s{i}", "cwd": "/x"}
-        for i in range(10)
-    ])
+    _make_events_jsonl(
+        events_path,
+        [
+            {
+                "ts": "2026-01-01T00:00:00Z",
+                "tool": "rejected_skill",
+                "ok": True,
+                "session": f"s{i}",
+                "cwd": "/x",
+            }
+            for i in range(10)
+        ],
+    )
 
     monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     from importlib import reload
     import setdrift_eval.optimizer.deprecator as dep_mod
+
     reload(dep_mod)
 
     decisions = dep_mod.scan(skills_dir, events_path)
-    quarantine_decisions = [d for d in decisions if d.decision == "quarantine" and d.skill_name == "rejected-skill"]
+    quarantine_decisions = [
+        d for d in decisions if d.decision == "quarantine" and d.skill_name == "rejected-skill"
+    ]
     assert len(quarantine_decisions) >= 1, "high-rejection skill must be flagged for quarantine"
     assert quarantine_decisions[0].reason, "quarantine decision must have a non-empty reason"

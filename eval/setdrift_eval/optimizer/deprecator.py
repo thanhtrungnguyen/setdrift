@@ -19,6 +19,7 @@ What this module does NOT do:
 Every state-changing call logs a Decision record with a non-empty reason.
 Fail-loud: this is offline analysis, NOT the telemetry hot path.
 """
+
 import json
 import os
 from datetime import datetime, timezone
@@ -65,7 +66,9 @@ class Decision(BaseModel):
     @classmethod
     def reason_must_be_non_empty(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError("Decision reason must be a non-empty string (anti-repudiation requirement)")
+            raise ValueError(
+                "Decision reason must be a non-empty string (anti-repudiation requirement)"
+            )
         return v
 
 
@@ -173,7 +176,7 @@ def count_idle_sessions(skill_name: str, events_path: Path) -> int:
     # Collect distinct active sessions (sessions with ≥1 tool-use event of any kind)
     # that appeared AFTER the last firing session
     seen_sessions: list[str] = []
-    found_last = (last_firing_session is None)  # if never fired, count all
+    found_last = last_firing_session is None  # if never fired, count all
 
     for ev in events:
         session = ev.get("session")

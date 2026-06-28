@@ -13,6 +13,7 @@ Gating:
   - Docker: gated by a _docker_info() check that skips with a clear reason.
     The test NEVER silently passes when Docker is down.
 """
+
 import subprocess
 import sys
 from pathlib import Path
@@ -41,7 +42,7 @@ def _docker_available() -> bool:
             timeout=10,
         )
         return result.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         return False
 
 
@@ -60,6 +61,7 @@ def _import_drift_task():
     if str(_EVAL_ROOT) not in sys.path:
         sys.path.insert(0, str(_EVAL_ROOT))
     import drift_task  # noqa: PLC0415
+
     return drift_task
 
 
@@ -74,15 +76,13 @@ def test_drift_task_constructs() -> None:
 
     # Patch arm_runner.load_skill_tools to not require a real skills directory.
     import unittest.mock as mock
-    with mock.patch(
-        "drift_task.load_skill_tools", return_value=[]
-    ):
-        task_obj = drift_task_mod.drift_task(
-            mode="synthetic", revision="mid", arm="B"
-        )
+
+    with mock.patch("drift_task.load_skill_tools", return_value=[]):
+        task_obj = drift_task_mod.drift_task(mode="synthetic", revision="mid", arm="B")
 
     # Inspect Task must be constructed
     from inspect_ai import Task
+
     assert isinstance(task_obj, Task), (
         f"drift_task() must return an inspect_ai.Task, got {type(task_obj)}"
     )
@@ -104,8 +104,7 @@ def test_build_dataset_revisions() -> None:
     for revision in ("early", "mid", "late"):
         dataset = drift_task_mod._build_dataset(mode="synthetic", revision=revision)
         assert len(dataset) > 0, (
-            f"_build_dataset(mode='synthetic', revision={revision!r}) "
-            "returned an empty dataset"
+            f"_build_dataset(mode='synthetic', revision={revision!r}) returned an empty dataset"
         )
         for sample in dataset:
             assert sample.metadata["mode"] == "synthetic", (
@@ -255,9 +254,7 @@ def test_drift_task_runs_in_sandbox() -> None:
     )
     # (c) Scorer returned a result — each sample should have a score
     for sample in log.samples:
-        assert sample.scores is not None, (
-            f"Sample {sample.id} must have scorer results"
-        )
+        assert sample.scores is not None, f"Sample {sample.id} must have scorer results"
 
 
 # ---------------------------------------------------------------------------
@@ -309,8 +306,7 @@ def test_solver_threads_active_model_into_run_arm() -> None:
 
     # get_model must be imported (the source of the active model name).
     imports_get_model = any(
-        isinstance(node, ast.ImportFrom)
-        and any(alias.name == "get_model" for alias in node.names)
+        isinstance(node, ast.ImportFrom) and any(alias.name == "get_model" for alias in node.names)
         for node in ast.walk(tree)
     )
     assert imports_get_model, "drift_task.py must import get_model to honor --model (CR-05)"

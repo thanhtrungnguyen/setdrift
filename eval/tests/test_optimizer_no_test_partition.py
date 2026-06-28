@@ -9,6 +9,7 @@ Two layers of proof:
   2. Structural source check: asserts gepa_wrapper.py does not import a split loader
      and does not contain any direct reference to 'split.json' in non-comment lines.
 """
+
 import json
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -16,12 +17,15 @@ from unittest.mock import MagicMock
 import pytest
 
 _SETDRIFT_PLUGIN_ROOT = Path(__file__).resolve().parents[2]
-_GEPA_WRAPPER_SRC = _SETDRIFT_PLUGIN_ROOT / "eval" / "setdrift_eval" / "optimizer" / "gepa_wrapper.py"
+_GEPA_WRAPPER_SRC = (
+    _SETDRIFT_PLUGIN_ROOT / "eval" / "setdrift_eval" / "optimizer" / "gepa_wrapper.py"
+)
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def mixed_corpus(tmp_path):
@@ -31,17 +35,31 @@ def mixed_corpus(tmp_path):
     corpus_file = corpus_dir / "public.jsonl"
 
     records = [
-        {"prompt_id": "train-1", "prompt": "add REST endpoint", "ground_truth_skills": ["spring-annotation-fix"]},
-        {"prompt_id": "train-2", "prompt": "create controller", "ground_truth_skills": ["spring-annotation-fix"]},
+        {
+            "prompt_id": "train-1",
+            "prompt": "add REST endpoint",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
+        {
+            "prompt_id": "train-2",
+            "prompt": "create controller",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
         {"prompt_id": "train-3", "prompt": "no skill needed", "ground_truth_skills": ["none"]},
-        {"prompt_id": "val-1", "prompt": "expose REST API (val)", "ground_truth_skills": ["spring-annotation-fix"]},
+        {
+            "prompt_id": "val-1",
+            "prompt": "expose REST API (val)",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
         {"prompt_id": "val-2", "prompt": "REST method (val)", "ground_truth_skills": ["none"]},
-        {"prompt_id": "test-1", "prompt": "reserved test prompt", "ground_truth_skills": ["spring-annotation-fix"]},
+        {
+            "prompt_id": "test-1",
+            "prompt": "reserved test prompt",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
         {"prompt_id": "test-2", "prompt": "another test prompt", "ground_truth_skills": ["none"]},
     ]
-    corpus_file.write_text(
-        "\n".join(json.dumps(r) for r in records), encoding="utf-8"
-    )
+    corpus_file.write_text("\n".join(json.dumps(r) for r in records), encoding="utf-8")
 
     split = {
         "train-1": "train",
@@ -102,6 +120,7 @@ def hmac_key(tmp_path, monkeypatch):
 # Layer 1: Runtime spy — only train examples reach propose()
 # ---------------------------------------------------------------------------
 
+
 def test_only_train_examples_reach_propose(
     mixed_corpus, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch, tmp_path
 ):
@@ -127,13 +146,18 @@ def test_only_train_examples_reach_propose(
             pid = ex.get("prompt_id") if isinstance(ex, dict) else getattr(ex, "prompt_id", None)
             prompt = ex.get("prompt", "") if isinstance(ex, dict) else getattr(ex, "prompt", "")
             skills = set(
-                (ex.get("ground_truth_skills") or []) if isinstance(ex, dict)
+                (ex.get("ground_truth_skills") or [])
+                if isinstance(ex, dict)
                 else (getattr(ex, "ground_truth_skills", None) or [])
             )
             gt = frozenset(skills - {"none"})
-            examples.append(dspy.Example(
-                prompt=prompt, gt_intents=gt, prompt_id=pid,
-            ).with_inputs("prompt"))
+            examples.append(
+                dspy.Example(
+                    prompt=prompt,
+                    gt_intents=gt,
+                    prompt_id=pid,
+                ).with_inputs("prompt")
+            )
         return examples
 
     def spy_propose(sn, skill_path, trainset, frozen_map, cycle_id):
@@ -156,10 +180,14 @@ def test_only_train_examples_reach_propose(
             reason="rejected: 0.5000 <= 0.7500",
         )
 
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset
+    )
     monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._propose", spy_propose)
     monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._verify_candidate", fake_verify)
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -204,14 +232,13 @@ def test_only_train_examples_reach_propose(
 # Layer 2: Structural source check — gepa_wrapper.py never reads split.json
 # ---------------------------------------------------------------------------
 
+
 def test_gepa_wrapper_does_not_import_split_loader():
     """gepa_wrapper.py must not import corpus split-loader or read split.json."""
     assert _GEPA_WRAPPER_SRC.exists(), f"gepa_wrapper.py not found at {_GEPA_WRAPPER_SRC}"
     src = _GEPA_WRAPPER_SRC.read_text(encoding="utf-8")
 
-    non_comment = "\n".join(
-        ln for ln in src.splitlines() if not ln.lstrip().startswith("#")
-    )
+    non_comment = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
 
     # Must not reference split.json or split-reading functions
     assert "split.json" not in non_comment, (
@@ -242,6 +269,7 @@ def test_gepa_wrapper_has_no_split_json_read():
 # ---------------------------------------------------------------------------
 # Layer 3: Verify the _load_trainset function filters correctly
 # ---------------------------------------------------------------------------
+
 
 def test_load_trainset_filters_to_train_only(mixed_corpus, map_path, tmp_path):
     """_load_trainset returns only split=='train' examples."""

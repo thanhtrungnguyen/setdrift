@@ -12,6 +12,7 @@ Tests:
 
 Uses in-memory DuckDB seeded with known A/B values for deterministic assertions.
 """
+
 import math
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from setdrift_eval.drift.db import DDL
 # ---------------------------------------------------------------------------
 # Helper: seed in-memory DuckDB with known A/B 5-run values
 # ---------------------------------------------------------------------------
+
 
 def _make_seeded_db(
     tmp_path: Path,
@@ -41,14 +43,14 @@ def _make_seeded_db(
     if f1_a_by_revision is None:
         f1_a_by_revision = {
             "early": [0.60, 0.62, 0.61, 0.63, 0.60],
-            "mid":   [0.70, 0.72, 0.71, 0.73, 0.70],
-            "late":  [0.80, 0.82, 0.81, 0.83, 0.80],
+            "mid": [0.70, 0.72, 0.71, 0.73, 0.70],
+            "late": [0.80, 0.82, 0.81, 0.83, 0.80],
         }
     if f1_b_by_revision is None:
         f1_b_by_revision = {
             "early": [0.55, 0.57, 0.56, 0.58, 0.55],
-            "mid":   [0.65, 0.67, 0.66, 0.68, 0.65],
-            "late":  [0.75, 0.77, 0.76, 0.78, 0.75],
+            "mid": [0.65, 0.67, 0.66, 0.68, 0.65],
+            "late": [0.75, 0.77, 0.76, 0.78, 0.75],
         }
 
     con = duckdb.connect(str(tmp_path / "test.ddb"))
@@ -63,9 +65,10 @@ def _make_seeded_db(
         for run_idx, (f1_a, f1_b) in enumerate(zip(a_runs, b_runs)):
             for arm, f1_val in (("A", f1_a), ("B", f1_b)):
                 import hashlib
-                cell_id = hashlib.sha256(
-                    f"{arm}{model}{revision}{run_idx}".encode()
-                ).hexdigest()[:12]
+
+                cell_id = hashlib.sha256(f"{arm}{model}{revision}{run_idx}".encode()).hexdigest()[
+                    :12
+                ]
                 con.execute(
                     """
                     INSERT OR REPLACE INTO grid_cells
@@ -76,10 +79,21 @@ def _make_seeded_db(
                     VALUES (?,?,?,?,?, ?,?,?,?, ?,?,?, ?,?,?)
                     """,
                     [
-                        cell_id, arm, model, revision, run_idx,
-                        "cfg_test", "snap_test", "map_test",
-                        "", run_idx, f1_val, 0,
-                        None, yoke_min, "2026-06-11T00:00:00+00:00",
+                        cell_id,
+                        arm,
+                        model,
+                        revision,
+                        run_idx,
+                        "cfg_test",
+                        "snap_test",
+                        "map_test",
+                        "",
+                        run_idx,
+                        f1_val,
+                        0,
+                        None,
+                        yoke_min,
+                        "2026-06-11T00:00:00+00:00",
                     ],
                 )
 
@@ -90,6 +104,7 @@ def _make_seeded_db(
 # Test 1: pivot to per-(revision, run_idx) paired diffs, mean_diff per revision
 # ---------------------------------------------------------------------------
 
+
 def test_paired_difference_report_computes_mean_diff(tmp_path: Path) -> None:
     """Test 1: report pivots grid_cells and computes correct paired mean_diff per revision."""
     from setdrift_eval.drift.paired_stats import paired_difference_report
@@ -97,13 +112,13 @@ def test_paired_difference_report_computes_mean_diff(tmp_path: Path) -> None:
     model = "claude-sonnet-4-6"
     f1_a = {
         "early": [0.60, 0.62, 0.61, 0.63, 0.60],
-        "mid":   [0.70, 0.72, 0.71, 0.73, 0.70],
-        "late":  [0.80, 0.82, 0.81, 0.83, 0.80],
+        "mid": [0.70, 0.72, 0.71, 0.73, 0.70],
+        "late": [0.80, 0.82, 0.81, 0.83, 0.80],
     }
     f1_b = {
         "early": [0.55, 0.57, 0.56, 0.58, 0.55],
-        "mid":   [0.65, 0.67, 0.66, 0.68, 0.65],
-        "late":  [0.75, 0.77, 0.76, 0.78, 0.75],
+        "mid": [0.65, 0.67, 0.66, 0.68, 0.65],
+        "late": [0.75, 0.77, 0.76, 0.78, 0.75],
     }
     con = _make_seeded_db(tmp_path, model=model, f1_a_by_revision=f1_a, f1_b_by_revision=f1_b)
 
@@ -132,20 +147,15 @@ def test_paired_difference_report_computes_mean_diff(tmp_path: Path) -> None:
         assert abs(result.paired_diff - expected_diff) < 1e-9, (
             f"Revision {revision}: paired_diff={result.paired_diff:.6f}, expected {expected_diff:.6f}"
         )
-        assert result.n_runs == 5, (
-            f"Revision {revision}: n_runs={result.n_runs}, expected 5"
-        )
-        assert result.revision == revision, (
-            f"result.revision={result.revision!r} != {revision!r}"
-        )
-        assert result.model == model, (
-            f"result.model={result.model!r} != {model!r}"
-        )
+        assert result.n_runs == 5, f"Revision {revision}: n_runs={result.n_runs}, expected 5"
+        assert result.revision == revision, f"result.revision={result.revision!r} != {revision!r}"
+        assert result.model == model, f"result.model={result.model!r} != {model!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2: t_stat / p_value via ttest_rel; nan-guard for n_runs < 2
 # ---------------------------------------------------------------------------
+
 
 def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
     """Test 2: t_stat/p_value via scipy.stats.ttest_rel; n_runs<2 returns nan + reason."""
@@ -161,6 +171,7 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
     con = duckdb.connect(str(tmp_path / "test.ddb"))
     con.execute(DDL)
     import hashlib
+
     yoke_min = "2026-06-11T00:00"
     for run_idx, (a, b) in enumerate(zip(f1_a["only"], f1_b["only"])):
         for arm, f1_val in (("A", a), ("B", b)):
@@ -171,9 +182,23 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
                     intent_map_sha,split_hash,rng_seed,macro_f1,token_cost,
                     cost_usd,yoke_minute,ts)
                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                [cell_id, arm, model, "only", run_idx,
-                 "c", "s", "m", "", run_idx, f1_val, 0, None, yoke_min,
-                 "2026-06-11T00:00:00+00:00"],
+                [
+                    cell_id,
+                    arm,
+                    model,
+                    "only",
+                    run_idx,
+                    "c",
+                    "s",
+                    "m",
+                    "",
+                    run_idx,
+                    f1_val,
+                    0,
+                    None,
+                    yoke_min,
+                    "2026-06-11T00:00:00+00:00",
+                ],
             )
 
     results = paired_difference_report(con, model=model)
@@ -181,9 +206,7 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
 
     # Verify t_stat and p_value match scipy.stats.ttest_rel
     stat, pval = ttest_rel(f1_a["only"], f1_b["only"])
-    assert abs(r.t_stat - stat) < 1e-9, (
-        f"t_stat mismatch: got {r.t_stat:.6f}, expected {stat:.6f}"
-    )
+    assert abs(r.t_stat - stat) < 1e-9, f"t_stat mismatch: got {r.t_stat:.6f}, expected {stat:.6f}"
     assert abs(r.p_value - pval) < 1e-9, (
         f"p_value mismatch: got {r.p_value:.6f}, expected {pval:.6f}"
     )
@@ -200,9 +223,23 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
                 intent_map_sha,split_hash,rng_seed,macro_f1,token_cost,
                 cost_usd,yoke_minute,ts)
                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            [cell_id, arm, model, "degen", 0,
-             "c", "s", "m", "", 0, f1_val, 0, None, yoke_min,
-             "2026-06-11T00:00:00+00:00"],
+            [
+                cell_id,
+                arm,
+                model,
+                "degen",
+                0,
+                "c",
+                "s",
+                "m",
+                "",
+                0,
+                f1_val,
+                0,
+                None,
+                yoke_min,
+                "2026-06-11T00:00:00+00:00",
+            ],
         )
 
     results2 = paired_difference_report(con2, model=model)
@@ -221,6 +258,7 @@ def test_ttest_rel_computed_and_nan_guard(tmp_path: Path) -> None:
 # Test 3: No cross-model average — report is per (model, revision) only (§7-2)
 # ---------------------------------------------------------------------------
 
+
 def test_no_cross_model_average(tmp_path: Path) -> None:
     """Test 3: paired_difference_report is per (model, revision); no cross-model averaging."""
     from setdrift_eval.drift.paired_stats import paired_difference_report
@@ -229,24 +267,37 @@ def test_no_cross_model_average(tmp_path: Path) -> None:
     con = duckdb.connect(str(tmp_path / "test.ddb"))
     con.execute(DDL)
     import hashlib
+
     yoke_min = "2026-06-11T00:00"
 
     for model, f1_offset in [("claude-sonnet-4-6", 0.0), ("claude-haiku-4-5-20251001", -0.1)]:
         for arm, base in (("A", 0.70 + f1_offset), ("B", 0.60 + f1_offset)):
             for run_idx in range(5):
                 f1_val = base + run_idx * 0.01
-                cell_id = hashlib.sha256(
-                    f"{arm}{model}only{run_idx}".encode()
-                ).hexdigest()[:12]
+                cell_id = hashlib.sha256(f"{arm}{model}only{run_idx}".encode()).hexdigest()[:12]
                 con.execute(
                     """INSERT OR REPLACE INTO grid_cells
                        (cell_id,arm,model,revision,run_idx,config_hash,snapshot_hash,
                         intent_map_sha,split_hash,rng_seed,macro_f1,token_cost,
                         cost_usd,yoke_minute,ts)
                        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    [cell_id, arm, model, "only", run_idx,
-                     "c", "s", "m", "", run_idx, f1_val, 0, None, yoke_min,
-                     "2026-06-11T00:00:00+00:00"],
+                    [
+                        cell_id,
+                        arm,
+                        model,
+                        "only",
+                        run_idx,
+                        "c",
+                        "s",
+                        "m",
+                        "",
+                        run_idx,
+                        f1_val,
+                        0,
+                        None,
+                        yoke_min,
+                        "2026-06-11T00:00:00+00:00",
+                    ],
                 )
 
     # Calling paired_difference_report with Sonnet model should NOT mix in Haiku rows
@@ -264,9 +315,7 @@ def test_no_cross_model_average(tmp_path: Path) -> None:
         )
 
     # The mean_A values must differ between models (not the same averaged value)
-    assert abs(
-        results_sonnet["only"].mean_A - results_haiku["only"].mean_A
-    ) > 0.05, (
+    assert abs(results_sonnet["only"].mean_A - results_haiku["only"].mean_A) > 0.05, (
         "Sonnet and Haiku mean_A should differ (not averaged together) — §7-2 violation check"
     )
 
@@ -274,6 +323,7 @@ def test_no_cross_model_average(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Test 4: PairedDiffResult always carries non-empty reason (field_validator)
 # ---------------------------------------------------------------------------
+
 
 def test_paired_diff_result_reason_always_populated(tmp_path: Path) -> None:
     """Test 4: PairedDiffResult.reason is never empty (field_validator enforces it)."""
@@ -354,6 +404,7 @@ def test_paired_diff_result_reason_always_populated(tmp_path: Path) -> None:
 # Test 5: noise_band consumed via frozen scorer (import check)
 # ---------------------------------------------------------------------------
 
+
 def test_paired_stats_imports_frozen_noise_band() -> None:
     """Test 5: paired_stats.py imports noise_band from setdrift_eval.telemetry.scorer (FROZEN RULER)."""
     import ast
@@ -365,8 +416,7 @@ def test_paired_stats_imports_frozen_noise_band() -> None:
 
     # Must contain FROZEN RULER comment
     assert "FROZEN RULER" in source, (
-        "paired_stats.py must contain '# FROZEN RULER' comment "
-        "marking the frozen scorer import"
+        "paired_stats.py must contain '# FROZEN RULER' comment marking the frozen scorer import"
     )
 
     # Must import noise_band from setdrift_eval.telemetry.scorer
@@ -401,6 +451,7 @@ def test_paired_stats_imports_frozen_noise_band() -> None:
 # Test 6: exceeds_b_upper_band is True when paired_diff > (b_band_high - mean_B)
 # ---------------------------------------------------------------------------
 
+
 def test_exceeds_b_upper_band_logic(tmp_path: Path) -> None:
     """Test 6: exceeds_b_upper_band correctly reflects whether A mean exceeds B upper band."""
     from setdrift_eval.drift.paired_stats import paired_difference_report
@@ -414,6 +465,7 @@ def test_exceeds_b_upper_band_logic(tmp_path: Path) -> None:
     con = duckdb.connect(str(tmp_path / "test.ddb"))
     con.execute(DDL)
     import hashlib
+
     yoke_min = "2026-06-11T00:00"
     for run_idx, (a, b) in enumerate(zip(f1_a_runs, f1_b_runs)):
         for arm, f1_val in (("A", a), ("B", b)):
@@ -424,9 +476,23 @@ def test_exceeds_b_upper_band_logic(tmp_path: Path) -> None:
                     intent_map_sha,split_hash,rng_seed,macro_f1,token_cost,
                     cost_usd,yoke_minute,ts)
                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                [cell_id, arm, model, "rev", run_idx,
-                 "c", "s", "m", "", run_idx, f1_val, 0, None, yoke_min,
-                 "2026-06-11T00:00:00+00:00"],
+                [
+                    cell_id,
+                    arm,
+                    model,
+                    "rev",
+                    run_idx,
+                    "c",
+                    "s",
+                    "m",
+                    "",
+                    run_idx,
+                    f1_val,
+                    0,
+                    None,
+                    yoke_min,
+                    "2026-06-11T00:00:00+00:00",
+                ],
             )
 
     results = paired_difference_report(con, model=model)

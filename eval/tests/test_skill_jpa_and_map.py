@@ -9,6 +9,7 @@ Covers:
   - Both SKILL.md descriptions contain the deliberate D-45 overlap phrase
     "Spring annotation patterns in the parking services"
 """
+
 from pathlib import Path
 
 import pytest
@@ -40,8 +41,7 @@ def test_spring_jpa_entity_tool_is_loaded():
 def test_spring_jpa_entity_skill_md_exists():
     """plugin/skills/spring-jpa-entity/SKILL.md must exist."""
     assert _JPA_SKILL_MD.exists(), (
-        f"Missing: {_JPA_SKILL_MD}. "
-        "Create the SKILL.md for the confusable-pair JPA skill (D-44)."
+        f"Missing: {_JPA_SKILL_MD}. Create the SKILL.md for the confusable-pair JPA skill (D-44)."
     )
 
 
@@ -49,9 +49,7 @@ def test_spring_jpa_entity_has_entity_annotation():
     """SKILL.md for spring-jpa-entity must mention @Entity."""
     assert _JPA_SKILL_MD.exists(), "SKILL.md not found — create it first."
     content = _JPA_SKILL_MD.read_text(encoding="utf-8")
-    assert "@Entity" in content, (
-        "spring-jpa-entity/SKILL.md must mention '@Entity' per D-44 scope."
-    )
+    assert "@Entity" in content, "spring-jpa-entity/SKILL.md must mention '@Entity' per D-44 scope."
 
 
 def test_intent_map_includes_jpa_migration_skill():

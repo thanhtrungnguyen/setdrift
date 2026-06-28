@@ -9,6 +9,7 @@ dropped (D-31). Fail-loud (ScorerError) on an empty scored space (Pitfall 4) and
 defense-in-depth for the ROADMAP exit-gate ordering — run_health REFUSES to compute
 F1 until the 02-03 precision/kappa gate report exists with passed=True.
 """
+
 import hashlib
 import json
 import math
@@ -73,8 +74,11 @@ def noise_band(f1_runs: list[float]) -> tuple[float, float]:
 
 
 def bootstrap_ci(
-    y_true: np.ndarray, y_pred: np.ndarray, seed: int,
-    n_resamples: int = 9999, confidence_level: float = 0.95,
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    seed: int,
+    n_resamples: int = 9999,
+    confidence_level: float = 0.95,
 ) -> tuple[float, float]:
     """BCa bootstrap CI by resampling PROMPTS (rows), seed-pinned (REQ-MEASURE-01)."""
     n = y_true.shape[0]
@@ -91,8 +95,14 @@ def bootstrap_ci(
 
     try:
         res = bootstrap(
-            (idx,), stat, n_resamples=n_resamples, vectorized=True, paired=False,
-            rng=np.random.default_rng(seed), method="BCa", confidence_level=confidence_level,
+            (idx,),
+            stat,
+            n_resamples=n_resamples,
+            vectorized=True,
+            paired=False,
+            rng=np.random.default_rng(seed),
+            method="BCa",
+            confidence_level=confidence_level,
         )
         lo, hi = float(res.confidence_interval.low), float(res.confidence_interval.high)
         if math.isnan(lo) or math.isnan(hi):
@@ -198,7 +208,9 @@ def run_health(
     per_source = gate.get("per_source", {})
     per_source_kappa = {s: m["kappa"] for s, m in per_source.items()}
     per_source_precision = {s: m["precision"] for s, m in per_source.items()}
-    per_source_label_distribution = {s: m.get("label_distribution", {}) for s, m in per_source.items()}
+    per_source_label_distribution = {
+        s: m.get("label_distribution", {}) for s, m in per_source.items()
+    }
     if not per_source_kappa:
         raise ScorerError("per_source_kappa unavailable — run 02-03 precision gate first")
 

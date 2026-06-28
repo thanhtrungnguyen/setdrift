@@ -1,4 +1,5 @@
 """Shared fixtures: synthetic bug records for offline labeler/synthesizer tests."""
+
 import textwrap
 from pathlib import Path
 
@@ -129,7 +130,9 @@ def mock_anthropic_client(monkeypatch):
     class _FakeClient:
         messages = _Messages()
 
-    monkeypatch.setattr("setdrift_eval.benchmark.llm_backend.anthropic.Anthropic", lambda: _FakeClient())
+    monkeypatch.setattr(
+        "setdrift_eval.benchmark.llm_backend.anthropic.Anthropic", lambda: _FakeClient()
+    )
     return calls
 
 

@@ -1,4 +1,5 @@
 """Heuristic labeler unit tests."""
+
 from setdrift_eval.corpus.fetcher import BugRecord
 from setdrift_eval.corpus.labeler import label_bug
 from setdrift_eval.corpus.schemas import SkillLabel
@@ -48,7 +49,9 @@ def test_added_import_yields_import_fix():
 
 
 def test_jpa_annotation_change_yields_jpa_migration():
-    diff = "diff --git a/User.java b/User.java\n+@Column(nullable = false)\n private String email;\n"
+    diff = (
+        "diff --git a/User.java b/User.java\n+@Column(nullable = false)\n private String email;\n"
+    )
     labels = label_bug(_make_record(diff))
     assert SkillLabel.JPA_MIGRATION in labels
 

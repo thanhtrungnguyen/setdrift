@@ -1,4 +1,5 @@
 """Tests for DriftEvent schema + dual-write append + transcript-banking standby (REQ-DRIFT-01, Plan 04-04 Task 1)."""
+
 import json
 import os
 
@@ -38,7 +39,9 @@ def test_drift_event_validates():
     evt = DriftEvent(**_make_event())
     assert evt.drift_type == "codebase_head_shift"
 
-    evt2 = DriftEvent(**_make_event(drift_type="model_release", model_id="claude-sonnet-4-6", head_sha=None))
+    evt2 = DriftEvent(
+        **_make_event(drift_type="model_release", model_id="claude-sonnet-4-6", head_sha=None)
+    )
     assert evt2.drift_type == "model_release"
 
     with pytest.raises(Exception):
@@ -63,7 +66,15 @@ def test_scrub_for_public_has_no_commit_message():
 
     assert "notes" not in scrubbed
     # Required fields must be present
-    for key in ("event_id", "ts", "drift_type", "head_sha", "model_id", "f1_at_event_A", "f1_at_event_B"):
+    for key in (
+        "event_id",
+        "ts",
+        "drift_type",
+        "head_sha",
+        "model_id",
+        "f1_at_event_A",
+        "f1_at_event_B",
+    ):
         assert key in scrubbed, f"Expected key {key!r} in scrubbed output"
 
 
@@ -122,7 +133,11 @@ def test_bank_transcripts_produces_cache_hit(tmp_path, monkeypatch):
         key = cache_key(model, prompt, tools)
         cached = tmp_path / f"{key}.json"
         if not cached.exists():
-            data = {"content": [{"text": "stub response"}], "usage": {"input_tokens": 5, "output_tokens": 3}, "stop_reason": "end_turn"}
+            data = {
+                "content": [{"text": "stub response"}],
+                "usage": {"input_tokens": 5, "output_tokens": 3},
+                "stop_reason": "end_turn",
+            }
             cached.write_text(json.dumps(data), encoding="utf-8")
         calls.append((model, prompt, tools))
         return json.loads(cached.read_text(encoding="utf-8"))
@@ -134,6 +149,7 @@ def test_bank_transcripts_produces_cache_hit(tmp_path, monkeypatch):
 
     import importlib
     import sys
+
     # Ensure bank_transcripts is imported fresh
     if "eval.scripts.bank_transcripts" in sys.modules:
         del sys.modules["eval.scripts.bank_transcripts"]
@@ -141,6 +157,7 @@ def test_bank_transcripts_produces_cache_hit(tmp_path, monkeypatch):
     # bank_transcripts.py is at eval/scripts/bank_transcripts.py; import it directly
     import importlib.util
     import pathlib
+
     # test_event_log.py is at eval/setdrift_eval/drift/tests/test_event_log.py
     # parents[3] = eval/ directory (the package root where scripts/ lives)
     script_path = pathlib.Path(__file__).parents[3] / "scripts" / "bank_transcripts.py"

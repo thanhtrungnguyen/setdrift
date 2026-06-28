@@ -9,6 +9,7 @@ violation so it can block CI and the Phase-2 exit:
         --corpus data/corpora/public/public.jsonl \\
         --experiments-dir experiments/
 """
+
 import argparse
 from pathlib import Path
 
@@ -48,7 +49,9 @@ def main(argv: list[str] | None = None) -> int:
             f"(>={args.kappa_threshold}), n={m['n']}"
         )
     neg_verdict = "PASS" if report["passed_negatives"] else "FAIL"
-    print(f"[{neg_verdict}] negatives_fraction={report['negatives_fraction']:.3f} (>={args.min_negatives})")
+    print(
+        f"[{neg_verdict}] negatives_fraction={report['negatives_fraction']:.3f} (>={args.min_negatives})"
+    )
     print(f"[{'PASS' if report['passed'] else 'FAIL'}] overall gate -> {out}")
 
     return 0 if report["passed"] else 1

@@ -1,4 +1,5 @@
 """Smoke test — the test infrastructure itself is alive."""
+
 import setdrift_eval
 
 

@@ -4,6 +4,7 @@ Tests: AuditRecord round-trip, step Literal validation, f1_delta None,
 LoopManifest inheritance + genealogy fields, extra="forbid" on both,
 and scrub_for_genealogy excludes hmac_sig (T-03-22 mitigation).
 """
+
 import pytest
 from pydantic import ValidationError
 
@@ -61,6 +62,7 @@ def _loop_manifest_kwargs(**overrides) -> dict:
 
 # --- AuditRecord tests ---
 
+
 def test_audit_record_roundtrips():
     """AuditRecord round-trips via model_dump_json with all D-40 fields."""
     rec = AuditRecord(**_audit_kwargs())
@@ -117,6 +119,7 @@ def test_audit_record_extra_field_rejected():
 
 # --- LoopManifest tests ---
 
+
 def test_loop_manifest_inherits_experiment_manifest_fields():
     """LoopManifest inherits every required ExperimentManifest field."""
     m = LoopManifest(**_loop_manifest_kwargs())
@@ -168,6 +171,7 @@ def test_loop_manifest_roundtrips():
 
 
 # --- scrub_for_genealogy tests ---
+
 
 def test_scrub_for_genealogy_excludes_hmac_sig():
     """scrub_for_genealogy output MUST exclude hmac_sig (T-03-22 mitigation)."""

@@ -9,6 +9,7 @@ Verifies:
 
 Uses tmp_path corpus + fake split + stubbed run_arm/cache to run offline without the API.
 """
+
 import json
 import math
 from pathlib import Path
@@ -23,6 +24,7 @@ from setdrift_eval.drift.db import DDL
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_corpus(tmp_path: Path, n_val: int = 3, n_test: int = 4) -> Path:
     """Create a tiny corpus JSONL with n_val val prompts and n_test test prompts."""
@@ -97,6 +99,7 @@ def _make_db(tmp_path: Path) -> duckdb.DuckDBPyConnection:
 # Test 1: Test-partition filter — no val prompts leak (Pitfall 6 guard)
 # ---------------------------------------------------------------------------
 
+
 def test_test_partition_filter_excludes_val(tmp_path: Path) -> None:
     """Test 1: n_prompts_scored equals test count; no val prompts are included (D-59 / Pitfall 6)."""
     from setdrift_eval.drift import haiku_arm
@@ -141,6 +144,7 @@ def test_test_partition_filter_excludes_val(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Test 2: Model id is the full versioned string
 # ---------------------------------------------------------------------------
+
 
 def test_haiku_model_id_full_versioned() -> None:
     """Test 2: HAIKU_MODEL constant is the full versioned id "claude-haiku-4-5-20251001" (A3)."""
@@ -195,6 +199,7 @@ def test_run_haiku_sensitivity_uses_full_versioned_model(tmp_path: Path) -> None
 # ---------------------------------------------------------------------------
 # Test 3: Report contains 5-run macro_f1 lists per arm, noise_band via frozen scorer
 # ---------------------------------------------------------------------------
+
 
 def test_report_contains_5run_band_per_arm(tmp_path: Path) -> None:
     """Test 3: report contains f1_runs_A, f1_runs_B (5 values each) and noise_band from frozen scorer."""
@@ -257,6 +262,7 @@ def test_report_contains_5run_band_per_arm(tmp_path: Path) -> None:
 # Test 4: cost_usd populated from cached usage token counts (D-60)
 # ---------------------------------------------------------------------------
 
+
 def test_cost_usd_populated_from_usage(tmp_path: Path) -> None:
     """Test 4: cost_usd is populated from the cached usage token counts (D-60)."""
     from setdrift_eval.drift import haiku_arm
@@ -302,6 +308,7 @@ def test_cost_usd_populated_from_usage(tmp_path: Path) -> None:
 # Test 5: Manifest note records D-59 test-only rationale
 # ---------------------------------------------------------------------------
 
+
 def test_manifest_note_records_d59_rationale(tmp_path: Path) -> None:
     """Test 5: DriftManifest notes field records the D-59 test-only partition rationale."""
     from setdrift_eval.drift import haiku_arm
@@ -345,6 +352,7 @@ def test_manifest_note_records_d59_rationale(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Test 6: haiku_arm.py does NOT call run_health (Goodhart firewall)
 # ---------------------------------------------------------------------------
+
 
 def test_haiku_arm_does_not_import_run_health() -> None:
     """Test 6: haiku_arm.py must not call run_health (Goodhart firewall / Pitfall 6)."""

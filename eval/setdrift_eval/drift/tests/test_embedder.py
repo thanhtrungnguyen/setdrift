@@ -1,4 +1,5 @@
 """Tests for embedder chunk/cosine/drift-index logic (REQ-MEASURE-03, Plan 04-01 Task 2)."""
+
 import numpy as np
 import pytest
 
@@ -6,6 +7,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _make_fake_tokenizer():
     """Return a minimal stub tokenizer that maps characters to token IDs bijectively.
@@ -15,6 +17,7 @@ def _make_fake_tokenizer():
     re-encode round-trip is lossless. This lets pure-math tests verify the
     MAX_TOKENS bound without loading the real MiniLM weights.
     """
+
     class FakeTok:
         def encode(self, text: str, add_special_tokens: bool = True) -> list[int]:
             return [ord(c) for c in text]
@@ -28,6 +31,7 @@ def _make_fake_tokenizer():
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_chunk_splits_long_text():
     """Test 1: chunk_code splits a >200-token string into chunks each <= MAX_TOKENS tokens."""

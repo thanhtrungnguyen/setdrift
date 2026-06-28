@@ -1,4 +1,5 @@
 """Offline arm-harness tests (Plan 02-04 Task 3, D-32). Fully offline."""
+
 import re
 
 from setdrift_eval.benchmark import arm_runner

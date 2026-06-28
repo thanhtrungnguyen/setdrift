@@ -7,6 +7,7 @@ parsed from per-bug manifest JSON files inside the cloned tree.
 The dataset URL is pinned as a constant. If the upstream repo moves, update
 GITBUG_JAVA_REPO and document the change in docs/corpus.md.
 """
+
 import json
 import subprocess
 from collections.abc import Iterator
@@ -35,9 +36,7 @@ class BugRecord(BaseModel):
     project_id: str = ""
 
 
-def clone_or_update(
-    target_dir: Path = DEFAULT_RAW_DIR, repo_url: str = GITBUG_JAVA_REPO
-) -> Path:
+def clone_or_update(target_dir: Path = DEFAULT_RAW_DIR, repo_url: str = GITBUG_JAVA_REPO) -> Path:
     """Idempotently clone the dataset; if already present, run `git pull`."""
     target_dir = Path(target_dir)
     if (target_dir / ".git").is_dir():
@@ -81,14 +80,12 @@ def iter_bug_records(raw_dir: Path = DEFAULT_RAW_DIR) -> Iterator[BugRecord]:
     or raw_dir/*.json (varies by upstream version). We accept both patterns.
     """
     raw_dir = Path(raw_dir)
-    candidates: list[Path] = list(raw_dir.glob("**/manifest.json")) + list(
-        raw_dir.glob("*.json")
-    )
+    candidates: list[Path] = list(raw_dir.glob("**/manifest.json")) + list(raw_dir.glob("*.json"))
     seen: set[str] = set()
     for path in candidates:
         try:
             record = parse_bug_manifest(path)
-        except (KeyError, json.JSONDecodeError):
+        except KeyError, json.JSONDecodeError:
             continue
         if record.bug_id in seen:
             continue

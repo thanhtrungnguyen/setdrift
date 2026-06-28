@@ -8,6 +8,7 @@ the only thing allowed to be skipped.
 This deliberately diverges from corpus/sampler.py (which tolerates bad lines) —
 the clean events.jsonl read path must never hide a dropped/interleaved line.
 """
+
 import json
 from pathlib import Path
 

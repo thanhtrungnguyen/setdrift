@@ -7,6 +7,7 @@ the post-optimization linter (including propose() rejecting a Goodhart-overfit c
 The live GEPA compile (_run_optimizer) is the 03-06 integration path and is monkeypatched
 here.
 """
+
 from pathlib import Path
 
 import dspy
@@ -52,9 +53,7 @@ def test_skill_proposal_validates_and_forbids_extra():
 # --- Task 2: structural no-write / no-forbidden-import fence (D-46) ---------------
 def test_wrapper_module_has_no_write_capability():
     src = Path(gw.__file__).read_text(encoding="utf-8")
-    non_comment = "\n".join(
-        ln for ln in src.splitlines() if not ln.lstrip().startswith("#")
-    )
+    non_comment = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
     assert "write_text" not in non_comment
     assert "open(" not in non_comment
     assert "import setdrift_eval.optimizer.orchestrator" not in non_comment

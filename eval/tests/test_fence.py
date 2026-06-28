@@ -8,6 +8,7 @@ ALLOWED_PREFIXES / FenceViolation / check_allowlist are imported FROM fence.py â
 SAME constant the applier (03-02) uses â€” never redefined here. That import is the
 no-drift guarantee (D-48): the test cannot pass against a stale or forked allowlist.
 """
+
 import pytest
 
 from setdrift_eval.optimizer.fence import ALLOWED_PREFIXES, FenceViolation, check_allowlist

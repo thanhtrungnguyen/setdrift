@@ -15,6 +15,7 @@ swallowing — the orchestrator catches these and logs to audit.jsonl.
 
 Requirements: REQ-SAFETY-02 (signed config + dry-run + restore).
 """
+
 import yaml
 from pathlib import Path
 
@@ -33,7 +34,9 @@ def apply_proposal(proposal: SkillProposal, *, dry_run: bool = False) -> None:
 
     This is the ONLY legitimate file-write path for optimizer-generated changes.
     """
-    check_allowlist(proposal.target_path)  # raises FenceViolation if out-of-allowlist — MUST be FIRST
+    check_allowlist(
+        proposal.target_path
+    )  # raises FenceViolation if out-of-allowlist — MUST be FIRST
     if dry_run:
         return
     text = Path(proposal.target_path).read_text(encoding="utf-8")

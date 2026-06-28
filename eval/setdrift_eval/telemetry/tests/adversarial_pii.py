@@ -26,6 +26,7 @@ Methodology / honesty note (clean evidence > flattering number):
 All plant values are OBVIOUSLY FAKE (RFC-5737 IPs, example.com, 555 / test-vector
 numbers, canonical AWS example key, shape-valid-but-junk tokens). NEVER a real secret.
 """
+
 from __future__ import annotations
 
 import json
@@ -131,26 +132,30 @@ def build_corpus(min_events: int = 210) -> list[dict]:
         cat, literal = rotating[i % len(rotating)]
         ctx = _CONTEXTS[i % len(_CONTEXTS)]
         field = _FIELDS[i % len(_FIELDS)]
-        events.append({
-            "session_id": f"adv-{i:04d}",
-            "tool_name": "Edit" if i % 2 else "Read",
-            field: ctx(literal),
-            "_synthetic": True,
-            "_adversarial_pii": True,
-        })
+        events.append(
+            {
+                "session_id": f"adv-{i:04d}",
+                "tool_name": "Edit" if i % 2 else "Read",
+                field: ctx(literal),
+                "_synthetic": True,
+                "_adversarial_pii": True,
+            }
+        )
         i += 1
     # 6 dedicated JDBC config events (password + host plants).
     pw = next(lit for c, lit, _ in PLANTS if c == "JDBC_CREDS" and lit == "S3cr3tPw0rd")
     host = next(lit for c, lit, _ in PLANTS if c == "JDBC_CREDS" and lit.startswith("db-prod"))
     for j in range(6):
-        events.append({
-            "session_id": f"adv-jdbc-{j}",
-            "tool_name": "Write",
-            "tool_input": _jdbc_blob(pw, host),
-            "prompt": f"Update the datasource for {host}",
-            "_synthetic": True,
-            "_adversarial_pii": True,
-        })
+        events.append(
+            {
+                "session_id": f"adv-jdbc-{j}",
+                "tool_name": "Write",
+                "tool_input": _jdbc_blob(pw, host),
+                "prompt": f"Update the datasource for {host}",
+                "_synthetic": True,
+                "_adversarial_pii": True,
+            }
+        )
     return events
 
 
@@ -202,11 +207,11 @@ def measure_recall(use_deny_list: bool = True, dump_dir: Path | None = None) -> 
 def _fmt(r: dict) -> str:
     lines = [
         f"events={r['n_events']}  plants={r['total_plants']}  removed={r['removed_plants']}",
-        f"OVERALL RECALL = {r['overall']*100:.2f}%",
+        f"OVERALL RECALL = {r['overall'] * 100:.2f}%",
         "per-category:",
     ]
     for cat, rec in r["by_category"].items():
-        lines.append(f"  {cat:<14} {rec*100:6.2f}%")
+        lines.append(f"  {cat:<14} {rec * 100:6.2f}%")
     if r["survivors"]:
         lines.append("SURVIVORS (LEAKED):")
         for cat, lit in r["survivors"]:

@@ -5,6 +5,7 @@ Tests:
 - arm="A" fires via run_arm (tool-based path), not run_arm_c
 - val_only_prompts() returns only split=="val" rows, never "test"
 """
+
 import json
 
 import pytest
@@ -83,6 +84,7 @@ def _row(pid, prompt, gt, source="gitbug-java"):
 # Test 1: arm="A" loads a non-empty toolset (Pitfall 3 — arm A must load tools)
 # ---------------------------------------------------------------------------
 
+
 def test_arm_a_loads_nonempty_toolset(tmp_path, monkeypatch):
     """arm="A" with a skills_dir containing one SKILL.md must load a non-empty toolset.
 
@@ -105,8 +107,15 @@ def test_arm_a_loads_nonempty_toolset(tmp_path, monkeypatch):
     rows = [_row("p1", "add endpoint", ["spring-annotation-fix"])]
     cp, mp, exp = _stage(tmp_path, monkeypatch, corpus_rows=rows, splits={"p1": "val"})
 
-    run_health(cp, "A", map_path=mp, skills_dir=sd, experiments_dir=exp,
-               cache_dir=tmp_path / "cache", timestamp="2026-06-01T00:00:00Z")
+    run_health(
+        cp,
+        "A",
+        map_path=mp,
+        skills_dir=sd,
+        experiments_dir=exp,
+        cache_dir=tmp_path / "cache",
+        timestamp="2026-06-01T00:00:00Z",
+    )
 
     # After the fix: tools must NOT be empty for arm A
     assert len(captured_tools) > 0, (
@@ -117,6 +126,7 @@ def test_arm_a_loads_nonempty_toolset(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Test 2: arm="A" uses run_arm (not run_arm_c)
 # ---------------------------------------------------------------------------
+
 
 def test_arm_a_fires_via_run_arm_not_run_arm_c(tmp_path, monkeypatch):
     """arm="A" must dispatch to run_arm (tool-path), not run_arm_c (empty floor)."""
@@ -141,8 +151,15 @@ def test_arm_a_fires_via_run_arm_not_run_arm_c(tmp_path, monkeypatch):
     rows = [_row("p1", "add endpoint", ["spring-annotation-fix"])]
     cp, mp, exp = _stage(tmp_path, monkeypatch, corpus_rows=rows, splits={"p1": "val"})
 
-    run_health(cp, "A", map_path=mp, skills_dir=sd, experiments_dir=exp,
-               cache_dir=tmp_path / "cache", timestamp="2026-06-01T00:00:00Z")
+    run_health(
+        cp,
+        "A",
+        map_path=mp,
+        skills_dir=sd,
+        experiments_dir=exp,
+        cache_dir=tmp_path / "cache",
+        timestamp="2026-06-01T00:00:00Z",
+    )
 
     assert run_arm_called, "arm='A' must call run_arm (tool-based path)"
     assert not run_arm_c_called, "arm='A' must NOT call run_arm_c (empty floor)"
@@ -151,6 +168,7 @@ def test_arm_a_fires_via_run_arm_not_run_arm_c(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Test 3: val_only_prompts returns only split=="val" rows (never "test")
 # ---------------------------------------------------------------------------
+
 
 def test_val_only_prompts_excludes_test_split(tmp_path):
     """val_only_prompts() must return only split=='val' rows — never 'test' or 'train'."""
@@ -186,6 +204,7 @@ def test_val_only_prompts_excludes_test_split(tmp_path):
 # Test 4: arm="A" F1 is NOT the empty-toolset floor (verifies Pitfall 3 end-to-end)
 # ---------------------------------------------------------------------------
 
+
 def test_arm_a_f1_differs_from_arm_c_when_skill_fires(tmp_path, monkeypatch):
     """When a skill fires for arm A, its F1 must differ from the arm-C zero floor.
 
@@ -213,13 +232,26 @@ def test_arm_a_f1_differs_from_arm_c_when_skill_fires(tmp_path, monkeypatch):
         _row("p1", "add endpoint", ["spring-annotation-fix"]),
         _row("p2", "fix null check", ["none"]),
     ]
-    cp, mp, exp = _stage(tmp_path, monkeypatch, corpus_rows=rows,
-                         splits={"p1": "val", "p2": "val"})
+    cp, mp, exp = _stage(tmp_path, monkeypatch, corpus_rows=rows, splits={"p1": "val", "p2": "val"})
 
-    result_a = run_health(cp, "A", map_path=mp, skills_dir=sd, experiments_dir=exp,
-                          cache_dir=tmp_path / "cache", timestamp="2026-06-01T00:00:00Z")
-    result_c = run_health(cp, "C", map_path=mp, skills_dir=sd, experiments_dir=exp,
-                          cache_dir=tmp_path / "cache", timestamp="2026-06-01T00:00:00Z")
+    result_a = run_health(
+        cp,
+        "A",
+        map_path=mp,
+        skills_dir=sd,
+        experiments_dir=exp,
+        cache_dir=tmp_path / "cache",
+        timestamp="2026-06-01T00:00:00Z",
+    )
+    result_c = run_health(
+        cp,
+        "C",
+        map_path=mp,
+        skills_dir=sd,
+        experiments_dir=exp,
+        cache_dir=tmp_path / "cache",
+        timestamp="2026-06-01T00:00:00Z",
+    )
 
     # arm A with a firing skill must produce different (and better) F1 than arm C
     assert result_a.macro_f1_mean != result_c.macro_f1_mean, (

@@ -18,6 +18,7 @@ Goodhart firewall:
 
 References: 05-AI-SPEC.md §3/§4/§4b, 05-PATTERNS.md §judge/runner.py, D5-7/D5-9.
 """
+
 from __future__ import annotations
 
 import json
@@ -43,9 +44,9 @@ from setdrift_eval.telemetry.scorer import macro_f1, ScorerError  # noqa: F401 �
 # ---------------------------------------------------------------------------
 
 JUDGE_MODELS: dict[str, tuple[str, str]] = {
-    "claude":  ("anthropic",  "claude-sonnet-4-6"),
-    "gpt4":    ("openrouter", "openai/gpt-4o"),
-    "gemini":  ("openrouter", "google/gemini-2.5-pro"),
+    "claude": ("anthropic", "claude-sonnet-4-6"),
+    "gpt4": ("openrouter", "openai/gpt-4o"),
+    "gemini": ("openrouter", "google/gemini-2.5-pro"),
 }
 
 MAX_JUDGE_RETRIES = 2
@@ -60,14 +61,13 @@ _JUDGE_SYSTEM = (
 )
 
 # Data wall: raw verdict directory (gitignored)
-_JUDGE_DATA_DIR = Path(
-    os.environ.get("SETDRIFT_JUDGE_DATA_DIR", "data/judge")
-)
+_JUDGE_DATA_DIR = Path(os.environ.get("SETDRIFT_JUDGE_DATA_DIR", "data/judge"))
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _build_judge_prompt(
     prompt: str,
@@ -130,16 +130,14 @@ def _write_raw_verdict(verdict: JudgeVerdict) -> None:
     """
     out_dir = Path(os.environ.get("SETDRIFT_JUDGE_DATA_DIR", "data/judge")) / "raw_verdicts"
     out_dir.mkdir(parents=True, exist_ok=True)
-    fname = (
-        f"{verdict.prompt_id}_{verdict.bias_mode}_"
-        f"{verdict.model_id.replace('/', '_')}.json"
-    )
+    fname = f"{verdict.prompt_id}_{verdict.bias_mode}_{verdict.model_id.replace('/', '_')}.json"
     (out_dir / fname).write_text(verdict.model_dump_json(indent=2), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
 # Core public API
 # ---------------------------------------------------------------------------
+
 
 def parse_verdict_with_retry(
     initial_text: str,
@@ -239,7 +237,10 @@ def run_judge_cell(
     verdict = parse_verdict_with_retry(
         initial_text=text,
         model_id=model_id,
-        retry_prompt_fn=lambda attempt: judge_prompt + f"\n\n[Attempt {attempt}: Fix your JSON — reply ONLY with a valid JudgeVerdict JSON object.]",
+        retry_prompt_fn=lambda attempt: (
+            judge_prompt
+            + f"\n\n[Attempt {attempt}: Fix your JSON — reply ONLY with a valid JudgeVerdict JSON object.]"
+        ),
         context={"bias_mode": bias_mode, "prompt_id": prompt_id, "position_swapped": swapped},
     )
     # Override position_swapped from the actual swap applied (D5-2 correctness)
@@ -269,7 +270,13 @@ def run_judge_sensitivity(args) -> int:
     Returns:
         0 on success.
     """
-    from setdrift_eval.judge.kappa import KappaCell, compute_kappa, de_alias, escalation_required, KAPPA_FLOOR
+    from setdrift_eval.judge.kappa import (
+        KappaCell,
+        compute_kappa,
+        de_alias,
+        escalation_required,
+        KAPPA_FLOOR,
+    )
 
     slice_path = Path(args.slice)
     seed = args.seed
@@ -291,8 +298,7 @@ def run_judge_sensitivity(args) -> int:
 
     # Collect verdicts: verdicts[bias_mode][family][prompt_id] = JudgeVerdict
     verdicts: dict[str, dict[str, dict[str, JudgeVerdict]]] = {
-        bm: {fam: {} for fam in families}
-        for bm in bias_modes
+        bm: {fam: {} for fam in families} for bm in bias_modes
     }
 
     total_cells = len(bias_modes) * len(families) * len(prompts)
@@ -304,6 +310,7 @@ def run_judge_sensitivity(args) -> int:
                 prompt_id = p["prompt_id"]
                 # Deterministic seed per (bias_mode, family, prompt_id, global_seed)
                 import hashlib
+
                 cell_key = f"{seed}-{bias_mode}-{family}-{prompt_id}"
                 cell_seed = int(hashlib.sha256(cell_key.encode()).hexdigest()[:8], 16)
 
@@ -319,11 +326,15 @@ def run_judge_sensitivity(args) -> int:
                 verdicts[bias_mode][family][prompt_id] = verdict
                 done += 1
 
-        print(f"[setdrift-eval] judge-sensitivity: {done}/{total_cells} calls done (mode={bias_mode})")
+        print(
+            f"[setdrift-eval] judge-sensitivity: {done}/{total_cells} calls done (mode={bias_mode})"
+        )
 
     # Build kappa cells: for each (bias_mode, family-pair)
     kappa_cells: list[KappaCell] = []
-    family_pairs = list(combinations(families, 2))  # [("claude","gpt4"),("claude","gemini"),("gpt4","gemini")]
+    family_pairs = list(
+        combinations(families, 2)
+    )  # [("claude","gpt4"),("claude","gemini"),("gpt4","gemini")]
 
     for bias_mode in bias_modes:
         for fam_a, fam_b in family_pairs:
@@ -363,14 +374,16 @@ def run_judge_sensitivity(args) -> int:
                     )
 
             pair_str = f"{fam_a}_vs_{fam_b}"
-            kappa_cells.append(KappaCell(
-                bias_mode=bias_mode,
-                family_pair=pair_str,
-                kappa=kappa_val if not (kappa_val != kappa_val) else 0.0,  # nan -> 0.0 for JSON
-                n_prompts=n,
-                escalation_required=escalation,
-                reason=reason,
-            ))
+            kappa_cells.append(
+                KappaCell(
+                    bias_mode=bias_mode,
+                    family_pair=pair_str,
+                    kappa=kappa_val if not (kappa_val != kappa_val) else 0.0,  # nan -> 0.0 for JSON
+                    n_prompts=n,
+                    escalation_required=escalation,
+                    reason=reason,
+                )
+            )
 
     # Promote only the scrubbed kappa matrix to experiments/ (data wall — raw verdicts stay under data/)
     manifest_path.parent.mkdir(parents=True, exist_ok=True)

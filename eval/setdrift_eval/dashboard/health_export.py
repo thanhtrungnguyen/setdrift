@@ -14,6 +14,7 @@ What it does NOT do:
 
 Goodhart firewall: no F1 arithmetic in this file.  Import only.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -58,15 +59,15 @@ def export_health_json(
     return {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "f1_current":  result.macro_f1_mean,
-        "f1_band_lo":  result.noise_band_low,
-        "f1_band_hi":  result.noise_band_high,
-        "pass_rate":   result.coverage_pct,   # sourced from Phase-3 when available
-        "cost_usd":    cost_usd,
-        "drift_index": 0.0,                   # populated from DriftManifest when Phase-4 lands
-        "event_count": 0,                     # populated from telemetry query when Phase-1 lands
-        "loop_status": "idle",                # populated from audit.jsonl last phase (Phase-3)
-        "skills":      [],                    # populated per-skill from skill table (Phase-3)
+        "f1_current": result.macro_f1_mean,
+        "f1_band_lo": result.noise_band_low,
+        "f1_band_hi": result.noise_band_high,
+        "pass_rate": result.coverage_pct,  # sourced from Phase-3 when available
+        "cost_usd": cost_usd,
+        "drift_index": 0.0,  # populated from DriftManifest when Phase-4 lands
+        "event_count": 0,  # populated from telemetry query when Phase-1 lands
+        "loop_status": "idle",  # populated from audit.jsonl last phase (Phase-3)
+        "skills": [],  # populated per-skill from skill table (Phase-3)
     }
 
 

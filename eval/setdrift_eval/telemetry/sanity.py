@@ -6,12 +6,15 @@ for a gap) against the number of tool calls the session's transcript shows. A ga
 over the threshold means events went missing — the session is FLAGGED and
 quarantined for review, never silently dropped.
 """
+
 import json
 import os
 from pathlib import Path
 
 TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
-QUARANTINE_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine"))
+QUARANTINE_DIR = Path(
+    os.environ.get("SETDRIFT_TELEMETRY_QUARANTINE_DIR", "data/telemetry/quarantine")
+)
 SANITY_FLAGS = TELEMETRY_DIR / "sanity-flags.jsonl"
 
 
@@ -23,9 +26,8 @@ def _count_lines(p: Path) -> int:
 
 def captured_count(session_id: str) -> int:
     """Clean events + quarantined events (quarantined count toward captured, D-27)."""
-    return (
-        _count_lines(TELEMETRY_DIR / f"{session_id}.events.jsonl")
-        + _count_lines(QUARANTINE_DIR / f"{session_id}.jsonl")
+    return _count_lines(TELEMETRY_DIR / f"{session_id}.events.jsonl") + _count_lines(
+        QUARANTINE_DIR / f"{session_id}.jsonl"
     )
 
 
@@ -65,7 +67,10 @@ def session_count_gap(session_id: str, expected_count: int | None = None) -> flo
 def _flag(session_id: str, gap: float) -> None:
     SANITY_FLAGS.parent.mkdir(parents=True, exist_ok=True)
     with SANITY_FLAGS.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"_session": session_id, "gap": gap, "_action": "quarantined-for-review"}) + "\n")
+        fh.write(
+            json.dumps({"_session": session_id, "gap": gap, "_action": "quarantined-for-review"})
+            + "\n"
+        )
 
 
 def check_all_sessions(threshold: float = 0.05, expected_counts: dict | None = None) -> list[str]:

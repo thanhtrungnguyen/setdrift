@@ -13,6 +13,7 @@ stdlib-only (hmac, hashlib, json, os, pathlib) — no new dependency for signing
 Canonicalization is JSON-canonical (sort_keys=True), NOT yaml.dump (Pitfall 6: YAML
 dump ordering/anchor instability would silently break the hash).
 """
+
 import hashlib
 import hmac
 import json
@@ -47,9 +48,7 @@ def canonicalize_config(skill_descriptions: dict[str, str]) -> bytes:
     → a stable hash. JSON canonical (sort_keys=True, ensure_ascii=True), never YAML.
     """
     ordered = {k: skill_descriptions[k] for k in sorted(skill_descriptions)}
-    return json.dumps(
-        {"skills": ordered}, sort_keys=True, ensure_ascii=True
-    ).encode("utf-8")
+    return json.dumps({"skills": ordered}, sort_keys=True, ensure_ascii=True).encode("utf-8")
 
 
 def sign_config(skill_descriptions: dict[str, str]) -> tuple[str, str]:

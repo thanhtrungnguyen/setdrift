@@ -13,6 +13,7 @@ What it does NOT do:
   - Recompute any metric (D-04).
   - Export raw log content to experiments/ (T-05-16 data wall boundary).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,9 +26,9 @@ _LOOP_PENDING_MSG = "[dim]No loop events yet (Phase 3 pending)[/dim]"
 
 # Level → Textual theme-variable color (no hardcoded hex — UI-SPEC §A.5)
 _LEVEL_COLORS: dict[str, str] = {
-    "info":    "$success",
+    "info": "$success",
     "warning": "$warning",
-    "error":   "$error",
+    "error": "$error",
 }
 
 
@@ -54,7 +55,7 @@ class LogPanel(Collapsible):
     def __init__(self, **kwargs) -> None:
         super().__init__(
             title="Loop + Telemetry Log",
-            collapsed=True,   # collapsed by default (UI-SPEC §A.9)
+            collapsed=True,  # collapsed by default (UI-SPEC §A.9)
             **kwargs,
         )
         self._loop_events_written = False
@@ -88,9 +89,7 @@ class LogPanel(Collapsible):
             for line in lines[-n_lines:]:
                 log.write(f"[dim]{line}[/dim]")
         except OSError:
-            log.write(
-                "[$warning]⚠ log source unreadable — check data/telemetry/[/$warning]"
-            )
+            log.write("[$warning]⚠ log source unreadable — check data/telemetry/[/$warning]")
 
     def write_loop_event(self, event: str, level: str = "info") -> None:
         """Write one loop-lifecycle event with level-to-theme-color mapping.

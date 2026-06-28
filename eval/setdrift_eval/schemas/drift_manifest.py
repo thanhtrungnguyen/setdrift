@@ -12,6 +12,7 @@ All fields carry only IDs, hashes, aggregates, and small enumerations.
 
 Requirements: REQ-DRIFT-02 (reproducibility substrate for drift grid).
 """
+
 from pydantic import ConfigDict, Field
 
 from setdrift_eval.schemas.experiment import ExperimentManifest
@@ -36,9 +37,7 @@ class DriftManifest(ExperimentManifest):
     grid_arm: str = Field(
         description="Experiment arm: 'A' (Setdrift-managed) or 'B' (frozen hand-written config)"
     )
-    grid_revision: str = Field(
-        description="Codebase revision label: 'early' | 'mid' | 'late'"
-    )
+    grid_revision: str = Field(description="Codebase revision label: 'early' | 'mid' | 'late'")
     grid_run_idx: int = Field(
         description="Repeat index within this cell, 0-indexed (default 5 repeats per cell)"
     )

@@ -1,4 +1,5 @@
-﻿"""Schema round-trip and validation tests."""
+"""Schema round-trip and validation tests."""
+
 import json
 
 import pytest

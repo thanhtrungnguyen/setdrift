@@ -18,6 +18,7 @@ What it does NOT do:
 Requirements: REQ-LOOP-01 (optimizer end-to-end), REQ-LOOP-02 (closed loop on >=2 skills,
 all steps in audit.jsonl), D-38 (two-file audit split), D-43 (human-approval gate).
 """
+
 import json
 import os
 import tempfile
@@ -28,14 +29,18 @@ from pathlib import Path
 from setdrift_eval.optimizer.applier import apply_proposal as _apply_proposal
 from setdrift_eval.optimizer.applier import stage_signed_candidate as _stage_signed_candidate
 from setdrift_eval.optimizer.gepa_wrapper import propose as _propose
-from setdrift_eval.optimizer.gepa_wrapper import build_optimizer_trainset as _build_optimizer_trainset
+from setdrift_eval.optimizer.gepa_wrapper import (
+    build_optimizer_trainset as _build_optimizer_trainset,
+)
 from setdrift_eval.optimizer.signer import sign_config
 from setdrift_eval.optimizer.verifier import verify_candidate as _verify_candidate
 from setdrift_eval.schemas.loop_manifest import AuditRecord, scrub_for_genealogy
 
 # --- configurable paths (env-var pattern from capture_event.py) ---
 _AUDIT_PATH = Path(os.environ.get("SETDRIFT_AUDIT_PATH", "data/audit/audit.jsonl"))
-_GENEALOGY_PATH = Path(os.environ.get("SETDRIFT_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl"))
+_GENEALOGY_PATH = Path(
+    os.environ.get("SETDRIFT_GENEALOGY_PATH", "experiments/audit-genealogy.jsonl")
+)
 _MODEL = os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6")
 _OPTIMIZER_BACKEND = os.environ.get("SETDRIFT_OPTIMIZER", "gepa")
 
@@ -82,6 +87,7 @@ def _read_genealogy_path() -> Path:
 # Sole audit write site (D-38, T-03-63) — only this function writes audit logs
 # ---------------------------------------------------------------------------
 
+
 def _append_audit(record: AuditRecord) -> None:
     """Write FULL record to data/audit/audit.jsonl + SCRUBBED record to experiments/.
 
@@ -109,6 +115,7 @@ def _append_audit(record: AuditRecord) -> None:
 # ---------------------------------------------------------------------------
 # Precondition checks (fail-loud)
 # ---------------------------------------------------------------------------
+
 
 def _check_precision_gate(experiments_dir: Path) -> None:
     """Raise OrchestratorError if the precision/kappa gate has not cleared.
@@ -146,6 +153,7 @@ def _check_hmac_key() -> None:
 # Trainset loader — ONLY train-partition examples (Pitfall 1 / T-03-60)
 # ---------------------------------------------------------------------------
 
+
 def _load_trainset(corpus_path: Path, map_path: Path) -> tuple[list, dict]:
     """Load corpus + split.json; return (train_examples, frozen_map).
 
@@ -179,6 +187,7 @@ def _load_trainset(corpus_path: Path, map_path: Path) -> tuple[list, dict]:
 # Current-description reader (for observe + signing baseline)
 # ---------------------------------------------------------------------------
 
+
 def _read_skill_description(skill_path: Path) -> str:
     """Read the current SKILL.md description frontmatter."""
     import yaml
@@ -197,6 +206,7 @@ def _read_skill_description(skill_path: Path) -> str:
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
+
 
 def run_loop_cycle(
     skill_name: str,
@@ -294,6 +304,7 @@ def run_loop_cycle(
     # optimization. Configured here (not in gepa_wrapper) so the orchestrator owns the
     # LM pin (model is a loop-level setting, not an optimizer-level setting).
     import dspy as _dspy
+
     _dspy.configure(lm=_dspy.LM(f"anthropic/{_MODEL}", temperature=0.0, max_tokens=1024))
     proposal = _propose(skill_name, skill_path, dspy_trainset, frozen_map, cycle_id)
 

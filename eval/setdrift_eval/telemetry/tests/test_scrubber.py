@@ -1,4 +1,5 @@
 """Tests for the layered scrubber (Plan 01-02 Task 2) and batch scrubber (Task 3)."""
+
 import json
 import re
 
@@ -11,6 +12,7 @@ HEX16 = re.compile(r"^[0-9a-f]{16}$")
 
 
 # ---- Task 2: scrub_text / scrub_event ----
+
 
 def test_presidio_email_redacted():
     """Test 1: email removed + a presidio EMAIL_ADDRESS record."""
@@ -64,8 +66,10 @@ def test_scrub_event_fields():
 
 def test_scrub_event_raises_not_swallow(monkeypatch):
     """Test 6: an internal scrubber error PROPAGATES (D-27 quarantine depends on it)."""
+
     def boom(*a, **k):
         raise RuntimeError("analyzer exploded")
+
     monkeypatch.setattr(scrubber._ANALYZER, "analyze", boom)
     with pytest.raises(RuntimeError):
         scrub_event({"prompt": "anything that reaches the analyzer"})
@@ -103,7 +107,9 @@ def _write_raw(tmp_path, session, events):
 def test_batch_clean_event_routed_and_raw_deleted(monkeypatch, tmp_path):
     """Task 3 (a): a clean event lands in events.jsonl; raw buffer deleted."""
     mod = _load_batch(monkeypatch, tmp_path)
-    raw = _write_raw(tmp_path, "sA", [{"_session": "sA", "tool_name": "Bash", "prompt": "hello world"}])
+    raw = _write_raw(
+        tmp_path, "sA", [{"_session": "sA", "tool_name": "Bash", "prompt": "hello world"}]
+    )
     mod.scrub_session("sA")
     assert (tmp_path / "sA.events.jsonl").exists()
     assert not raw.exists()  # idempotent: raw consumed

@@ -21,6 +21,7 @@ Goodhart firewall:
 References: 05-PATTERNS.md §figures/kappa_heatmap.py, 05-UI-SPEC.md §B.1/B.5,
 PLAN 05-06 Task 2, D-11.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -87,20 +88,36 @@ def plot_kappa_heatmap(
         for j in range(len(_FAMILY_PAIRS)):
             val = matrix[i, j]
             if not np.isnan(val):
-                ax.text(j, i, f"{val:.2f}", ha="center", va="center",
-                        fontsize=7, color="black" if abs(val) < 0.7 else "white")
+                ax.text(
+                    j,
+                    i,
+                    f"{val:.2f}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="black" if abs(val) < 0.7 else "white",
+                )
 
     # κ=0.6 floor annotation (UI-SPEC §B.5 threshold label, D-11 pre-registered)
     # The floor is annotated as a note in the colorbar area rather than a line on the
     # heatmap (lines across imshow cells are visually confusing). We use a text
     # annotation on the axes at the floor color level.
-    ax.axhline(y=len(_BIAS_MODES) - 0.5, color="#949494", linestyle="--",
-               linewidth=0.8, label=f"κ={_KAPPA_FLOOR} floor (pre-registered D-11)")
+    ax.axhline(
+        y=len(_BIAS_MODES) - 0.5,
+        color="#949494",
+        linestyle="--",
+        linewidth=0.8,
+        label=f"κ={_KAPPA_FLOOR} floor (pre-registered D-11)",
+    )
     # Add a floor marker to the colorbar by annotating the figure
     fig.text(
-        0.93, 0.5 + _KAPPA_FLOOR / 2,  # approx normalized colorbar position for κ=0.6
+        0.93,
+        0.5 + _KAPPA_FLOOR / 2,  # approx normalized colorbar position for κ=0.6
         f"← κ={_KAPPA_FLOOR} floor",
-        va="center", ha="left", fontsize=7, color="#555555",
+        va="center",
+        ha="left",
+        fontsize=7,
+        color="#555555",
         transform=fig.transFigure,
     )
 

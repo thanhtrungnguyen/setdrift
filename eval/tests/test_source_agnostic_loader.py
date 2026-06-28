@@ -7,6 +7,7 @@ special-cases dataset == "gitbug-java" in a way that would drop enterprise rows,
 these tests fail loudly — that is what lets the enterprise capture path activate
 later (on a clean end-June IP ruling) with zero architecture change.
 """
+
 import json
 
 from setdrift_eval.corpus.schemas import BugSource, LabeledPrompt, SkillLabel
@@ -57,9 +58,7 @@ def test_mixed_jsonl_read_yields_all_rows_including_enterprise(tmp_path):
         _prompt("parking", "PKG-42"),  # enterprise source
     ]
     corpus_file = tmp_path / "mixed.jsonl"
-    corpus_file.write_text(
-        "\n".join(p.model_dump_json() for p in rows) + "\n", encoding="utf-8"
-    )
+    corpus_file.write_text("\n".join(p.model_dump_json() for p in rows) + "\n", encoding="utf-8")
 
     loaded = [
         LabeledPrompt.model_validate(json.loads(line))

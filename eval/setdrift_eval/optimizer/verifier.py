@@ -14,6 +14,7 @@ The verifier reuses the Phase-2 frozen instrument:
 
 Consumes REQ-LOOP-03 / D-41 / Success Criterion 4.
 """
+
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -29,8 +30,12 @@ class VerifyResult(BaseModel):
 
     promote: bool = Field(description="True iff candidate mean F1 > baseline upper band edge")
     candidate_f1_mean: float = Field(description="Candidate arm-A macro-F1 mean on val partition")
-    baseline_band_high: float = Field(description="Baseline (arm-B) noise_band upper edge = mean+2σ")
-    f1_delta: float = Field(description="candidate_f1_mean − baseline_band_high (positive = above threshold)")
+    baseline_band_high: float = Field(
+        description="Baseline (arm-B) noise_band upper edge = mean+2σ"
+    )
+    f1_delta: float = Field(
+        description="candidate_f1_mean − baseline_band_high (positive = above threshold)"
+    )
     reason: str = Field(description="Human-readable promotion or rejection rationale (never empty)")
 
     @field_validator("reason")
@@ -86,6 +91,7 @@ def verify_candidate(
 
     # Resolve map_path
     from setdrift_eval.telemetry.scorer import _DEFAULT_MAP
+
     resolved_map = Path(map_path) if map_path is not None else _DEFAULT_MAP
 
     # -----------------------------------------------------------------------

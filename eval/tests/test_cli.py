@@ -1,4 +1,5 @@
 """CLI argparse wiring tests."""
+
 import sys
 from pathlib import Path
 
@@ -13,8 +14,13 @@ def test_corpus_build_invokes_pipeline(monkeypatch, tmp_path: Path, capsys):
 
     calls: dict[str, object] = {}
 
-    def fake_build_corpus(raw_dir: Path, output_path: Path, corpus_version: str,
-                          corpus_name: str = "gitbug-java", **kwargs):
+    def fake_build_corpus(
+        raw_dir: Path,
+        output_path: Path,
+        corpus_version: str,
+        corpus_name: str = "gitbug-java",
+        **kwargs,
+    ):
         from setdrift_eval.corpus.schemas import Corpus
 
         calls["raw_dir"] = raw_dir

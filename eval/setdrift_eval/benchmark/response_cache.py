@@ -14,6 +14,7 @@ the backend (anthropic | openrouter) is transparent to this layer.
 
 Eval-side fail-loud: API errors propagate (no bare except).
 """
+
 import hashlib
 import json
 import os

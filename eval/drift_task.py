@@ -56,6 +56,7 @@ Python invocation (used by grid_runner.py):
 
 Note: CachePolicy(per_epoch=False) is NEVER passed (Pitfall 5).
 """
+
 import os
 from pathlib import Path
 
@@ -202,6 +203,7 @@ def _build_dataset(mode: str, revision: str) -> Dataset:
     ]
 
     from inspect_ai.dataset import MemoryDataset  # lazy import inside function
+
     return MemoryDataset(samples=samples, name=f"drift-{mode}-{revision}")
 
 

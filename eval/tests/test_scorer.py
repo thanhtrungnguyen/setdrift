@@ -3,6 +3,7 @@
 Holdout / gate-guard / arm-C behaviors live in test_health_cli.py (they are
 run_health-level); this file covers the pure scoring primitives.
 """
+
 import numpy as np
 import pytest
 import yaml
@@ -41,7 +42,8 @@ def test_project_to_intents():
         "none": [],
     }
     assert scorer.project_to_intents({"spring_boot_endpoint"}, m) == {
-        "spring-annotation-fix", "jpa-migration",
+        "spring-annotation-fix",
+        "jpa-migration",
     }
     assert scorer.project_to_intents(set(), m) == set()
 

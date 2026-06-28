@@ -6,6 +6,7 @@ Tests:
 - VAL-only restriction: no test-split prompt_id is passed to scoring
 - Baseline band computed via noise_band reuse (not re-derived)
 """
+
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -93,6 +94,7 @@ def _make_proposal(skills_dir, target_skill="spring-boot-endpoint", new_desc="Im
 # Test 1: verify_candidate returns promote=True when candidate > baseline+2σ
 # ---------------------------------------------------------------------------
 
+
 def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
     """promote=True iff candidate mean F1 > baseline_mean + 2σ (upper band edge)."""
     from setdrift_eval.benchmark import arm_runner
@@ -112,10 +114,10 @@ def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
     # Candidate (arm A) returns F1 = [0.9, 0.9, 0.9, 0.9, 0.9] → mean=0.9 > 0.4+2σ
     call_count = {"n": 0}
 
-
     def mock_run_health(corpus_path, arm, **kw):
         call_count["n"] += 1
         from setdrift_eval.schemas.experiment import F1Result
+
         if arm == "A":
             # Candidate: high F1
             return F1Result(
@@ -173,6 +175,7 @@ def test_verify_promotes_above_upper_band(tmp_path, monkeypatch):
 # Test 2: verify_candidate returns promote=False + non-empty reason when below band
 # ---------------------------------------------------------------------------
 
+
 def test_verify_rejects_below_upper_band_with_reason(tmp_path, monkeypatch):
     """promote=False + non-empty reason string when candidate ≤ baseline upper band.
 
@@ -195,18 +198,27 @@ def test_verify_rejects_below_upper_band_with_reason(tmp_path, monkeypatch):
 
     def mock_run_health(corpus_path, arm, **kw):
         from setdrift_eval.schemas.experiment import F1Result
+
         if arm == "A":
             # Candidate: below band
             return F1Result(
-                arm="A", macro_f1_mean=0.35,
-                noise_band_low=0.33, noise_band_high=0.37,
-                bootstrap_ci_low=0.33, bootstrap_ci_high=0.37, coverage_pct=0.5,
+                arm="A",
+                macro_f1_mean=0.35,
+                noise_band_low=0.33,
+                noise_band_high=0.37,
+                bootstrap_ci_low=0.33,
+                bootstrap_ci_high=0.37,
+                coverage_pct=0.5,
             )
         else:
             return F1Result(
-                arm="B", macro_f1_mean=0.5,
-                noise_band_low=0.48, noise_band_high=0.52,
-                bootstrap_ci_low=0.48, bootstrap_ci_high=0.52, coverage_pct=0.5,
+                arm="B",
+                macro_f1_mean=0.5,
+                noise_band_low=0.48,
+                noise_band_high=0.52,
+                bootstrap_ci_low=0.48,
+                bootstrap_ci_high=0.52,
+                coverage_pct=0.5,
             )
 
     def mock_noise_band(runs):
@@ -234,15 +246,19 @@ def test_verify_rejects_below_upper_band_with_reason(tmp_path, monkeypatch):
     assert len(result.reason) > 5, "reason must be substantive, not just a whitespace string"
     # Reason should indicate rejection
     reason_lower = result.reason.lower()
-    assert "reject" in reason_lower or "≤" in result.reason or "<" in result.reason or \
-           "below" in reason_lower or "not" in reason_lower, (
-        f"Rejection reason must describe the rejection; got: '{result.reason}'"
-    )
+    assert (
+        "reject" in reason_lower
+        or "≤" in result.reason
+        or "<" in result.reason
+        or "below" in reason_lower
+        or "not" in reason_lower
+    ), f"Rejection reason must describe the rejection; got: '{result.reason}'"
 
 
 # ---------------------------------------------------------------------------
 # Test 3: VAL-only restriction — no test-split prompt_id passed to scoring
 # ---------------------------------------------------------------------------
+
 
 def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     """The verifier must restrict scoring to the VAL partition only (T-03-30 Exit Gate).
@@ -259,8 +275,10 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
         _row("p_test2", "test prompt 2", ["none"]),
     ]
     splits = {
-        "p_val1": "val", "p_val2": "val",
-        "p_test1": "test", "p_test2": "test",
+        "p_val1": "val",
+        "p_val2": "val",
+        "p_test1": "test",
+        "p_test2": "test",
     }
     cp = _make_corpus(tmp_path, rows, splits)
     mp = _make_map(tmp_path)
@@ -270,12 +288,12 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     # Track which prompt_ids actually reach scoring
     scored_prompt_ids: list[str] = []
 
-
     def capture_run_health(corpus_path, arm, **kw):
         # Inspect the corpus_path to see which prompts would be scored
         # We track which prompts are in the corpus_path passed to run_health
         from setdrift_eval.telemetry.scorer import val_only_prompts
         from setdrift_eval.schemas.experiment import F1Result
+
         # Record the val-only prompts that would be scored
         try:
             prompts = val_only_prompts(corpus_path)
@@ -284,9 +302,13 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
         except Exception:
             pass
         return F1Result(
-            arm=arm, macro_f1_mean=0.5,
-            noise_band_low=0.48, noise_band_high=0.52,
-            bootstrap_ci_low=0.48, bootstrap_ci_high=0.52, coverage_pct=0.5,
+            arm=arm,
+            macro_f1_mean=0.5,
+            noise_band_low=0.48,
+            noise_band_high=0.52,
+            bootstrap_ci_low=0.48,
+            bootstrap_ci_high=0.52,
+            coverage_pct=0.5,
         )
 
     monkeypatch.setattr(scorer, "run_health", capture_run_health)
@@ -303,7 +325,8 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     # The verifier must have used val_only_prompts — test prompt_ids must NOT appear
     # in the corpus passed to scoring
     [
-        p for p in [
+        p
+        for p in [
             _row("p_val1", "val prompt 1", ["spring-annotation-fix"]),
             _row("p_val2", "val prompt 2", ["none"]),
         ]
@@ -312,6 +335,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
     # Core assertion: test-split prompts must not be evaluated
     # We verify this by checking the verifier calls val_only_prompts helper
     from setdrift_eval.telemetry.scorer import val_only_prompts
+
     val_rows = val_only_prompts(cp)
     val_ids = {r["prompt_id"] for r in val_rows}
     test_ids = {"p_test1", "p_test2"}
@@ -325,6 +349,7 @@ def test_verifier_scores_val_partition_only(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Test 4: Baseline band computed via noise_band reuse (not re-derived)
 # ---------------------------------------------------------------------------
+
 
 def test_verifier_reuses_noise_band_for_baseline(tmp_path, monkeypatch):
     """The verifier must reuse scorer.noise_band to compute the baseline band high.
@@ -352,10 +377,15 @@ def test_verifier_reuses_noise_band_for_baseline(tmp_path, monkeypatch):
 
     def mock_run_health(corpus_path, arm, **kw):
         from setdrift_eval.schemas.experiment import F1Result
+
         return F1Result(
-            arm=arm, macro_f1_mean=0.6,
-            noise_band_low=0.58, noise_band_high=0.62,
-            bootstrap_ci_low=0.58, bootstrap_ci_high=0.62, coverage_pct=0.5,
+            arm=arm,
+            macro_f1_mean=0.6,
+            noise_band_low=0.58,
+            noise_band_high=0.62,
+            bootstrap_ci_low=0.58,
+            bootstrap_ci_high=0.62,
+            coverage_pct=0.5,
         )
 
     monkeypatch.setattr(scorer_module, "run_health", mock_run_health)
@@ -382,6 +412,7 @@ def test_verifier_reuses_noise_band_for_baseline(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Test 5: VerifyResult has required fields
 # ---------------------------------------------------------------------------
+
 
 def test_verify_result_schema():
     """VerifyResult has all required fields."""

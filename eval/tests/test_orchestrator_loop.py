@@ -8,6 +8,7 @@ Covers:
   - run_loop_cycle stages a signed candidate but does NOT auto-commit to plugin/ (D-43)
   - orchestrator is the sole _append_audit writer; gepa_wrapper/verifier contain no audit
 """
+
 import json
 import shutil
 import textwrap
@@ -55,15 +56,25 @@ def corpus_path(tmp_path):
 
     # 3 train prompts, 1 val prompt, 1 test prompt
     records = [
-        {"prompt_id": "t1", "prompt": "add a REST controller", "ground_truth_skills": ["spring-annotation-fix"]},
-        {"prompt_id": "t2", "prompt": "create a GET mapping", "ground_truth_skills": ["spring-annotation-fix"]},
+        {
+            "prompt_id": "t1",
+            "prompt": "add a REST controller",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
+        {
+            "prompt_id": "t2",
+            "prompt": "create a GET mapping",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
         {"prompt_id": "t3", "prompt": "no matching skill", "ground_truth_skills": ["none"]},
-        {"prompt_id": "v1", "prompt": "expose a REST API", "ground_truth_skills": ["spring-annotation-fix"]},
+        {
+            "prompt_id": "v1",
+            "prompt": "expose a REST API",
+            "ground_truth_skills": ["spring-annotation-fix"],
+        },
         {"prompt_id": "x1", "prompt": "test partition prompt", "ground_truth_skills": ["none"]},
     ]
-    corpus_file.write_text(
-        "\n".join(json.dumps(r) for r in records), encoding="utf-8"
-    )
+    corpus_file.write_text("\n".join(json.dumps(r) for r in records), encoding="utf-8")
 
     # Write split.json
     split = {"t1": "train", "t2": "train", "t3": "train", "v1": "val", "x1": "test"}
@@ -93,9 +104,7 @@ def precision_gate_report(experiments_dir):
         "overall_precision": 0.92,
         "overall_kappa": 0.75,
     }
-    (experiments_dir / "001-mining-precision.json").write_text(
-        json.dumps(report), encoding="utf-8"
-    )
+    (experiments_dir / "001-mining-precision.json").write_text(json.dumps(report), encoding="utf-8")
     return experiments_dir
 
 
@@ -113,6 +122,7 @@ def hmac_key(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Helpers: build the trainset spy
 # ---------------------------------------------------------------------------
+
 
 def _make_propose_spy(monkeypatch, skill_name: str, new_desc: str = "improved description"):
     """Monkeypatch gepa_wrapper.propose to capture trainset and return a fake proposal.
@@ -132,15 +142,20 @@ def _make_propose_spy(monkeypatch, skill_name: str, new_desc: str = "improved de
         for ex in train_examples:
             prompt = ex.get("prompt", "") if isinstance(ex, dict) else getattr(ex, "prompt", "")
             skills = set(
-                (ex.get("ground_truth_skills") or []) if isinstance(ex, dict)
+                (ex.get("ground_truth_skills") or [])
+                if isinstance(ex, dict)
                 else (getattr(ex, "ground_truth_skills", None) or [])
             )
             gt = frozenset(skills - {"none"})
-            examples.append(dspy.Example(
-                prompt=prompt,
-                gt_intents=gt,
-                prompt_id=ex.get("prompt_id") if isinstance(ex, dict) else getattr(ex, "prompt_id", None),
-            ).with_inputs("prompt"))
+            examples.append(
+                dspy.Example(
+                    prompt=prompt,
+                    gt_intents=gt,
+                    prompt_id=ex.get("prompt_id")
+                    if isinstance(ex, dict)
+                    else getattr(ex, "prompt_id", None),
+                ).with_inputs("prompt")
+            )
         return examples
 
     def fake_propose(sn, skill_path, trainset, frozen_map, cycle_id):
@@ -152,7 +167,9 @@ def _make_propose_spy(monkeypatch, skill_name: str, new_desc: str = "improved de
             cycle_id=cycle_id,
         )
 
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._build_optimizer_trainset", fake_build_trainset
+    )
     monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._propose", fake_propose)
     return seen_trainsets
 
@@ -178,6 +195,7 @@ def _make_verify_result(promote: bool, f1_delta: float = 0.05):
 # Test: run_loop_cycle only passes train examples to propose
 # ---------------------------------------------------------------------------
 
+
 def test_run_loop_cycle_only_passes_train_to_optimizer(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
@@ -192,7 +210,10 @@ def test_run_loop_cycle_only_passes_train_to_optimizer(
 
     # Bypass the precision gate guard
     from setdrift_eval.optimizer.orchestrator import _check_precision_gate
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -226,6 +247,7 @@ def test_run_loop_cycle_only_passes_train_to_optimizer(
 # Test: promoted cycle — all 5 steps, one cycle_id
 # ---------------------------------------------------------------------------
 
+
 def test_promoted_cycle_has_all_steps_same_cycle_id(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
@@ -243,7 +265,9 @@ def test_promoted_cycle_has_all_steps_same_cycle_id(
         "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True, f1_delta=0.05),
     )
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     manifest = run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -278,6 +302,7 @@ def test_promoted_cycle_has_all_steps_same_cycle_id(
 # Test: rejected cycle — all steps, one cycle_id, step="rollback"
 # ---------------------------------------------------------------------------
 
+
 def test_rejected_cycle_has_rollback_step(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
@@ -294,7 +319,9 @@ def test_rejected_cycle_has_rollback_step(
         "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=False, f1_delta=-0.15),
     )
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     manifest = run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -322,6 +349,7 @@ def test_rejected_cycle_has_rollback_step(
 # Test: two-file audit write — full has hmac_sig, genealogy does NOT
 # ---------------------------------------------------------------------------
 
+
 def test_audit_full_has_hmac_sig_genealogy_does_not(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
@@ -338,7 +366,9 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
         "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=False),
     )
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -357,7 +387,9 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
         assert "hmac_sig" in rec, f"Full audit record missing hmac_sig: {rec}"
 
     # Genealogy must NOT have hmac_sig on any record (data-wall-clean)
-    genealogy_records = [json.loads(ln) for ln in genealogy_path.read_text().splitlines() if ln.strip()]
+    genealogy_records = [
+        json.loads(ln) for ln in genealogy_path.read_text().splitlines() if ln.strip()
+    ]
     assert len(genealogy_records) > 0, "Genealogy file must have at least one record"
     for rec in genealogy_records:
         assert "hmac_sig" not in rec, (
@@ -371,6 +403,7 @@ def test_audit_full_has_hmac_sig_genealogy_does_not(
 # ---------------------------------------------------------------------------
 # Test: dry_run=True + approve=False does NOT auto-commit to live plugin/
 # ---------------------------------------------------------------------------
+
 
 def test_dry_run_does_not_write_to_live_plugin(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
@@ -395,7 +428,9 @@ def test_dry_run_does_not_write_to_live_plugin(
         "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True),
     )
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -420,6 +455,7 @@ def test_dry_run_does_not_write_to_live_plugin(
 # Test: approve=True actually applies when promoted
 # ---------------------------------------------------------------------------
 
+
 def test_approve_true_calls_apply_with_dry_run_false(
     tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
 ):
@@ -442,7 +478,9 @@ def test_approve_true_calls_apply_with_dry_run_false(
         "setdrift_eval.optimizer.orchestrator._verify_candidate",
         lambda *a, **k: _make_verify_result(promote=True),
     )
-    monkeypatch.setattr("setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
 
     run_loop_cycle(
         skill_name="spring-boot-endpoint",
@@ -466,15 +504,14 @@ def test_approve_true_calls_apply_with_dry_run_false(
 # Test: sole audit writer — gepa_wrapper and verifier have no audit write
 # ---------------------------------------------------------------------------
 
+
 def test_gepa_wrapper_has_no_audit_write():
     """gepa_wrapper.py must contain no audit write (Pitfall 5, T-03-63)."""
     from setdrift_eval.optimizer import gepa_wrapper as gw
 
     src = Path(gw.__file__).read_text(encoding="utf-8")
     # Strip comments
-    non_comment = "\n".join(
-        ln for ln in src.splitlines() if not ln.lstrip().startswith("#")
-    )
+    non_comment = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
     # Count lines with 'audit'
     audit_count = sum(1 for ln in non_comment.splitlines() if "audit" in ln.lower())
     assert audit_count == 0, (
@@ -495,7 +532,8 @@ def test_verifier_has_no_audit_write():
     # Only check code lines (non-comment, non-docstring-only)
     # Look for actual file-write or audit-append calls
     write_calls = [
-        ln for ln in src.splitlines()
+        ln
+        for ln in src.splitlines()
         if not ln.lstrip().startswith("#")
         and not ln.lstrip().startswith('"""')
         and not ln.lstrip().startswith("'")
@@ -515,6 +553,7 @@ def test_verifier_has_no_audit_write():
 # ---------------------------------------------------------------------------
 # Test: run_loop_cycle is exported from optimizer/__init__.py
 # ---------------------------------------------------------------------------
+
 
 def test_run_loop_cycle_exported_from_optimizer_init():
     """run_loop_cycle must be importable from setdrift_eval.optimizer."""

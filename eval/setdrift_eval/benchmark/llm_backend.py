@@ -13,6 +13,7 @@ The tool_choice / empty-toolset decision lives entirely here:
 
 eval-side fail-loud: API errors propagate — no bare except anywhere in this module.
 """
+
 import json
 import os
 
@@ -22,8 +23,7 @@ import openai  # module-level so the test fixture can patch setdrift_eval.benchm
 MAX_TOKENS = 256  # default; judge path passes 512 — never bump this constant
 
 
-def call_model(model: str, prompt: str, tools: list[dict],
-               max_tokens: int = MAX_TOKENS) -> dict:
+def call_model(model: str, prompt: str, tools: list[dict], max_tokens: int = MAX_TOKENS) -> dict:
     """Dispatch to the configured LLM backend and return the canonical response dict.
 
     The returned dict always has the shape:
@@ -58,8 +58,10 @@ def call_model(model: str, prompt: str, tools: list[dict],
 # Anthropic backend (default)
 # ---------------------------------------------------------------------------
 
-def _call_anthropic(model: str, prompt: str, tools: list[dict],
-                    max_tokens: int = MAX_TOKENS) -> dict:
+
+def _call_anthropic(
+    model: str, prompt: str, tools: list[dict], max_tokens: int = MAX_TOKENS
+) -> dict:
     """Call the Anthropic Messages API.
 
     Logic moved verbatim from response_cache.py (pre-refactor) so the default
@@ -89,8 +91,10 @@ def _call_anthropic(model: str, prompt: str, tools: list[dict],
 # OpenRouter backend (OpenAI Chat-Completions wire format)
 # ---------------------------------------------------------------------------
 
-def _call_openrouter(model: str, prompt: str, tools: list[dict],
-                     max_tokens: int = MAX_TOKENS) -> dict:
+
+def _call_openrouter(
+    model: str, prompt: str, tools: list[dict], max_tokens: int = MAX_TOKENS
+) -> dict:
     """Call the OpenRouter API using the OpenAI Chat-Completions wire format.
 
     Provider-locked to first-party Anthropic by default (configurable via env).

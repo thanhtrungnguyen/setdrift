@@ -14,6 +14,7 @@ Tests the mechanical yoking discipline:
 Uses in-memory / tmp_path DuckDB so no data/drift/ directory is needed.
 Fixed test minute (not wall-clock) for deterministic assertions.
 """
+
 import hashlib
 import os
 from pathlib import Path
@@ -70,10 +71,21 @@ def _insert_cell(
         VALUES (?,?,?,?,?, ?,?,?,?, ?,?,?, ?,?,?)
         """,
         [
-            cell_id, arm, model, revision, run_idx,
-            "cfg_hash_test", "snap_hash_test", "map_sha_test",
-            "", 12345, f1, 0,
-            None, yoke_minute, "2026-06-11T00:00:00+00:00",
+            cell_id,
+            arm,
+            model,
+            revision,
+            run_idx,
+            "cfg_hash_test",
+            "snap_hash_test",
+            "map_sha_test",
+            "",
+            12345,
+            f1,
+            0,
+            None,
+            yoke_minute,
+            "2026-06-11T00:00:00+00:00",
         ],
     )
 
@@ -152,9 +164,7 @@ def test_yoke_minute_mismatch_raises(tmp_path: Path) -> None:
     yoke_by_arm = {row[0]: row[1] for row in rows}
 
     # The exit gate: both arms must be present and carry the same yoke_minute
-    assert "A" in yoke_by_arm and "B" in yoke_by_arm, (
-        "Both arms must be present for a paired check"
-    )
+    assert "A" in yoke_by_arm and "B" in yoke_by_arm, "Both arms must be present for a paired check"
 
     with pytest.raises(AssertionError, match="Yoking exit gate"):
         assert yoke_by_arm["A"] == yoke_by_arm["B"], (

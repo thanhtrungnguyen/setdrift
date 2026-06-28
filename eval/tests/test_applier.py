@@ -7,6 +7,7 @@ restore_config verifies HMAC before writing (T-03-20 mitigation).
 All tests are offline (no API calls). HMAC key is written to a temp path via
 SETDRIFT_SIGNING_KEY env override (never touches data/keys/).
 """
+
 import os
 import textwrap
 from pathlib import Path
@@ -22,6 +23,7 @@ from setdrift_eval.optimizer.signer import SigningKeyError, generate_key
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def hmac_key_env(tmp_path, monkeypatch):
     """Write a fresh HMAC key to a temp path and point SETDRIFT_SIGNING_KEY at it."""
@@ -31,6 +33,7 @@ def hmac_key_env(tmp_path, monkeypatch):
     # Re-initialize _KEY_PATH in signer after env change
     import importlib
     import setdrift_eval.optimizer.signer as signer_mod
+
     signer_mod._KEY_PATH = Path(str(key_file))
     yield key_file
 
@@ -73,6 +76,7 @@ def plugin_proposal(fake_skill_file):
 # check_allowlist integration (via apply_proposal)
 # ---------------------------------------------------------------------------
 
+
 def test_apply_proposal_eval_target_raises_fence_violation(tmp_path):
     """apply_proposal with a target inside eval/ raises FenceViolation, writes nothing."""
     from setdrift_eval.optimizer.applier import apply_proposal
@@ -99,7 +103,10 @@ def test_apply_proposal_eval_target_raises_fence_violation(tmp_path):
 # dry_run behavior
 # ---------------------------------------------------------------------------
 
-def test_apply_proposal_dry_run_does_not_write(plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch):
+
+def test_apply_proposal_dry_run_does_not_write(
+    plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch
+):
     """apply_proposal(..., dry_run=True) does NOT modify the file but does NOT raise."""
     from setdrift_eval.optimizer.applier import apply_proposal
 
@@ -118,7 +125,10 @@ def test_apply_proposal_dry_run_does_not_write(plugin_proposal, fake_skill_file,
 # real write: frontmatter-preserving
 # ---------------------------------------------------------------------------
 
-def test_apply_proposal_rewrites_only_description(plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch):
+
+def test_apply_proposal_rewrites_only_description(
+    plugin_proposal, fake_skill_file, hmac_key_env, monkeypatch
+):
     """apply_proposal(..., dry_run=False) replaces ONLY description, preserves body + other keys."""
     from setdrift_eval.optimizer.applier import apply_proposal
 
@@ -131,6 +141,7 @@ def test_apply_proposal_rewrites_only_description(plugin_proposal, fake_skill_fi
 
     written = fake_skill_file.read_text(encoding="utf-8")
     import yaml
+
     _, fm, body = written.split("---", 2)
     meta = yaml.safe_load(fm)
 
@@ -147,6 +158,7 @@ def test_apply_proposal_rewrites_only_description(plugin_proposal, fake_skill_fi
 # ---------------------------------------------------------------------------
 # stage_signed_candidate
 # ---------------------------------------------------------------------------
+
 
 def test_stage_signed_candidate_returns_hash_and_sig(hmac_key_env):
     """stage_signed_candidate returns (config_hash, hmac_sig) without touching plugin/."""
@@ -178,6 +190,7 @@ def test_stage_signed_candidate_deterministic(hmac_key_env):
 # ---------------------------------------------------------------------------
 # restore_config: signature verified BEFORE any write
 # ---------------------------------------------------------------------------
+
 
 def test_restore_config_raises_on_bad_sig_before_write(tmp_path, hmac_key_env, monkeypatch):
     """restore_config with a tampered sig raises before writing anything (T-03-20)."""
@@ -225,6 +238,7 @@ def test_restore_config_writes_with_valid_sig(tmp_path, hmac_key_env, monkeypatc
 
     written = skill_file.read_text(encoding="utf-8")
     import yaml
+
     _, fm, body = written.split("---", 2)
     meta = yaml.safe_load(fm)
     assert meta["description"] == "restored description"

@@ -10,6 +10,7 @@ What it does NOT do:
   - Recompute any metric (D-04 single-source-of-truth: all data comes from run_health).
   - Assign .renderable on any widget (RESEARCH Pitfall 2 guard; use .update() always).
 """
+
 from __future__ import annotations
 
 from textual.widgets import DataTable, Static
@@ -73,13 +74,13 @@ class MetricWidget(Static):
 # ---------------------------------------------------------------------------
 _SKILL_COLUMNS: list[tuple[str, str, int]] = [
     # (key, header, width)
-    ("skill",     "Skill",   24),
-    ("f1",        "F1",       7),
-    ("band_lo",   "Band lo",  8),
-    ("band_hi",   "Band hi",  8),
-    ("pass_rate", "Pass%",    7),
-    ("cost_usd",  "Cost $",   9),
-    ("status",    "Status",  10),
+    ("skill", "Skill", 24),
+    ("f1", "F1", 7),
+    ("band_lo", "Band lo", 8),
+    ("band_hi", "Band hi", 8),
+    ("pass_rate", "Pass%", 7),
+    ("cost_usd", "Cost $", 9),
+    ("status", "Status", 10),
 ]
 
 
@@ -156,12 +157,12 @@ class SkillTable:
             self.add_skill_row(name, f1, band_lo, band_hi, pass_rate, cost_usd, status)
             return
         t = self._table
-        t.update_cell(name, "f1",        f"{f1:.3f}")
-        t.update_cell(name, "band_lo",   f"{band_lo:.3f}")
-        t.update_cell(name, "band_hi",   f"{band_hi:.3f}")
+        t.update_cell(name, "f1", f"{f1:.3f}")
+        t.update_cell(name, "band_lo", f"{band_lo:.3f}")
+        t.update_cell(name, "band_hi", f"{band_hi:.3f}")
         t.update_cell(name, "pass_rate", f"{pass_rate:.1%}")
-        t.update_cell(name, "cost_usd",  f"${cost_usd:.4f}")
-        t.update_cell(name, "status",    _status_markup(status))
+        t.update_cell(name, "cost_usd", f"${cost_usd:.4f}")
+        t.update_cell(name, "status", _status_markup(status))
 
     def show_no_data(self) -> None:
         """Show the empty-state row (UI-SPEC §A.8 no-data copy).
@@ -174,6 +175,11 @@ class SkillTable:
             self.setup_columns()
         self._table.add_row(
             "[italic]No telemetry events yet. Run a session with the Setdrift plugin installed.[/italic]",
-            "", "", "", "", "", "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             key="__empty__",
         )

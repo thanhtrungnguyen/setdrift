@@ -1,4 +1,5 @@
 """Prompt synthesizer tests — issue+commit text becomes a realistic prompt."""
+
 from setdrift_eval.corpus.fetcher import BugRecord
 from setdrift_eval.corpus.synthesizer import synthesize_prompt
 

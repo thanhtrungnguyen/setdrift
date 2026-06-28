@@ -9,6 +9,7 @@ REAL stop_batch_scrubber.py to land events in events.jsonl.
 Synthetic events carry `_synthetic: True` so Phase 2 excludes them from F1
 (prevents the canary/large-payload events biasing the metric).
 """
+
 import json
 import os
 import subprocess
@@ -52,14 +53,16 @@ def _flush(session_id: str) -> None:
 
 def inject_canary(session_id: str, flush: bool = True) -> None:
     """Inject one synthetic canary tool call through the real hot path."""
-    _inject({
-        "hook_event_name": "PostToolUse",
-        "session_id": session_id,
-        "tool_name": CANARY_TOOL_NAME,
-        "tool_input": {"_canary": True},
-        "tool_result": {"ok": True},
-        "_synthetic": True,
-    })
+    _inject(
+        {
+            "hook_event_name": "PostToolUse",
+            "session_id": session_id,
+            "tool_name": CANARY_TOOL_NAME,
+            "tool_input": {"_canary": True},
+            "tool_result": {"ok": True},
+            "_synthetic": True,
+        }
+    )
     print(f"[sica-harness] injected canary into session {session_id}")
     if flush:
         _flush(session_id)
@@ -69,14 +72,16 @@ def inject_large_payloads(session_id: str, count: int = 50, flush: bool = True) 
     """Inject `count` PostToolUse events each with a >1MB tool_input. Returns bytes/payload."""
     filler = "x" * (1_100_000)  # ~1.1 MB > 1 MB
     for i in range(count):
-        _inject({
-            "hook_event_name": "PostToolUse",
-            "session_id": session_id,
-            "tool_name": "Bash",
-            "tool_input": {"command": f"#{i}", "blob": filler},
-            "tool_result": {"stdout": "ok"},
-            "_synthetic": True,
-        })
+        _inject(
+            {
+                "hook_event_name": "PostToolUse",
+                "session_id": session_id,
+                "tool_name": "Bash",
+                "tool_input": {"command": f"#{i}", "blob": filler},
+                "tool_result": {"stdout": "ok"},
+                "_synthetic": True,
+            }
+        )
     print(f"[sica-harness] injected {count} >1MB payloads into session {session_id}")
     if flush:
         _flush(session_id)
@@ -86,14 +91,16 @@ def inject_large_payloads(session_id: str, count: int = 50, flush: bool = True) 
 def inject_plain(session_id: str, count: int, flush: bool = False) -> None:
     """Inject `count` small plain events (for volume / perf runs)."""
     for i in range(count):
-        _inject({
-            "hook_event_name": "PostToolUse",
-            "session_id": session_id,
-            "tool_name": "Read",
-            "tool_input": {"file": f"f{i}.py"},
-            "tool_result": {"content": "..."},
-            "_synthetic": True,
-        })
+        _inject(
+            {
+                "hook_event_name": "PostToolUse",
+                "session_id": session_id,
+                "tool_name": "Read",
+                "tool_input": {"file": f"f{i}.py"},
+                "tool_result": {"content": "..."},
+                "_synthetic": True,
+            }
+        )
     if flush:
         _flush(session_id)
 

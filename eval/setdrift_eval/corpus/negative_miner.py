@@ -11,6 +11,7 @@ Provenance is carried in `LabeledPrompt.metadata["negative_source"]` ∈
 one must NOT be added. Both functions yield LabeledPrompt (not BugRecord) so the
 negative_source tag travels with the prompt. Fail-loud on malformed TSV.
 """
+
 import subprocess
 from collections.abc import Iterable, Iterator
 from pathlib import Path
@@ -35,7 +36,9 @@ def mine_non_fix_negatives(
         repo = Path(repo)
         log = subprocess.run(
             ["git", "-C", str(repo), "log", "--format=%H\t%s", "--no-merges"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         count = 0
         for line in log.stdout.splitlines():
@@ -46,12 +49,17 @@ def mine_non_fix_negatives(
                 continue
             diff = subprocess.run(
                 ["git", "-C", str(repo), "diff", f"{sha}~1", sha],
-                capture_output=True, text=True, check=True,
+                capture_output=True,
+                text=True,
+                check=True,
             ).stdout
             record = BugRecord(
                 bug_id=f"nonfix-{repo.name}-{sha[:12]}",
-                commit=sha, parent_commit=f"{sha}~1",
-                diff=diff, commit_message=msg, project_id=repo.name,
+                commit=sha,
+                parent_commit=f"{sha}~1",
+                diff=diff,
+                commit_message=msg,
+                project_id=repo.name,
             )
             if label_bug(record) != [SkillLabel.NONE]:
                 continue  # accidentally triggered a rule → not a clean negative
@@ -62,8 +70,10 @@ def mine_non_fix_negatives(
                 predicted_skills=[SkillLabel.NONE],
                 ground_truth_skills=None,
                 source=BugSource(
-                    dataset=f"nonfix-{repo.name}", bug_id=sha,
-                    commit=sha, parent_commit=f"{sha}~1",
+                    dataset=f"nonfix-{repo.name}",
+                    bug_id=sha,
+                    commit=sha,
+                    parent_commit=f"{sha}~1",
                 ),
                 metadata={"negative_source": "non_fix_commit"},
             )
@@ -92,8 +102,10 @@ def load_constructed_negatives(tsv_path: Path) -> list[LabeledPrompt]:
                 predicted_skills=[SkillLabel.NONE],
                 ground_truth_skills=None,
                 source=BugSource(
-                    dataset="constructed", bug_id=bug_id.strip(),
-                    commit="", parent_commit="",
+                    dataset="constructed",
+                    bug_id=bug_id.strip(),
+                    commit="",
+                    parent_commit="",
                 ),
                 metadata={"negative_source": "constructed"},
             )

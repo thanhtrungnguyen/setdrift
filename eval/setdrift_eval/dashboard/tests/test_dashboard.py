@@ -10,6 +10,7 @@ Test groups:
 All Textual App tests use the built-in pilot / run_test harness — no live
 terminal, no network, no real API calls.  HEADLESS only.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,6 +23,7 @@ from unittest.mock import MagicMock, patch
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_f1_result(macro_f1_mean: float = 0.72) -> Any:
     """Build a minimal F1Result-like namespace for mocking."""
@@ -39,6 +41,7 @@ def _make_f1_result(macro_f1_mean: float = 0.72) -> Any:
 # ---------------------------------------------------------------------------
 # health_json tests (D-12, UI-SPEC §A.7)
 # ---------------------------------------------------------------------------
+
 
 def test_health_json_schema_version(tmp_path):
     """export_health_json returns a dict with schema_version=1 (D-12)."""
@@ -62,10 +65,17 @@ def test_health_json_required_keys(tmp_path):
     from setdrift_eval.dashboard.health_export import export_health_json
 
     required_keys = {
-        "schema_version", "generated_at",
-        "f1_current", "f1_band_lo", "f1_band_hi",
-        "pass_rate", "cost_usd", "drift_index",
-        "event_count", "loop_status", "skills",
+        "schema_version",
+        "generated_at",
+        "f1_current",
+        "f1_band_lo",
+        "f1_band_hi",
+        "pass_rate",
+        "cost_usd",
+        "drift_index",
+        "event_count",
+        "loop_status",
+        "skills",
     }
 
     with patch(
@@ -77,9 +87,7 @@ def test_health_json_required_keys(tmp_path):
             arm="B",
         )
 
-    assert required_keys.issubset(payload.keys()), (
-        f"Missing keys: {required_keys - payload.keys()}"
-    )
+    assert required_keys.issubset(payload.keys()), f"Missing keys: {required_keys - payload.keys()}"
 
 
 def test_health_json_f1_values_match_run_health(tmp_path):
@@ -160,13 +168,18 @@ def test_health_json_skills_is_list(tmp_path):
 # log_panel tests (D-17, UI-SPEC §A.9) — unit tests, no Textual app needed
 # ---------------------------------------------------------------------------
 
+
 def test_log_tail_telemetry_reads_last_n_lines(tmp_path):
     """tail_telemetry reads the last n_lines of events.jsonl (single-source-of-truth)."""
     import pytest
+
     pytest.importorskip("textual")
 
     events_file = tmp_path / "events.jsonl"
-    lines = [json.dumps({"ts": f"2026-06-15T{i:02d}:00:00Z", "tool": "read", "ok": True}) for i in range(100)]
+    lines = [
+        json.dumps({"ts": f"2026-06-15T{i:02d}:00:00Z", "tool": "read", "ok": True})
+        for i in range(100)
+    ]
     events_file.write_text("\n".join(lines), encoding="utf-8")
 
     # We test the logic without running the full Textual app by mocking the RichLog
@@ -190,6 +203,7 @@ def test_log_tail_telemetry_reads_last_n_lines(tmp_path):
 def test_log_tail_telemetry_empty_file(tmp_path):
     """tail_telemetry on an empty file writes the no-data copy (UI-SPEC §A.9)."""
     import pytest
+
     pytest.importorskip("textual")
 
     events_file = tmp_path / "events.jsonl"
@@ -214,6 +228,7 @@ def test_log_tail_telemetry_empty_file(tmp_path):
 def test_log_tail_telemetry_missing_file(tmp_path):
     """tail_telemetry with missing file writes the ⚠ warning copy (UI-SPEC §A.9)."""
     import pytest
+
     pytest.importorskip("textual")
 
     missing = tmp_path / "nonexistent.jsonl"
@@ -229,14 +244,13 @@ def test_log_tail_telemetry_missing_file(tmp_path):
     panel.tail_telemetry(missing, n_lines=50)
 
     call_args = [str(c) for c in mock_log.write.call_args_list]
-    assert any("unreadable" in a for a in call_args), (
-        f"Expected warning copy; got: {call_args}"
-    )
+    assert any("unreadable" in a for a in call_args), f"Expected warning copy; got: {call_args}"
 
 
 def test_log_write_loop_event_info(tmp_path):
     """write_loop_event with level='info' uses $success color (no hex)."""
     import pytest
+
     pytest.importorskip("textual")
 
     from unittest.mock import MagicMock
@@ -257,6 +271,7 @@ def test_log_write_loop_event_info(tmp_path):
 def test_log_write_loop_event_clears_placeholder_on_first_real_event(tmp_path):
     """write_loop_event clears Phase-3-pending placeholder on first real event."""
     import pytest
+
     pytest.importorskip("textual")
 
     from unittest.mock import MagicMock
@@ -280,17 +295,17 @@ def test_log_write_loop_event_clears_placeholder_on_first_real_event(tmp_path):
 # metric_widget tests — verify .update() is used, never .renderable
 # ---------------------------------------------------------------------------
 
+
 def test_metric_widget_set_value_uses_update(monkeypatch):
     """MetricWidget.set_value calls .update() — never assigns .renderable (Pitfall 2)."""
     import pytest
+
     pytest.importorskip("textual")
 
     from setdrift_eval.dashboard.widgets import MetricWidget
 
     # Patch Static.__init__ to avoid full Textual initialization
     from textual.widgets import Static
-
-
 
     def mock_init(self_inner, *args, **kwargs):
         # Minimal init bypass
@@ -314,6 +329,7 @@ def test_metric_widget_set_value_uses_update(monkeypatch):
 def test_metric_widget_set_gated():
     """MetricWidget.set_gated shows 'GATED' in the content."""
     import pytest
+
     pytest.importorskip("textual")
 
     from setdrift_eval.dashboard.widgets import MetricWidget
@@ -338,9 +354,11 @@ def test_metric_widget_set_gated():
 # skill_table tests — update-without-clear guard (RESEARCH Pitfall 5)
 # ---------------------------------------------------------------------------
 
+
 def test_skill_table_update_does_not_call_clear():
     """SkillTable.update_skill_row never calls table.clear() (RESEARCH Pitfall 5)."""
     import pytest
+
     pytest.importorskip("textual")
 
     from setdrift_eval.dashboard.widgets import SkillTable
@@ -366,6 +384,7 @@ def test_skill_table_update_does_not_call_clear():
 def test_skill_table_show_no_data_when_empty():
     """SkillTable.show_no_data adds empty-state row when table has no skills."""
     import pytest
+
     pytest.importorskip("textual")
 
     from setdrift_eval.dashboard.widgets import SkillTable

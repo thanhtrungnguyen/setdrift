@@ -30,6 +30,7 @@ Lazy imports:
 Requirements: REQ-DRIFT-02 (synthetic-drift grid, content-addressed snapshot
 reproducibility), REQ-DRIFT-03 (Haiku sensitivity arm wired here, run in 04-03).
 """
+
 import hashlib
 import json
 import os
@@ -63,9 +64,7 @@ ARMS = ["A", "B"]
 REVISIONS = ["early", "mid", "late"]
 N_RUNS = 5
 
-_EXPERIMENTS_DIR = Path(
-    os.environ.get("SETDRIFT_EXPERIMENTS_DIR", "experiments")
-)
+_EXPERIMENTS_DIR = Path(os.environ.get("SETDRIFT_EXPERIMENTS_DIR", "experiments"))
 _CACHE_DIR = Path(os.environ.get("SETDRIFT_CACHE_DIR", "data/cache"))
 
 
@@ -184,7 +183,7 @@ def run_grid(
 
     # --- Load FROZEN ruler components (import-only, never re-implemented) ---
     mapping, map_sha = load_intent_map(map_path)  # FROZEN RULER — do not re-implement
-    scored = scored_intents(mapping)               # FROZEN RULER — do not re-implement
+    scored = scored_intents(mapping)  # FROZEN RULER — do not re-implement
     labels = sorted(scored)
 
     # --- Open DuckDB connection ---
@@ -195,6 +194,7 @@ def run_grid(
     # DriftManifest. Silently substituting "" on failure would write
     # reproducibility-blind manifests; let the error propagate instead.
     from setdrift_eval.drift.embedder import embedder_checksum  # lazy: [drift] extra
+
     emb_checksum = embedder_checksum()
 
     # --- Outer loops: model × revision (yoking boundary) ---
@@ -209,9 +209,7 @@ def run_grid(
 
         for revision in REVISIONS:
             # Content-addressed snapshot for this revision point
-            snap_dir, snap_hash = checkout_snapshot(
-                gitbug_repo, revision_shas[revision]
-            )
+            snap_dir, snap_hash = checkout_snapshot(gitbug_repo, revision_shas[revision])
 
             # YOKING EXIT GATE: capture yoke_minute ONCE per (model, revision) pair,
             # BEFORE iterating arms. Both A and B rows carry this identical value.
@@ -240,9 +238,7 @@ def run_grid(
 
                     for p in prompts:
                         gt = set(p.get("ground_truth_skills") or [])
-                        fired = run_arm(
-                            p["prompt"], tools, model=model, cache_dir=cache_dir
-                        )
+                        fired = run_arm(p["prompt"], tools, model=model, cache_dir=cache_dir)
                         # Project to intent space using the FROZEN ruler
                         gt_intents = project_to_intents(gt, mapping) & scored
                         pred_intents = project_to_intents(fired, mapping) & scored
@@ -250,9 +246,9 @@ def run_grid(
                         y_pred_sets.append(pred_intents)
 
                     # FROZEN RULER — do not re-implement binarize / macro_f1
-                    yt = binarize(y_true_sets, labels)   # FROZEN RULER
-                    yp = binarize(y_pred_sets, labels)   # FROZEN RULER
-                    f1_val = macro_f1(yt, yp)            # FROZEN RULER
+                    yt = binarize(y_true_sets, labels)  # FROZEN RULER
+                    yp = binarize(y_pred_sets, labels)  # FROZEN RULER
+                    f1_val = macro_f1(yt, yp)  # FROZEN RULER
                     f1_runs.append(f1_val)
 
                     # Cell id: sha256[:12] of (arm, model, revision, run_idx)
@@ -281,12 +277,12 @@ def run_grid(
                             cfg_hash,
                             snap_hash,
                             map_sha,
-                            "",          # split_hash — populated by corpus loader
+                            "",  # split_hash — populated by corpus loader
                             seed,
                             f1_val,
                             token_cost_run,
-                            None,        # cost_usd — populated for Haiku (D-60, 04-03)
-                            yoke_min,    # same for A and B in this (model, revision) pair
+                            None,  # cost_usd — populated for Haiku (D-60, 04-03)
+                            yoke_min,  # same for A and B in this (model, revision) pair
                             ts_now,
                         ],
                     )
@@ -309,7 +305,7 @@ def run_grid(
                     arm=arm,
                     corpus_name="gitbug-java",
                     corpus_version="public",
-                    dataset_sha256="",        # populated by corpus version hash
+                    dataset_sha256="",  # populated by corpus version hash
                     split_hash="",
                     intent_map_sha256=map_sha,
                     config_hash=cfg_hash,
@@ -335,8 +331,6 @@ def run_grid(
                     drift_index=None,
                     fallback_note="",
                 )
-                manifest_path.write_text(
-                    manifest.model_dump_json(indent=2), encoding="utf-8"
-                )
+                manifest_path.write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
 
     con.close()

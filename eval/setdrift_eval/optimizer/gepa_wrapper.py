@@ -26,6 +26,7 @@ Fail-loud: optimizer errors propagate (no bare except). The optimizer only ever 
 trainset the orchestrator pre-filters to the TRAIN partition (Goodhart firewall enforced
 upstream in 03-06); this module never loads any split file.
 """
+
 import os
 import re
 from pathlib import Path
@@ -39,11 +40,11 @@ from setdrift_eval.telemetry.scorer import project_to_intents, scored_intents
 
 # --- pins / knobs -----------------------------------------------------------------
 OPTIMIZER_BACKEND = os.environ.get("SETDRIFT_OPTIMIZER", "gepa")  # "gepa" | "miprov2"
-REFLECTION_LM_MODEL = "anthropic/claude-sonnet-4-6"           # model pin (default arm)
+REFLECTION_LM_MODEL = "anthropic/claude-sonnet-4-6"  # model pin (default arm)
 MAX_METRIC_CALLS = int(os.environ.get("SETDRIFT_GEPA_MAX_METRIC_CALLS", "200"))
-NO_IMPROVEMENT_PATIENCE = 10                                  # exit-gate patience
-PARETO_DIVERSITY_FLOOR = 5                                    # exit-gate >=5 candidates
-MIN_ADVERSARIAL_NEGATIVES = 50                               # exit-gate >=50 negatives
+NO_IMPROVEMENT_PATIENCE = 10  # exit-gate patience
+PARETO_DIVERSITY_FLOOR = 5  # exit-gate >=5 candidates
+MIN_ADVERSARIAL_NEGATIVES = 50  # exit-gate >=50 negatives
 CARDINALITY_PENALTY_WEIGHT = float(os.environ.get("SETDRIFT_CARDINALITY_PENALTY", "0.25"))
 SEED = 42
 
@@ -64,8 +65,8 @@ DEFAULT_LINT_ALLOWLIST: frozenset[str] = frozenset(
     {"spring", "java", "hibernate", "jpa", "rest", "boot", "claude", "sica", "http"}
 )
 
-_CAMEL_RE = re.compile(r"\b[A-Za-z]*[a-z][A-Z][A-Za-z]*\b")   # RestController / findById
-_SNAKE_RE = re.compile(r"\b[A-Za-z]+_[A-Za-z_]+\b")            # find_by_id
+_CAMEL_RE = re.compile(r"\b[A-Za-z]*[a-z][A-Z][A-Za-z]*\b")  # RestController / findById
+_SNAKE_RE = re.compile(r"\b[A-Za-z]+_[A-Za-z_]+\b")  # find_by_id
 
 
 class OptimizerError(RuntimeError):
@@ -78,7 +79,7 @@ class SkillProposal(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     target_path: Path  # must be within plugin/ or be CLAUDE.md (checked by the applier)
-    new_content: str   # the proposed new description string
+    new_content: str  # the proposed new description string
     skill_name: str
     cycle_id: str
 
@@ -97,8 +98,8 @@ def build_optimizer(metric_fn):
             metric=metric_fn,
             auto="light",
             seed=SEED,
-            max_errors=0,          # exit-gate: no silent error tolerance
-            prompt_model=lm,       # MIPROv2 requires an LM at construction
+            max_errors=0,  # exit-gate: no silent error tolerance
+            prompt_model=lm,  # MIPROv2 requires an LM at construction
             task_model=lm,
         )
     return _build_gepa(metric_fn)
@@ -118,11 +119,11 @@ def _build_gepa(metric_fn):
     return dspy.GEPA(
         metric=metric_fn,
         candidate_selection_strategy="pareto",  # exit-gate Pareto strategy
-        failure_score=0.0,                       # exit-gate max_errors=0 analog on GEPA
+        failure_score=0.0,  # exit-gate max_errors=0 analog on GEPA
         reflection_lm=dspy.LM(REFLECTION_LM_MODEL, temperature=1.0, max_tokens=8192),
         seed=SEED,
-        track_stats=True,                        # exposes candidate count for Pareto floor
-        max_metric_calls=MAX_METRIC_CALLS,       # hard budget ceiling
+        track_stats=True,  # exposes candidate count for Pareto floor
+        max_metric_calls=MAX_METRIC_CALLS,  # hard budget ceiling
         gepa_kwargs=gepa_kwargs,
     )
 
@@ -251,9 +252,7 @@ def build_optimizer_trainset(corpus_train_examples, *, constructed_path: Path | 
         if not gt:
             n_neg += 1
     for prompt in load_constructed_negatives(constructed_path):
-        trainset.append(
-            dspy.Example(prompt=prompt, gt_intents=frozenset()).with_inputs("prompt")
-        )
+        trainset.append(dspy.Example(prompt=prompt, gt_intents=frozenset()).with_inputs("prompt"))
         n_neg += 1
     if n_neg < MIN_ADVERSARIAL_NEGATIVES:
         raise OptimizerError(
@@ -345,14 +344,14 @@ class _SkillTriggerProgram(dspy.Module):
         # dspy.Predict with a signature whose instruction is the skill description.
         # GEPA's seed_candidate = {name: pred.signature.instructions for named_predictors()}
         # so this is what GEPA optimizes.
-        self.classify = dspy.Predict(
-            _SkillClassifier.with_instructions(description)
-        )
+        self.classify = dspy.Predict(_SkillClassifier.with_instructions(description))
 
     def forward(self, prompt: str):  # pragma: no cover - integration path
         result = self.classify(prompt=prompt)
         fired = result.fired_intents if isinstance(result.fired_intents, list) else []
-        return dspy.Prediction(fired_intents=fired, description=self.classify.signature.instructions)
+        return dspy.Prediction(
+            fired_intents=fired, description=self.classify.signature.instructions
+        )
 
 
 def _enforce_pareto_floor(compiled) -> None:
@@ -382,7 +381,9 @@ def _run_optimizer(optimizer, seed_description: str, trainset, skill_name: str) 
     return str(best)
 
 
-def propose(skill_name: str, skill_path: Path, trainset, frozen_map, cycle_id: str) -> SkillProposal:
+def propose(
+    skill_name: str, skill_path: Path, trainset, frozen_map, cycle_id: str
+) -> SkillProposal:
     """Run the optimizer and return the best candidate as a SkillProposal (DATA only).
 
     Pipeline: read current description -> build metric (CONSTRAINT injection) -> build

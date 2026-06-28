@@ -5,6 +5,7 @@ malformed line rather than skipping it). Answers the two gate queries
 (events-per-session, missing-canary-count) and auto-promotes the JSONL archive
 to Parquet at ~500MB. Everything stays inside the gitignored data wall.
 """
+
 import os
 from datetime import date
 from pathlib import Path

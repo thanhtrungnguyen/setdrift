@@ -8,6 +8,7 @@ Tests:
 - setdrift-eval ablate --help exits 0 and shows --failure-id
 - health --arm choices includes A
 """
+
 import json
 import sys
 from pathlib import Path
@@ -87,6 +88,7 @@ def _make_map(tmp_path):
 # Test 1: build_ablation_table returns exactly 6 rows (full + 5 ablations)
 # ---------------------------------------------------------------------------
 
+
 def test_build_ablation_table_returns_six_rows(tmp_path, monkeypatch):
     """build_ablation_table returns one row per 6 configurations:
     full Setdrift config, 4 leave-one-out ablations, and arm-C floor.
@@ -113,15 +115,15 @@ def test_build_ablation_table_returns_six_rows(tmp_path, monkeypatch):
         map_path=mp,
     )
 
-    assert len(rows) == 6, (
-        f"Expected 6 rows (full + 5 ablations); got {len(rows)}: "
-        + str([r.get("component") for r in rows])
+    assert len(rows) == 6, f"Expected 6 rows (full + 5 ablations); got {len(rows)}: " + str(
+        [r.get("component") for r in rows]
     )
 
 
 # ---------------------------------------------------------------------------
 # Test 2: Each row has F1 + delta vs full-config
 # ---------------------------------------------------------------------------
+
 
 def test_build_ablation_table_row_has_f1_and_delta(tmp_path, monkeypatch):
     """Each row must have 'f1', 'delta_vs_full', and 'component' fields."""
@@ -156,6 +158,7 @@ def test_build_ablation_table_row_has_f1_and_delta(tmp_path, monkeypatch):
 # Test 3: The largest-negative-delta row is flagged ROOT CAUSE
 # ---------------------------------------------------------------------------
 
+
 def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
     """The row with the largest negative delta_vs_full is flagged as ROOT CAUSE."""
     from setdrift_eval.benchmark import arm_runner
@@ -164,7 +167,6 @@ def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
     sd = _make_skills_dir(tmp_path)
     cp = _make_corpus(tmp_path)
     mp = _make_map(tmp_path)
-
 
     def fake_run_arm(prompt, tools, **kw):
         # Full config (2 tools): spring_boot_endpoint fires → correct prediction
@@ -204,6 +206,7 @@ def test_build_ablation_table_flags_root_cause(tmp_path, monkeypatch):
 # Test 4: render_table produces required header columns
 # ---------------------------------------------------------------------------
 
+
 def test_render_table_contains_required_columns():
     """render_table output must contain the header columns from RESEARCH §Discretion 1."""
     from setdrift_eval.optimizer.ablate import render_table
@@ -236,6 +239,7 @@ def test_render_table_contains_required_columns():
 # Test 5: setdrift-eval ablate --help exits 0 and shows --failure-id
 # ---------------------------------------------------------------------------
 
+
 def test_ablate_cli_help_exits_zero_and_shows_failure_id(capsys):
     """setdrift-eval ablate --help exits 0 and shows --failure-id."""
     import sys
@@ -254,6 +258,7 @@ def test_ablate_cli_help_exits_zero_and_shows_failure_id(capsys):
 # Test 6: health --arm choices includes A
 # ---------------------------------------------------------------------------
 
+
 def test_health_arm_choices_includes_a(capsys):
     """health --arm must accept A (choices=["A","B","C"])."""
     import sys
@@ -271,6 +276,7 @@ def test_health_arm_choices_includes_a(capsys):
 # ---------------------------------------------------------------------------
 # Test 7: build_ablation_table full-config row has delta_vs_full == 0.0
 # ---------------------------------------------------------------------------
+
 
 def test_full_config_row_has_zero_delta(tmp_path, monkeypatch):
     """The 'None (full Setdrift config)' row must have delta_vs_full == 0.0 (it's the baseline)."""
@@ -293,8 +299,11 @@ def test_full_config_row_has_zero_delta(tmp_path, monkeypatch):
         map_path=mp,
     )
 
-    full_rows = [r for r in rows if r.get("delta_vs_full") == 0.0 and "full" in r.get("component", "").lower()]
-    assert len(full_rows) >= 1, (
-        "Full-config row must have delta_vs_full=0.0; rows: "
-        + str([(r["component"], r["delta_vs_full"]) for r in rows])
+    full_rows = [
+        r
+        for r in rows
+        if r.get("delta_vs_full") == 0.0 and "full" in r.get("component", "").lower()
+    ]
+    assert len(full_rows) >= 1, "Full-config row must have delta_vs_full=0.0; rows: " + str(
+        [(r["component"], r["delta_vs_full"]) for r in rows]
     )

@@ -5,6 +5,7 @@ Matplotlib uses the Agg backend (headless) — no display required.
 
 References: PLAN 05-06, 05-PATTERNS.md, 05-RESEARCH.md Pitfall 4/7, D-09/D-15.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,6 +14,7 @@ import tempfile
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")  # enforce headless before any pyplot import
 
 import pytest
@@ -30,6 +32,7 @@ _TRIANGULATION_FIXTURE = _FIXTURES_DIR / "triangulation_fixture.json"
 # ===========================================================================
 # Task 1: Genealogy DAG + Mermaid serialiser tests
 # ===========================================================================
+
 
 class TestBuildGenealogyDag:
     """Tests for build_genealogy_dag (REQ-DELIV-01, T-05-22)."""
@@ -81,20 +84,36 @@ class TestBuildGenealogyDag:
 
         # Create a JSONL with a cycle: v1 -> v2 -> v3 -> v1
         cyclic_records = [
-            {"version_id": "v1", "skill_name": "test-skill", "f1_mean": 0.6,
-             "status": "archived", "parent_version_id": "v3", "date": "2026-01-01",
-             "rolled_back": False},
-            {"version_id": "v2", "skill_name": "test-skill", "f1_mean": 0.7,
-             "status": "archived", "parent_version_id": "v1", "date": "2026-01-02",
-             "rolled_back": False},
-            {"version_id": "v3", "skill_name": "test-skill", "f1_mean": 0.5,
-             "status": "archived", "parent_version_id": "v2", "date": "2026-01-03",
-             "rolled_back": True},
+            {
+                "version_id": "v1",
+                "skill_name": "test-skill",
+                "f1_mean": 0.6,
+                "status": "archived",
+                "parent_version_id": "v3",
+                "date": "2026-01-01",
+                "rolled_back": False,
+            },
+            {
+                "version_id": "v2",
+                "skill_name": "test-skill",
+                "f1_mean": 0.7,
+                "status": "archived",
+                "parent_version_id": "v1",
+                "date": "2026-01-02",
+                "rolled_back": False,
+            },
+            {
+                "version_id": "v3",
+                "skill_name": "test-skill",
+                "f1_mean": 0.5,
+                "status": "archived",
+                "parent_version_id": "v2",
+                "date": "2026-01-03",
+                "rolled_back": True,
+            },
         ]
         cyclic_path = tmp_path / "cyclic.jsonl"
-        cyclic_path.write_text(
-            "\n".join(json.dumps(r) for r in cyclic_records), encoding="utf-8"
-        )
+        cyclic_path.write_text("\n".join(json.dumps(r) for r in cyclic_records), encoding="utf-8")
 
         with pytest.raises(AssertionError, match="cycle"):
             build_genealogy_dag(cyclic_path)
@@ -180,6 +199,7 @@ class TestDagToMermaid:
 # Task 2: Triangulation (Spearman + sign test + permutation fallback) tests
 # ===========================================================================
 
+
 class TestTriangulate:
     """Tests for triangulate() (D-15 pre-registered statistic)."""
 
@@ -211,8 +231,14 @@ class TestTriangulate:
 
         assert result["null_result"] is True, "Anti-correlated series must be null result"
         # All fields must be present even for null results (D-15 selective-reporting mitigation)
-        for key in ("spearman_rho", "spearman_pvalue", "sign_test_pvalue",
-                    "n_concordant", "n_pairs", "null_result"):
+        for key in (
+            "spearman_rho",
+            "spearman_pvalue",
+            "sign_test_pvalue",
+            "n_concordant",
+            "n_pairs",
+            "null_result",
+        ):
             assert key in result, f"Missing key {key!r} in triangulate result"
 
     def test_small_n_uses_permutation_test(self):
@@ -257,8 +283,14 @@ class TestTriangulate:
         result = triangulate(f1, pr)
 
         required_keys = {
-            "spearman_rho", "spearman_pvalue", "sign_test_pvalue",
-            "n_concordant", "n_pairs", "null_result", "n_versions", "pvalue_method",
+            "spearman_rho",
+            "spearman_pvalue",
+            "sign_test_pvalue",
+            "n_concordant",
+            "n_pairs",
+            "null_result",
+            "n_versions",
+            "pvalue_method",
         }
         missing = required_keys - result.keys()
         assert not missing, f"triangulate result missing keys: {missing}"
@@ -302,6 +334,7 @@ class TestPlotTriangulation:
 # Task 2: Cohen's κ heatmap tests
 # ===========================================================================
 
+
 class TestPlotKappaHeatmap:
     """Tests for plot_kappa_heatmap (5×3 bias_mode × family_pair heatmap)."""
 
@@ -317,14 +350,16 @@ class TestPlotKappaHeatmap:
             for j, fp in enumerate(family_pairs):
                 kappa_val = 0.5 + i * 0.05 + j * 0.03
                 esc = kappa_val < 0.6
-                cells.append(KappaCell(
-                    bias_mode=bm,
-                    family_pair=fp,
-                    kappa=round(kappa_val, 3),
-                    n_prompts=100,
-                    escalation_required=esc,
-                    reason=f"Test cell for {bm}/{fp}: kappa={kappa_val:.3f}",
-                ))
+                cells.append(
+                    KappaCell(
+                        bias_mode=bm,
+                        family_pair=fp,
+                        kappa=round(kappa_val, 3),
+                        n_prompts=100,
+                        escalation_required=esc,
+                        reason=f"Test cell for {bm}/{fp}: kappa={kappa_val:.3f}",
+                    )
+                )
         return cells
 
     def test_kappa_heatmap_writes_pdf_and_png(self, tmp_path):
@@ -365,6 +400,7 @@ class TestPlotKappaHeatmap:
 # No hand-rolled statistics guard (T-05-21 static check)
 # ===========================================================================
 
+
 def test_no_hand_rolled_statistics_in_triangulation():
     """triangulation.py must not contain hand-rolled F1/kappa/spearman formulas (T-05-21)."""
     triangulation_path = Path(__file__).parent.parent / "triangulation.py"
@@ -374,6 +410,7 @@ def test_no_hand_rolled_statistics_in_triangulation():
 
     # Reject hand-rolled F1
     import re
+
     assert not re.search(r"2\s*\*\s*p\s*\*\s*r", source), (
         "Hand-rolled F1 formula found in triangulation.py (T-05-21 violation)"
     )
@@ -395,6 +432,7 @@ def test_no_hand_rolled_statistics_in_kappa_heatmap():
     source = heatmap_path.read_text(encoding="utf-8")
 
     import re
+
     assert not re.search(r"2\s*\*\s*p\s*\*\s*r", source), (
         "Hand-rolled F1 formula found in kappa_heatmap.py (T-05-21 violation)"
     )

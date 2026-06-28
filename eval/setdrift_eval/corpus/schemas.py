@@ -1,9 +1,10 @@
-﻿"""Pydantic schemas for the public corpus.
+"""Pydantic schemas for the public corpus.
 
 The SkillLabel taxonomy is fixed at eight values. Extending the taxonomy
 requires updating the labeler rules in labeler.py and bumping the corpus
 version string so downstream consumers know labels may have shifted.
 """
+
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field

@@ -18,6 +18,7 @@ Goodhart firewall:
 
 References: REQ-DRIFT-03, §7-2 (yoking discipline), D-59, RESEARCH.md Pattern 5.
 """
+
 import statistics
 
 import duckdb
@@ -34,6 +35,7 @@ from setdrift_eval.telemetry.scorer import noise_band  # FROZEN RULER — do not
 # ---------------------------------------------------------------------------
 # Result model
 # ---------------------------------------------------------------------------
+
 
 class PairedDiffResult(BaseModel):
     """Result of one paired-difference computation for a single (model, revision).
@@ -62,9 +64,7 @@ class PairedDiffResult(BaseModel):
     t_stat: float = Field(
         description="Paired t-statistic from scipy.stats.ttest_rel; nan if n_runs < 2"
     )
-    p_value: float = Field(
-        description="Two-tailed p-value from ttest_rel; nan if n_runs < 2"
-    )
+    p_value: float = Field(description="Two-tailed p-value from ttest_rel; nan if n_runs < 2")
     n_runs: int = Field(description="Number of run pairs available for the t-test")
     exceeds_b_upper_band: bool = Field(
         description=(
@@ -94,6 +94,7 @@ class PairedDiffResult(BaseModel):
 # ---------------------------------------------------------------------------
 # Main function
 # ---------------------------------------------------------------------------
+
 
 def paired_difference_report(
     con: duckdb.DuckDBPyConnection,

@@ -14,6 +14,7 @@ What this module does NOT do (code-identity boundary):
 
 Consumes REQ-LOOP-03 (per-component failure attribution with root cause flag).
 """
+
 from pathlib import Path
 
 import yaml
@@ -43,9 +44,14 @@ def _load_intent_map(map_path: Path) -> dict:
     return yaml.safe_load(Path(map_path).read_text(encoding="utf-8"))
 
 
-def _score_single_prompt(prompt: str, tools: list[dict], mapping: dict,
-                          ground_truth: set[str], cache_dir: Path | None = None,
-                          model: str | None = None) -> tuple[float, set, set]:
+def _score_single_prompt(
+    prompt: str,
+    tools: list[dict],
+    mapping: dict,
+    ground_truth: set[str],
+    cache_dir: Path | None = None,
+    model: str | None = None,
+) -> tuple[float, set, set]:
     """Compute per-prompt F1 for one ablation configuration.
 
     Uses _arm_runner.run_arm with provided tools, projects fired skills to intents
@@ -117,18 +123,16 @@ def build_ablation_table(
 
     # --- Load corpus and find the failure prompt ---
     import json
+
     lines = corpus_path.read_text(encoding="utf-8").splitlines()
     prompts = [json.loads(line) for line in lines if line.strip()]
-    failure_prompt = next(
-        (p for p in prompts if p["prompt_id"] == failure_id), None
-    )
+    failure_prompt = next((p for p in prompts if p["prompt_id"] == failure_id), None)
     if failure_prompt is None:
         raise ValueError(f"failure_id='{failure_id}' not found in corpus {corpus_path}")
 
     prompt_text = failure_prompt["prompt"]
     gt_skills = set(
-        failure_prompt.get("ground_truth_skills") or
-        failure_prompt.get("predicted_skills") or []
+        failure_prompt.get("ground_truth_skills") or failure_prompt.get("predicted_skills") or []
     )
     # Ground truth is in intent space (SkillLabel taxonomy)
     # Remove "none" from ground truth for positive scoring
@@ -145,8 +149,9 @@ def build_ablation_table(
     skill_names = sorted(skills.keys())
 
     # Build baseline tools for full config
-    def _tools_for(included_names: list[str],
-                   desc_overrides: dict[str, str] | None = None) -> list[dict]:
+    def _tools_for(
+        included_names: list[str], desc_overrides: dict[str, str] | None = None
+    ) -> list[dict]:
         result = []
         for name in included_names:
             if name not in skills:
@@ -209,19 +214,25 @@ def build_ablation_table(
 
     for component, tools in configs:
         f1, fired, predicted = _score_single_prompt(
-            prompt_text, tools, mapping, ground_truth,
-            cache_dir=cache_dir, model=model,
+            prompt_text,
+            tools,
+            mapping,
+            ground_truth,
+            cache_dir=cache_dir,
+            model=model,
         )
         if full_f1 is None:
             full_f1 = f1  # first config is always the full config
 
-        rows.append({
-            "component": component,
-            "fired_intents": sorted(predicted),
-            "f1": f1,
-            "delta_vs_full": f1 - (full_f1 or 0.0),
-            "root_cause": False,
-        })
+        rows.append(
+            {
+                "component": component,
+                "fired_intents": sorted(predicted),
+                "f1": f1,
+                "delta_vs_full": f1 - (full_f1 or 0.0),
+                "root_cause": False,
+            }
+        )
 
     # --- Flag root cause: the row(s) with the largest negative delta ---
     # Skip the full-config row (delta=0 by definition) when finding root cause

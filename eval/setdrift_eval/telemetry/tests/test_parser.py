@@ -1,4 +1,5 @@
 """Tests for the fail-loud strict JSONL parser (Plan 01-03 Task 1)."""
+
 import json
 
 import pytest

@@ -33,6 +33,7 @@ Usage:
         --skills-dir plugin/skills
         --cache-dir  data/cache
 """
+
 import argparse
 import json
 import os
@@ -65,6 +66,7 @@ def _load_arm_tools(skills_dir: Path) -> list[dict]:
     for skill_md in sorted(skills_dir.rglob("SKILL.md")):
         try:
             import yaml
+
             text = skill_md.read_text(encoding="utf-8")
             if not text.startswith("---"):
                 continue
@@ -72,11 +74,13 @@ def _load_arm_tools(skills_dir: Path) -> list[dict]:
             meta = yaml.safe_load(frontmatter)
             name = meta.get("name", skill_md.parent.name)
             description = meta.get("description", "")
-            tools.append({
-                "name": name,
-                "description": description,
-                "input_schema": {"type": "object", "properties": {}, "required": []},
-            })
+            tools.append(
+                {
+                    "name": name,
+                    "description": description,
+                    "input_schema": {"type": "object", "properties": {}, "required": []},
+                }
+            )
         except Exception:
             # fail-loud only on critical errors; skip malformed SKILL.md
             pass
@@ -103,7 +107,9 @@ def bank_all(
     cache_dir = Path(cache_dir)
 
     if not corpus_path.exists():
-        print(f"[setdrift-eval] bank_transcripts: corpus not found at {corpus_path} — nothing to bank")
+        print(
+            f"[setdrift-eval] bank_transcripts: corpus not found at {corpus_path} — nothing to bank"
+        )
         return 0
 
     arm_a_tools = _load_arm_tools(skills_dir)
@@ -131,7 +137,9 @@ def bank_all(
                 f"model={model} cache={cache_dir}"
             )
 
-    print(f"[setdrift-eval] bank_transcripts: complete — {banked} (prompt, arm) pairs banked into {cache_dir}")
+    print(
+        f"[setdrift-eval] bank_transcripts: complete — {banked} (prompt, arm) pairs banked into {cache_dir}"
+    )
     return banked
 
 

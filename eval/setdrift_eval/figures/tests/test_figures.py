@@ -5,6 +5,7 @@ Tests cover:
   - cost: tokens_to_cost computation, plot_cost_delta PDF+PNG output, fixture watermark
   - cli: FigureDataError gate, --allow-fixtures writes watermarked output
 """
+
 from __future__ import annotations
 
 import math

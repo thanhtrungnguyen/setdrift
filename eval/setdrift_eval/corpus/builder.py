@@ -9,6 +9,7 @@ substrate). The builder owns ONLY split_hash — the intent-map hash is the
 harness/scorer's concern (02-04/02-05) and is never computed here (W7); the
 builder never reads the intent map.
 """
+
 import hashlib
 import json
 import random
@@ -102,7 +103,8 @@ def build_corpus(
         from setdrift_eval.corpus.negative_miner import load_constructed_negatives
 
         pool = [
-            n for n in load_constructed_negatives(Path(constructed_negatives_path))
+            n
+            for n in load_constructed_negatives(Path(constructed_negatives_path))
             if n.prompt_id not in seen_ids
         ]
         while _none_fraction(prompts) < min_negative_fraction and pool:
@@ -153,8 +155,6 @@ def freeze_split(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     split_path = output_dir / "split.json"
-    split_path.write_text(
-        json.dumps(assignment, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    split_path.write_text(json.dumps(assignment, indent=2, sort_keys=True), encoding="utf-8")
     split_hash = hashlib.sha256(split_path.read_bytes()).hexdigest()
     return assignment, split_hash

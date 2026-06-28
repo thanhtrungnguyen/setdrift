@@ -13,10 +13,11 @@ in shell. ONE PLACE TO AUDIT — impossible to drift between guard, test, and ho
 This is the inverse of the telemetry hook's silent-catch pattern: a violation MUST
 raise loudly, never silently return.
 """
+
 from pathlib import Path
 
 ALLOWED_PREFIXES: tuple[str, ...] = (
-    "plugin/",    # all skill/hook/agent/command files under the published plugin
+    "plugin/",  # all skill/hook/agent/command files under the published plugin
     "CLAUDE.md",  # the project CLAUDE.md
 )
 

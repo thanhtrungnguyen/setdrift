@@ -1,4 +1,5 @@
 """Fetcher tests — exercise parsing logic with synthetic on-disk records."""
+
 import json
 from pathlib import Path
 

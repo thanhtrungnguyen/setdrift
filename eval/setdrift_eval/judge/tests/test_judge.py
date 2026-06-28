@@ -3,6 +3,7 @@
 RED tests (Task 1): schema, bias_modes, kappa.
 GREEN tests (Task 2): runner preconditions, retry, provider lock, sensitivity.
 """
+
 from __future__ import annotations
 
 import json
@@ -23,15 +24,17 @@ class TestJudgeVerdictSchema:
     def test_valid_verdict_parses(self):
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "1",
-            "confidence": 0.85,
-            "rationale": "Response 1 is more accurate and concise.",
-            "bias_mode": "verbosity",
-            "model_id": "claude-sonnet-4-6",
-            "position_swapped": False,
-            "prompt_id": "p001",
-        })
+        payload = json.dumps(
+            {
+                "winner": "1",
+                "confidence": 0.85,
+                "rationale": "Response 1 is more accurate and concise.",
+                "bias_mode": "verbosity",
+                "model_id": "claude-sonnet-4-6",
+                "position_swapped": False,
+                "prompt_id": "p001",
+            }
+        )
         verdict = JudgeVerdict.model_validate_json(payload)
         assert verdict.winner == "1"
         assert verdict.confidence == 0.85
@@ -40,12 +43,14 @@ class TestJudgeVerdictSchema:
         from pydantic import ValidationError
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "1",
-            "confidence": 0.85,
-            "rationale": "Response 1 is more accurate.",
-            # missing bias_mode, model_id, position_swapped, prompt_id
-        })
+        payload = json.dumps(
+            {
+                "winner": "1",
+                "confidence": 0.85,
+                "rationale": "Response 1 is more accurate.",
+                # missing bias_mode, model_id, position_swapped, prompt_id
+            }
+        )
         with pytest.raises(ValidationError):
             JudgeVerdict.model_validate_json(payload)
 
@@ -53,16 +58,18 @@ class TestJudgeVerdictSchema:
         from pydantic import ValidationError
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "tie",
-            "confidence": 0.5,
-            "rationale": "Both responses are equally good in quality.",
-            "bias_mode": "position",
-            "model_id": "openai/gpt-4o",
-            "position_swapped": True,
-            "prompt_id": "p002",
-            "extra_field": "not_allowed",
-        })
+        payload = json.dumps(
+            {
+                "winner": "tie",
+                "confidence": 0.5,
+                "rationale": "Both responses are equally good in quality.",
+                "bias_mode": "position",
+                "model_id": "openai/gpt-4o",
+                "position_swapped": True,
+                "prompt_id": "p002",
+                "extra_field": "not_allowed",
+            }
+        )
         with pytest.raises(ValidationError):
             JudgeVerdict.model_validate_json(payload)
 
@@ -70,15 +77,17 @@ class TestJudgeVerdictSchema:
         from pydantic import ValidationError
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "3",  # invalid — must be "1", "2", or "tie"
-            "confidence": 0.7,
-            "rationale": "This is a test of invalid winner field.",
-            "bias_mode": "verbosity",
-            "model_id": "claude-sonnet-4-6",
-            "position_swapped": False,
-            "prompt_id": "p003",
-        })
+        payload = json.dumps(
+            {
+                "winner": "3",  # invalid — must be "1", "2", or "tie"
+                "confidence": 0.7,
+                "rationale": "This is a test of invalid winner field.",
+                "bias_mode": "verbosity",
+                "model_id": "claude-sonnet-4-6",
+                "position_swapped": False,
+                "prompt_id": "p003",
+            }
+        )
         with pytest.raises(ValidationError):
             JudgeVerdict.model_validate_json(payload)
 
@@ -86,15 +95,17 @@ class TestJudgeVerdictSchema:
         from pydantic import ValidationError
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "2",
-            "confidence": 1.5,  # out of [0, 1]
-            "rationale": "This tests confidence range validation.",
-            "bias_mode": "authority",
-            "model_id": "google/gemini-2.5-pro",
-            "position_swapped": True,
-            "prompt_id": "p004",
-        })
+        payload = json.dumps(
+            {
+                "winner": "2",
+                "confidence": 1.5,  # out of [0, 1]
+                "rationale": "This tests confidence range validation.",
+                "bias_mode": "authority",
+                "model_id": "google/gemini-2.5-pro",
+                "position_swapped": True,
+                "prompt_id": "p004",
+            }
+        )
         with pytest.raises(ValidationError):
             JudgeVerdict.model_validate_json(payload)
 
@@ -102,15 +113,17 @@ class TestJudgeVerdictSchema:
         from pydantic import ValidationError
         from setdrift_eval.judge.schema import JudgeVerdict
 
-        payload = json.dumps({
-            "winner": "1",
-            "confidence": 0.9,
-            "rationale": "Short",  # less than 10 chars
-            "bias_mode": "recency",
-            "model_id": "claude-sonnet-4-6",
-            "position_swapped": False,
-            "prompt_id": "p005",
-        })
+        payload = json.dumps(
+            {
+                "winner": "1",
+                "confidence": 0.9,
+                "rationale": "Short",  # less than 10 chars
+                "bias_mode": "recency",
+                "model_id": "claude-sonnet-4-6",
+                "position_swapped": False,
+                "prompt_id": "p005",
+            }
+        )
         with pytest.raises(ValidationError):
             JudgeVerdict.model_validate_json(payload)
 
@@ -346,6 +359,7 @@ class TestProviderLockGuard:
         called = []
 
         import setdrift_eval.judge.runner as runner_mod
+
         monkeypatch.setattr(runner_mod, "call_model", lambda *a, **kw: called.append(1))
 
         from setdrift_eval.judge.runner import run_judge_cell
@@ -368,15 +382,17 @@ class TestParseVerdictWithRetry:
     """parse_verdict_with_retry — parses on first try; raises after MAX_JUDGE_RETRIES."""
 
     def _make_valid_json(self, prompt_id: str = "p001") -> str:
-        return json.dumps({
-            "winner": "1",
-            "confidence": 0.8,
-            "rationale": "Response 1 is clearly more accurate and concise than response 2.",
-            "bias_mode": "verbosity",
-            "model_id": "claude-sonnet-4-6",
-            "position_swapped": False,
-            "prompt_id": prompt_id,
-        })
+        return json.dumps(
+            {
+                "winner": "1",
+                "confidence": 0.8,
+                "rationale": "Response 1 is clearly more accurate and concise than response 2.",
+                "bias_mode": "verbosity",
+                "model_id": "claude-sonnet-4-6",
+                "position_swapped": False,
+                "prompt_id": prompt_id,
+            }
+        )
 
     def test_parses_valid_json_on_first_try(self, monkeypatch):
         import setdrift_eval.judge.runner as runner_mod
@@ -385,8 +401,11 @@ class TestParseVerdictWithRetry:
 
         def fake_call_model(*args, **kwargs):
             call_count.append(1)
-            return {"content": [{"type": "text", "text": self._make_valid_json()}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            return {
+                "content": [{"type": "text", "text": self._make_valid_json()}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
 
@@ -410,8 +429,11 @@ class TestParseVerdictWithRetry:
 
         def fake_call_model(*args, **kwargs):
             call_count.append(1)
-            return {"content": [{"type": "text", "text": "not valid json {{{"}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            return {
+                "content": [{"type": "text", "text": "not valid json {{{"}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
 
@@ -422,7 +444,11 @@ class TestParseVerdictWithRetry:
                 initial_text="bad json {{{",
                 model_id="claude-sonnet-4-6",
                 retry_prompt_fn=lambda attempt: f"Fix attempt {attempt}",
-                context={"bias_mode": "verbosity", "prompt_id": "p_retry", "position_swapped": False},
+                context={
+                    "bias_mode": "verbosity",
+                    "prompt_id": "p_retry",
+                    "position_swapped": False,
+                },
             )
         # Must name model_id, prompt_id, bias_mode in the error
         msg = str(exc_info.value)
@@ -437,8 +463,11 @@ class TestParseVerdictWithRetry:
 
         def fake_call_model(*args, **kwargs):
             call_count.append(1)
-            return {"content": [{"type": "text", "text": "invalid{{"}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            return {
+                "content": [{"type": "text", "text": "invalid{{"}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
 
@@ -468,17 +497,22 @@ class TestRunJudgeCellMaxTokens:
         def fake_call_model(model, prompt, tools, max_tokens=256):
             captured.append({"model": model, "tools": tools, "max_tokens": max_tokens})
             # Return a valid verdict JSON in a text block
-            verdict_json = json.dumps({
-                "winner": "2",
-                "confidence": 0.7,
-                "rationale": "Response 2 provides a more complete answer overall.",
-                "bias_mode": "verbosity",
-                "model_id": model,
-                "position_swapped": False,
-                "prompt_id": "p001",
-            })
-            return {"content": [{"type": "text", "text": verdict_json}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            verdict_json = json.dumps(
+                {
+                    "winner": "2",
+                    "confidence": 0.7,
+                    "rationale": "Response 2 provides a more complete answer overall.",
+                    "bias_mode": "verbosity",
+                    "model_id": model,
+                    "position_swapped": False,
+                    "prompt_id": "p001",
+                }
+            )
+            return {
+                "content": [{"type": "text", "text": verdict_json}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
 
@@ -502,17 +536,20 @@ class TestRunJudgeCellMaxTokens:
 class TestRunJudgeSensitivity:
     """run_judge_sensitivity produces 15-cell kappa matrix; flags escalation when kappa<0.6."""
 
-    def _make_verdict_json(self, winner: str, model_id: str, bias_mode: str,
-                           prompt_id: str, swapped: bool = False) -> str:
-        return json.dumps({
-            "winner": winner,
-            "confidence": 0.75,
-            "rationale": f"Response {winner} is better for this prompt evaluation.",
-            "bias_mode": bias_mode,
-            "model_id": model_id,
-            "position_swapped": swapped,
-            "prompt_id": prompt_id,
-        })
+    def _make_verdict_json(
+        self, winner: str, model_id: str, bias_mode: str, prompt_id: str, swapped: bool = False
+    ) -> str:
+        return json.dumps(
+            {
+                "winner": winner,
+                "confidence": 0.75,
+                "rationale": f"Response {winner} is better for this prompt evaluation.",
+                "bias_mode": bias_mode,
+                "model_id": model_id,
+                "position_swapped": swapped,
+                "prompt_id": prompt_id,
+            }
+        )
 
     def test_sensitivity_produces_15_kappa_cells(self, monkeypatch, tmp_path):
         """run_judge_sensitivity over a 2-prompt fixture slice produces 15 KappaCell objects."""
@@ -522,14 +559,20 @@ class TestRunJudgeSensitivity:
         # Build a minimal 2-prompt slice JSONL
         slice_path = tmp_path / "slice.jsonl"
         prompts = [
-            {"prompt_id": "p001", "prompt": "What is REST?",
-             "response_a": "REST is an architectural style.", "response_b": "REST uses HTTP methods."},
-            {"prompt_id": "p002", "prompt": "What is DI?",
-             "response_a": "DI decouples components.", "response_b": "DI is a pattern for object creation."},
+            {
+                "prompt_id": "p001",
+                "prompt": "What is REST?",
+                "response_a": "REST is an architectural style.",
+                "response_b": "REST uses HTTP methods.",
+            },
+            {
+                "prompt_id": "p002",
+                "prompt": "What is DI?",
+                "response_a": "DI decouples components.",
+                "response_b": "DI is a pattern for object creation.",
+            },
         ]
-        slice_path.write_text(
-            "\n".join(json.dumps(p) for p in prompts), encoding="utf-8"
-        )
+        slice_path.write_text("\n".join(json.dumps(p) for p in prompts), encoding="utf-8")
 
         # Mock call_model to return valid verdicts
         call_idx = [0]
@@ -540,17 +583,22 @@ class TestRunJudgeSensitivity:
             call_idx[0] += 1
             # Extract bias_mode from prompt (approximation for test)
             bias_mode_guess = "verbosity"  # default; sensitivity loop injects the real mode
-            verdict_json = json.dumps({
-                "winner": winner,
-                "confidence": 0.75,
-                "rationale": f"Response {winner} is better for this evaluation prompt.",
-                "bias_mode": bias_mode_guess,
-                "model_id": model,
-                "position_swapped": False,
-                "prompt_id": "p001",
-            })
-            return {"content": [{"type": "text", "text": verdict_json}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            verdict_json = json.dumps(
+                {
+                    "winner": winner,
+                    "confidence": 0.75,
+                    "rationale": f"Response {winner} is better for this evaluation prompt.",
+                    "bias_mode": bias_mode_guess,
+                    "model_id": model,
+                    "position_swapped": False,
+                    "prompt_id": "p001",
+                }
+            )
+            return {
+                "content": [{"type": "text", "text": verdict_json}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
         monkeypatch.setenv("SETDRIFT_OPENROUTER_ALLOW_FALLBACKS", "false")
@@ -561,6 +609,7 @@ class TestRunJudgeSensitivity:
 
         # Build fake args namespace
         import types
+
         manifest_path = tmp_path / "judge-sensitivity.json"
         args = types.SimpleNamespace(
             slice=slice_path,
@@ -569,6 +618,7 @@ class TestRunJudgeSensitivity:
         )
 
         from setdrift_eval.judge.runner import run_judge_sensitivity
+
         run_judge_sensitivity(args)
 
         # Must produce exactly 15 cells (5 bias_modes × 3 family-pairs)
@@ -584,14 +634,20 @@ class TestRunJudgeSensitivity:
         # Build a 2-prompt slice
         slice_path = tmp_path / "slice.jsonl"
         prompts = [
-            {"prompt_id": "p001", "prompt": "Explain REST.",
-             "response_a": "REST uses HTTP.", "response_b": "REST is a style."},
-            {"prompt_id": "p002", "prompt": "Explain DI.",
-             "response_a": "DI decouples.", "response_b": "DI is injection."},
+            {
+                "prompt_id": "p001",
+                "prompt": "Explain REST.",
+                "response_a": "REST uses HTTP.",
+                "response_b": "REST is a style.",
+            },
+            {
+                "prompt_id": "p002",
+                "prompt": "Explain DI.",
+                "response_a": "DI decouples.",
+                "response_b": "DI is injection.",
+            },
         ]
-        slice_path.write_text(
-            "\n".join(json.dumps(p) for p in prompts), encoding="utf-8"
-        )
+        slice_path.write_text("\n".join(json.dumps(p) for p in prompts), encoding="utf-8")
 
         # All models return alternating winners — ensures kappa won't be 1.0
         call_idx = [0]
@@ -600,17 +656,22 @@ class TestRunJudgeSensitivity:
             # Alternate winners: first call wins "1", second wins "2", etc.
             winner = "1" if call_idx[0] % 2 == 0 else "2"
             call_idx[0] += 1
-            verdict_json = json.dumps({
-                "winner": winner,
-                "confidence": 0.6,
-                "rationale": "Alternating responses test kappa computation below floor.",
-                "bias_mode": "verbosity",
-                "model_id": model,
-                "position_swapped": False,
-                "prompt_id": "p001",
-            })
-            return {"content": [{"type": "text", "text": verdict_json}],
-                    "usage": {}, "stop_reason": "end_turn"}
+            verdict_json = json.dumps(
+                {
+                    "winner": winner,
+                    "confidence": 0.6,
+                    "rationale": "Alternating responses test kappa computation below floor.",
+                    "bias_mode": "verbosity",
+                    "model_id": model,
+                    "position_swapped": False,
+                    "prompt_id": "p001",
+                }
+            )
+            return {
+                "content": [{"type": "text", "text": verdict_json}],
+                "usage": {},
+                "stop_reason": "end_turn",
+            }
 
         monkeypatch.setattr(runner_mod, "call_model", fake_call_model)
         monkeypatch.setenv("SETDRIFT_OPENROUTER_ALLOW_FALLBACKS", "false")
@@ -618,6 +679,7 @@ class TestRunJudgeSensitivity:
         monkeypatch.setenv("SETDRIFT_JUDGE_DATA_DIR", str(tmp_path / "judge"))
 
         import types
+
         manifest_path = tmp_path / "judge-sensitivity.json"
         args = types.SimpleNamespace(
             slice=slice_path,
@@ -626,6 +688,7 @@ class TestRunJudgeSensitivity:
         )
 
         from setdrift_eval.judge.runner import run_judge_sensitivity
+
         run_judge_sensitivity(args)
 
         result = json.loads(manifest_path.read_text())

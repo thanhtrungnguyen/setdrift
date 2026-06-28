@@ -1,4 +1,5 @@
 """CLI entrypoint for the setdrift-eval harness."""
+
 import argparse
 from pathlib import Path
 
@@ -8,11 +9,14 @@ from setdrift_eval.corpus.builder import build_corpus
 def _rollback_restore(skill_descriptions, expected_sig, targets):
     """Thin wrapper around applier.restore_config; monkeypatched in tests to inject paths."""
     from setdrift_eval.optimizer.applier import restore_config
+
     restore_config(skill_descriptions, expected_sig, targets)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="setdrift-eval", description="Setdrift evaluation harness")
+    parser = argparse.ArgumentParser(
+        prog="setdrift-eval", description="Setdrift evaluation harness"
+    )
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("benchmark", help="run the offline replay benchmark")
@@ -22,16 +26,23 @@ def main() -> int:
     health_p.add_argument("--corpus", choices=["public"], default="public")
     health_p.add_argument("--arm", choices=["A", "B", "C"], required=True)
     health_p.add_argument("--seed", type=int, default=42)
-    health_p.add_argument("--corpus-path", type=Path, default=Path("data/corpora/public/public.jsonl"))
-    health_p.add_argument("--map", type=Path, default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"))
+    health_p.add_argument(
+        "--corpus-path", type=Path, default=Path("data/corpora/public/public.jsonl")
+    )
+    health_p.add_argument(
+        "--map", type=Path, default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml")
+    )
     health_p.add_argument("--skills-dir", type=Path, default=Path("plugin/skills"))
     health_p.add_argument("--experiments-dir", type=Path, default=Path("experiments"))
     health_p.add_argument(
-        "--json", dest="emit_json", action="store_true",
+        "--json",
+        dest="emit_json",
+        action="store_true",
         help="emit metrics as JSON to stdout (D-12, feeds Phase-6 Next.js)",
     )
     health_p.add_argument(
-        "--live", action="store_true",
+        "--live",
+        action="store_true",
         help="launch Textual TUI dashboard (D-03)",
     )
 
@@ -42,12 +53,24 @@ def main() -> int:
     build_p.add_argument("--raw-dir", type=Path, default=Path("data/raw/gitbug-java"))
     build_p.add_argument("--output", type=Path, default=Path("data/corpora/public/public.jsonl"))
     build_p.add_argument("--version", required=True, help="corpus version tag, e.g. 2026-05-22")
-    build_p.add_argument("--gitbug-meta-dir", type=Path, default=None,
-                         help="GitBug-Java metadata checkout (adds ~199 bugs via bundled bug_patch)")
-    build_p.add_argument("--defects4j-dir", type=Path, default=None,
-                         help="Defects4J v1.2 framework checkout (adds ~395 bugs via .src.patch)")
-    build_p.add_argument("--constructed-negatives", type=Path, default=None,
-                         help="TSV of hand-authored near-miss negatives for the >=20%% top-up")
+    build_p.add_argument(
+        "--gitbug-meta-dir",
+        type=Path,
+        default=None,
+        help="GitBug-Java metadata checkout (adds ~199 bugs via bundled bug_patch)",
+    )
+    build_p.add_argument(
+        "--defects4j-dir",
+        type=Path,
+        default=None,
+        help="Defects4J v1.2 framework checkout (adds ~395 bugs via .src.patch)",
+    )
+    build_p.add_argument(
+        "--constructed-negatives",
+        type=Path,
+        default=None,
+        help="TSV of hand-authored near-miss negatives for the >=20%% top-up",
+    )
     build_p.add_argument("--min-negative-fraction", type=float, default=0.20)
 
     verify_p = corpus_sub.add_parser("verify", help="emit a 20%% manual-verification CSV")
@@ -61,26 +84,32 @@ def main() -> int:
         help="per-component leave-one-out failure-attribution ablation table",
     )
     ablate_p.add_argument(
-        "--failure-id", required=True,
+        "--failure-id",
+        required=True,
         help="prompt_id of the failure prompt to ablate",
     )
     ablate_p.add_argument(
-        "--corpus-path", type=Path,
+        "--corpus-path",
+        type=Path,
         default=Path("data/corpora/public/public.jsonl"),
         help="path to the corpus JSONL (default: data/corpora/public/public.jsonl)",
     )
     ablate_p.add_argument(
-        "--skills-dir", type=Path,
+        "--skills-dir",
+        type=Path,
         default=Path("plugin/skills"),
         help="path to the skills directory (default: plugin/skills)",
     )
     ablate_p.add_argument(
-        "--map", type=Path,
+        "--map",
+        type=Path,
         default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"),
         help="path to intent_skill_map.yaml",
     )
     ablate_p.add_argument(
-        "--cache-dir", type=Path, default=None,
+        "--cache-dir",
+        type=Path,
+        default=None,
         help="path to the response cache directory (optional)",
     )
 
@@ -96,11 +125,15 @@ def main() -> int:
         help="restore a prior signed config by config_hash (verifies HMAC before activating)",
     )
     rollback_p.add_argument(
-        "--to", required=True, metavar="HASH",
+        "--to",
+        required=True,
+        metavar="HASH",
         help="config_hash of the audit log entry to restore",
     )
     rollback_p.add_argument(
-        "--audit-log", type=Path, default=Path("data/audit/audit.jsonl"),
+        "--audit-log",
+        type=Path,
+        default=Path("data/audit/audit.jsonl"),
         help="path to the audit JSONL log (default: data/audit/audit.jsonl)",
     )
 
@@ -110,39 +143,48 @@ def main() -> int:
         help="run one observe->diagnose->patch->verify->promote|rollback cycle (D-43: dry-run by default)",
     )
     loop_p.add_argument(
-        "--skill", required=True,
+        "--skill",
+        required=True,
         help="kebab-case skill name to optimize (e.g. spring-boot-endpoint)",
     )
     loop_p.add_argument(
-        "--corpus-path", type=Path,
+        "--corpus-path",
+        type=Path,
         default=Path("data/corpora/public/public.jsonl"),
         help="path to the corpus JSONL (split.json must be adjacent)",
     )
     loop_p.add_argument(
-        "--skills-dir", type=Path,
+        "--skills-dir",
+        type=Path,
         default=Path("plugin/skills"),
         help="path to the skills directory (default: plugin/skills)",
     )
     loop_p.add_argument(
-        "--map", type=Path,
+        "--map",
+        type=Path,
         default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"),
         help="path to intent_skill_map.yaml",
     )
     loop_p.add_argument(
-        "--experiments-dir", type=Path,
+        "--experiments-dir",
+        type=Path,
         default=Path("experiments"),
         help="path to the experiments/ directory (default: experiments)",
     )
     loop_p.add_argument(
-        "--seed", type=int, default=42,
+        "--seed",
+        type=int,
+        default=42,
         help="RNG seed for reproducibility (default: 42)",
     )
     loop_p.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="validate the cycle without writing to live plugin/ (default behavior; D-43)",
     )
     loop_p.add_argument(
-        "--approve", action="store_true",
+        "--approve",
+        action="store_true",
         help="apply a promoted candidate to live plugin/ (requires human approval, D-43)",
     )
 
@@ -152,41 +194,56 @@ def main() -> int:
         help="run the yoked drift grid and emit a per-model paired-difference report (REQ-DRIFT-03)",
     )
     drift_p.add_argument(
-        "--mode", choices=["real", "synthetic"], default="synthetic",
+        "--mode",
+        choices=["real", "synthetic"],
+        default="synthetic",
         help="evaluation mode: 'synthetic' (default) or 'real' GitBug-Java corpus",
     )
     drift_p.add_argument(
-        "--gitbug-repo", type=Path, default=None,
+        "--gitbug-repo",
+        type=Path,
+        default=None,
         help="path to the GitBug-Java repository for real-mode snapshotting",
     )
     drift_p.add_argument(
-        "--corpus", type=Path, default=Path("data/corpora/public/public.jsonl"),
+        "--corpus",
+        type=Path,
+        default=Path("data/corpora/public/public.jsonl"),
         help="path to corpus JSONL (default: data/corpora/public/public.jsonl)",
     )
     drift_p.add_argument(
-        "--map", type=Path, default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"),
+        "--map",
+        type=Path,
+        default=Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"),
         help="path to intent_skill_map.yaml (default: eval/setdrift_eval/corpus/intent_skill_map.yaml)",
     )
     drift_p.add_argument(
-        "--cache-dir", type=Path, default=Path("data/cache"),
+        "--cache-dir",
+        type=Path,
+        default=Path("data/cache"),
         help="path to LLM response cache directory (default: data/cache)",
     )
     drift_p.add_argument(
-        "--arm-a-skills", type=Path, default=None,
+        "--arm-a-skills",
+        type=Path,
+        default=None,
         help=(
             "skills directory for arm A (Setdrift-managed config); "
             "default: SETDRIFT_ARM_A_SKILLS env var or plugin/skills"
         ),
     )
     drift_p.add_argument(
-        "--arm-b-skills", type=Path, default=None,
+        "--arm-b-skills",
+        type=Path,
+        default=None,
         help=(
             "skills directory for arm B (frozen hand-written config); "
             "default: SETDRIFT_ARM_B_SKILLS env var or plugin/skills-frozen"
         ),
     )
     drift_p.add_argument(
-        "--haiku", action="store_true",
+        "--haiku",
+        action="store_true",
         help="also run the Haiku TEST-partition A/B sensitivity arm (REQ-DRIFT-03, D-59)",
     )
 
@@ -196,12 +253,16 @@ def main() -> int:
         help="run 5-bias-mode x 3-family LLM-as-judge sensitivity matrix (D-11)",
     )
     judge_p.add_argument(
-        "--slice", type=Path, default=Path("data/judge/slice_100.jsonl"),
+        "--slice",
+        type=Path,
+        default=Path("data/judge/slice_100.jsonl"),
         help="path to 100-prompt curated slice (D-14)",
     )
     judge_p.add_argument("--seed", type=int, default=42)
     judge_p.add_argument(
-        "--manifest", type=Path, default=Path("experiments/judge-sensitivity.json"),
+        "--manifest",
+        type=Path,
+        default=Path("experiments/judge-sensitivity.json"),
         help="output path for the scrubbed kappa matrix (experiments/ only — not data/)",
     )
 
@@ -211,23 +272,38 @@ def main() -> int:
         help="regenerate dissertation figures from experiments/ JSON (D-10)",
     )
     figures_p.add_argument(
-        "--experiments-dir", type=Path, default=Path("experiments"),
+        "--experiments-dir",
+        type=Path,
+        default=Path("experiments"),
         help="path to experiments/ JSON directory",
     )
     figures_p.add_argument(
-        "--output-dir", type=Path, default=Path("docs/figures"),
+        "--output-dir",
+        type=Path,
+        default=Path("docs/figures"),
         help="output directory for PDF/PNG figures",
     )
     figures_p.add_argument(
-        "--allow-fixtures", action="store_true",
+        "--allow-fixtures",
+        action="store_true",
         help="allow fixture data (watermark applied); never use for dissertation figures (D-09)",
     )
-    figures_p.add_argument("--genealogy", action="store_true", help="generate skill genealogy Mermaid diagram")
-    figures_p.add_argument("--f1-curve", action="store_true", help="generate F1-over-versions curve")
-    figures_p.add_argument("--cost-delta", action="store_true", help="generate cost delta figure (REQ-DELIV-02)")
-    figures_p.add_argument("--triangulation", action="store_true", help="generate triangulation scatter (D-15)")
+    figures_p.add_argument(
+        "--genealogy", action="store_true", help="generate skill genealogy Mermaid diagram"
+    )
+    figures_p.add_argument(
+        "--f1-curve", action="store_true", help="generate F1-over-versions curve"
+    )
+    figures_p.add_argument(
+        "--cost-delta", action="store_true", help="generate cost delta figure (REQ-DELIV-02)"
+    )
+    figures_p.add_argument(
+        "--triangulation", action="store_true", help="generate triangulation scatter (D-15)"
+    )
     figures_p.add_argument("--kappa-matrix", action="store_true", help="generate 5x3 kappa heatmap")
-    figures_p.add_argument("--all", dest="all_figures", action="store_true", help="generate all figures")
+    figures_p.add_argument(
+        "--all", dest="all_figures", action="store_true", help="generate all figures"
+    )
 
     # --- deprecate-scan subcommand (REQ-SAFETY-03 idle-archive + rejection-quarantine) ---
     deprecate_scan_p = sub.add_parser(
@@ -235,11 +311,15 @@ def main() -> int:
         help="scan skills for idle-archive and rejection-quarantine decisions",
     )
     deprecate_scan_p.add_argument(
-        "--skills-dir", type=Path, default=Path("plugin/skills"),
+        "--skills-dir",
+        type=Path,
+        default=Path("plugin/skills"),
         help="path to the skills directory (default: plugin/skills)",
     )
     deprecate_scan_p.add_argument(
-        "--events", type=Path, default=Path("data/telemetry/events.jsonl"),
+        "--events",
+        type=Path,
+        default=Path("data/telemetry/events.jsonl"),
         help="path to events.jsonl telemetry (default: data/telemetry/events.jsonl)",
     )
 
@@ -249,11 +329,14 @@ def main() -> int:
         help="re-promote a quarantined skill back into the load glob",
     )
     promote_skill_p.add_argument(
-        "--name", required=True,
+        "--name",
+        required=True,
         help="skill name (kebab-case) to promote from quarantine",
     )
     promote_skill_p.add_argument(
-        "--skills-dir", type=Path, default=Path("plugin/skills"),
+        "--skills-dir",
+        type=Path,
+        default=Path("plugin/skills"),
         help="path to the skills directory (default: plugin/skills)",
     )
 
@@ -284,15 +367,14 @@ def main() -> int:
     if args.cmd == "corpus" and args.corpus_cmd == "verify":
         from setdrift_eval.corpus.sampler import emit_verification_csv
 
-        emit_verification_csv(
-            corpus_path=args.corpus, output_path=args.output, seed=args.seed
-        )
+        emit_verification_csv(corpus_path=args.corpus, output_path=args.output, seed=args.seed)
         print(f"[setdrift-eval] verification CSV written -> {args.output}")
         return 0
 
     if args.cmd == "health" and getattr(args, "live", False):
         # Lazy import: textual is an optional extra (D-03)
         from setdrift_eval.dashboard.app import SetdriftDashboard
+
         SetdriftDashboard(
             corpus_path=args.corpus_path,
             arm=args.arm,
@@ -307,6 +389,7 @@ def main() -> int:
         # Lazy import: dashboard is an optional extra; json is stdlib (D-12)
         import json as _json
         from setdrift_eval.dashboard.health_export import export_health_json
+
         payload = export_health_json(
             corpus_path=args.corpus_path,
             arm=args.arm,
@@ -400,7 +483,9 @@ def main() -> int:
                     entry = record
                     # Don't break — use the latest matching entry
         if entry is None:
-            print(f"[setdrift-eval] rollback: no audit entry found with config_hash='{target_hash}'")
+            print(
+                f"[setdrift-eval] rollback: no audit entry found with config_hash='{target_hash}'"
+            )
             return 1
 
         hmac_sig = entry.get("hmac_sig")
@@ -414,16 +499,13 @@ def main() -> int:
 
         # Build targets mapping: skill_name -> Path (default plugin/skills/<name>/SKILL.md)
         targets = {
-            name: Path("plugin") / "skills" / name / "SKILL.md"
-            for name in skill_descriptions
+            name: Path("plugin") / "skills" / name / "SKILL.md" for name in skill_descriptions
         }
 
         # Delegate to _rollback_restore (monkeypatchable in tests for path injection)
         _rollback_restore(skill_descriptions, hmac_sig, targets)
 
-        print(
-            f"[setdrift-eval] rollback restored config_hash={target_hash} verified=True"
-        )
+        print(f"[setdrift-eval] rollback restored config_hash={target_hash} verified=True")
         return 0
 
     if args.cmd == "loop":
@@ -452,11 +534,13 @@ def main() -> int:
     if args.cmd == "judge-sensitivity":
         # Lazy import (project convention — D-11 judge harness)
         from setdrift_eval.judge.runner import run_judge_sensitivity
+
         return run_judge_sensitivity(args)
 
     if args.cmd == "figures":
         # Lazy import (project convention — D-10 deterministic figures CLI)
         from setdrift_eval.figures.cli import main as figures_main  # lazy import
+
         return figures_main(args)
 
     if args.cmd == "drift":
@@ -535,6 +619,7 @@ def main() -> int:
         # Optionally run the Haiku TEST-partition sensitivity arm (--haiku flag)
         if args.haiku:
             from setdrift_eval.drift.haiku_arm import run_haiku_sensitivity
+
             haiku_report = run_haiku_sensitivity(
                 corpus_path=args.corpus,
                 arm_configs=arm_configs,
@@ -542,9 +627,7 @@ def main() -> int:
                 cache_dir=args.cache_dir,
                 con=con,
             )
-            haiku_results = paired_difference_report(
-                con, model="claude-haiku-4-5-20251001"
-            )
+            haiku_results = paired_difference_report(con, model="claude-haiku-4-5-20251001")
             for revision, r in sorted(haiku_results.items()):
                 print(
                     f"[setdrift-eval] drift model=claude-haiku-4-5-20251001 revision={revision} "
@@ -571,11 +654,15 @@ def main() -> int:
         for decision in decisions:
             if decision.decision == "archive":
                 archived += 1
-                print(f"[setdrift-eval] deprecate-scan archive skill={decision.skill_name} reason={decision.reason!r}")
+                print(
+                    f"[setdrift-eval] deprecate-scan archive skill={decision.skill_name} reason={decision.reason!r}"
+                )
             elif decision.decision == "quarantine":
                 quarantine_skill(decision.skill_name, args.skills_dir)
                 quarantined += 1
-                print(f"[setdrift-eval] deprecate-scan quarantine skill={decision.skill_name} reason={decision.reason!r}")
+                print(
+                    f"[setdrift-eval] deprecate-scan quarantine skill={decision.skill_name} reason={decision.reason!r}"
+                )
         print(f"[setdrift-eval] deprecate-scan archived={archived} quarantined={quarantined}")
         return 0
 
@@ -584,7 +671,9 @@ def main() -> int:
         from setdrift_eval.optimizer.deprecator import promote_skill
 
         decision = promote_skill(args.name, args.skills_dir)
-        print(f"[setdrift-eval] promote-skill name={args.name} restored=True reason={decision.reason!r}")
+        print(
+            f"[setdrift-eval] promote-skill name={args.name} restored=True reason={decision.reason!r}"
+        )
         return 0
 
     print(f"[setdrift-eval] '{args.cmd or 'help'}' not yet implemented — scaffold.")

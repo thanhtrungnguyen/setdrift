@@ -3,6 +3,7 @@
 GitBug-Java bundles the source diff inline as `bug_patch` (already git-diff,
 `+` = fix) in data/bugs/<repo>.json — no Docker/reproduction needed.
 """
+
 import json
 
 import pytest

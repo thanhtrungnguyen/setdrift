@@ -1,4 +1,5 @@
 """Verification sampler tests."""
+
 import csv
 from pathlib import Path
 
@@ -40,7 +41,13 @@ def test_sampler_emits_twenty_percent(tmp_path: Path):
     with output_path.open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     assert len(rows) == 20
-    assert set(rows[0].keys()) == {"prompt_id", "prompt", "predicted_skills", "verified_skills", "notes"}
+    assert set(rows[0].keys()) == {
+        "prompt_id",
+        "prompt",
+        "predicted_skills",
+        "verified_skills",
+        "notes",
+    }
     assert rows[0]["verified_skills"] == ""  # for human to fill in
 
 
@@ -77,12 +84,22 @@ def _write_jsonl_multi(path: Path, counts: dict) -> None:
         for src, n in counts.items():
             for j in range(n):
                 f.write(
-                    json.dumps({
-                        "prompt_id": f"{src}-{j}", "prompt": f"text {src} {j}",
-                        "predicted_skills": ["none"], "ground_truth_skills": None,
-                        "source": {"dataset": src, "bug_id": str(j), "commit": "c", "parent_commit": "p"},
-                        "metadata": {},
-                    }) + "\n"
+                    json.dumps(
+                        {
+                            "prompt_id": f"{src}-{j}",
+                            "prompt": f"text {src} {j}",
+                            "predicted_skills": ["none"],
+                            "ground_truth_skills": None,
+                            "source": {
+                                "dataset": src,
+                                "bug_id": str(j),
+                                "commit": "c",
+                                "parent_commit": "p",
+                            },
+                            "metadata": {},
+                        }
+                    )
+                    + "\n"
                 )
 
 

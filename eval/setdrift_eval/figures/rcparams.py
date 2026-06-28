@@ -10,6 +10,7 @@ What it does NOT do:
   - Never calls plt.show() — headless Agg backend only (D-10 anti-pattern)
   - Never renders to screen or opens a display
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -37,21 +38,30 @@ SETDRIFT_RCPARAMS: dict = {
     "axes.grid": True,
     "grid.alpha": 0.3,
     "grid.linewidth": 0.5,
-    "axes.prop_cycle": mpl.cycler(color=[
-        "#0173B2", "#DE8F05", "#029E73", "#D55E00",
-        "#CC78BC", "#CA9161", "#FBAFE4", "#949494",
-        "#ECE133", "#56B4E9",
-    ]),
+    "axes.prop_cycle": mpl.cycler(
+        color=[
+            "#0173B2",
+            "#DE8F05",
+            "#029E73",
+            "#D55E00",
+            "#CC78BC",
+            "#CA9161",
+            "#FBAFE4",
+            "#949494",
+            "#ECE133",
+            "#56B4E9",
+        ]
+    ),
     "axes.spines.top": False,
     "axes.spines.right": False,
 }
 
 # Convenience sentinel colors (UI-SPEC B.3 role-mapping)
 PRIMARY_BLUE = "#0173B2"
-ORANGE       = "#DE8F05"
-GREEN        = "#029E73"
-VERMILLION   = "#D55E00"
-GREY         = "#949494"
+ORANGE = "#DE8F05"
+GREEN = "#029E73"
+VERMILLION = "#D55E00"
+GREY = "#949494"
 
 
 def apply() -> None:
@@ -83,7 +93,8 @@ def _apply_fixture_watermark(fig) -> None:
     visual gate: any figure stamped here is test-only scaffolding.
     """
     fig.text(
-        0.5, 0.5,
+        0.5,
+        0.5,
         "[FIXTURE DATA — awaiting Phase-3 output]",
         transform=fig.transFigure,
         alpha=0.15,

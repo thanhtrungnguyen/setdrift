@@ -9,6 +9,7 @@ only IDs/hashes/aggregates — never prompt or response text (data wall).
 intent_map_sha256 and split_hash are REQUIRED (no default) so a manifest can
 never silently omit the anti-massage map hash or the partition fingerprint.
 """
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -28,14 +29,20 @@ class ExperimentManifest(BaseModel):
     corpus_name: str = Field(description="Corpus name, e.g. 'public'")
     corpus_version: str = Field(description="Corpus version string")
     dataset_sha256: str = Field(description="sha256 of the corpus JSONL used")
-    split_hash: str = Field(description="sha256 of the frozen train/val/test split (build-time, Phase-3 exit-gate substrate)")
-    intent_map_sha256: str = Field(description="sha256 of the frozen intent_skill_map.yaml (D-30 anti-massage)")
+    split_hash: str = Field(
+        description="sha256 of the frozen train/val/test split (build-time, Phase-3 exit-gate substrate)"
+    )
+    intent_map_sha256: str = Field(
+        description="sha256 of the frozen intent_skill_map.yaml (D-30 anti-massage)"
+    )
     config_hash: str = Field(description="sha256 of the arm's skill configuration")
     rng_seed: int = Field(description="RNG seed for sampling / bootstrap")
 
     # Coverage (D-31 out-of-coverage holdout)
     n_prompts_scored: int = Field(description="Prompts in scored (mapped) intents")
-    n_prompts_out_of_coverage: int = Field(description="Prompts whose gt intent maps to [] (holdout)")
+    n_prompts_out_of_coverage: int = Field(
+        description="Prompts whose gt intent maps to [] (holdout)"
+    )
     coverage_pct: float = Field(description="scored intents / total taxonomy intents")
 
     # Primary metric (REQ-MEASURE-01): strict-match macro-F1, 5-run band, bootstrap CI

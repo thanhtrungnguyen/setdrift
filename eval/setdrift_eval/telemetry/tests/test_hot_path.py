@@ -3,6 +3,7 @@
 The hook is driven as a real subprocess with stdin piped, exactly as Claude Code
 invokes it, with SETDRIFT_TELEMETRY_RAW_DIR pointed at a tmp dir.
 """
+
 import json
 import subprocess
 import sys
