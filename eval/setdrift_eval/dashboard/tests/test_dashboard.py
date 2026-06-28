@@ -192,7 +192,7 @@ def test_log_tail_telemetry_reads_last_n_lines(tmp_path):
 
     panel = lp.LogPanel.__new__(lp.LogPanel)
     panel._loop_events_written = False
-    panel.query_one = mock_query
+    panel.query_one = mock_query  # type: ignore[method-assign]
 
     panel.tail_telemetry(events_file, n_lines=10)
 
@@ -215,7 +215,7 @@ def test_log_tail_telemetry_empty_file(tmp_path):
     mock_log = MagicMock()
     panel = lp.LogPanel.__new__(lp.LogPanel)
     panel._loop_events_written = False
-    panel.query_one = MagicMock(return_value=mock_log)
+    panel.query_one = MagicMock(return_value=mock_log)  # type: ignore[method-assign]
 
     panel.tail_telemetry(events_file, n_lines=50)
 
@@ -239,7 +239,7 @@ def test_log_tail_telemetry_missing_file(tmp_path):
     mock_log = MagicMock()
     panel = lp.LogPanel.__new__(lp.LogPanel)
     panel._loop_events_written = False
-    panel.query_one = MagicMock(return_value=mock_log)
+    panel.query_one = MagicMock(return_value=mock_log)  # type: ignore[method-assign]
 
     panel.tail_telemetry(missing, n_lines=50)
 
@@ -259,7 +259,7 @@ def test_log_write_loop_event_info(tmp_path):
     mock_log = MagicMock()
     panel = lp.LogPanel.__new__(lp.LogPanel)
     panel._loop_events_written = False
-    panel.query_one = MagicMock(return_value=mock_log)
+    panel.query_one = MagicMock(return_value=mock_log)  # type: ignore[method-assign]
 
     panel.write_loop_event("observe phase started", level="info")
 
@@ -280,7 +280,7 @@ def test_log_write_loop_event_clears_placeholder_on_first_real_event(tmp_path):
     mock_log = MagicMock()
     panel = lp.LogPanel.__new__(lp.LogPanel)
     panel._loop_events_written = False
-    panel.query_one = MagicMock(return_value=mock_log)
+    panel.query_one = MagicMock(return_value=mock_log)  # type: ignore[method-assign]
 
     # First call should clear + write
     panel.write_loop_event("loop event 1", level="info")
@@ -316,7 +316,7 @@ def test_metric_widget_set_value_uses_update(monkeypatch):
         w = MetricWidget.__new__(MetricWidget)
         w._label = "F1 (current)"
         updates = []
-        w.update = lambda val: updates.append(val)
+        w.update = lambda val: updates.append(val)  # type: ignore[method-assign, misc, assignment]
 
         w.set_value("0.742")
 
@@ -342,7 +342,7 @@ def test_metric_widget_set_gated():
         w = MetricWidget.__new__(MetricWidget)
         w._label = "F1 (current)"
         updates = []
-        w.update = lambda val: updates.append(val)
+        w.update = lambda val: updates.append(val)  # type: ignore[method-assign, misc, assignment]
         w.styles = MagicMock()
 
         w.set_gated()

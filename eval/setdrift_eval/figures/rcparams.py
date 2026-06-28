@@ -38,7 +38,7 @@ SETDRIFT_RCPARAMS: dict = {
     "axes.grid": True,
     "grid.alpha": 0.3,
     "grid.linewidth": 0.5,
-    "axes.prop_cycle": mpl.cycler(
+    "axes.prop_cycle": mpl.cycler(  # type: ignore[attr-defined]
         color=[
             "#0173B2",
             "#DE8F05",

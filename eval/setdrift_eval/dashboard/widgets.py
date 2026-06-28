@@ -46,7 +46,7 @@ class MetricWidget(Static):
         """Update the displayed value.  Uses .update() — never .renderable (Pitfall 2)."""
         self.update(f"[bold dim]{self._label}[/]\n[bold accent]{value}[/]")
 
-    def set_loading(self) -> None:
+    def set_loading(self) -> None:  # type: ignore[override]
         """Show loading state (A.6)."""
         self.update(f"[bold dim]{self._label}[/]\n[dim]…[/]")
 

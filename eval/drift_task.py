@@ -238,7 +238,7 @@ def _sica_skill_solver(arm: str) -> Solver:
             state.output.completion = f"fired={sorted(fired)}"
             return state
 
-        return solve
+        return solve  # type: ignore[return-value]
 
     return sica_solver()
 

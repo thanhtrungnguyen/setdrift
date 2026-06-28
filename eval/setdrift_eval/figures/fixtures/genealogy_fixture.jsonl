@@ -1,4 +1,0 @@
-{"version_id": "v1", "skill_name": "spring-boot-endpoint", "f1_mean": 0.62, "status": "archived", "parent_version_id": null, "date": "2026-05-01", "rolled_back": false}
-{"version_id": "v2", "skill_name": "spring-boot-endpoint", "f1_mean": 0.71, "status": "archived", "parent_version_id": "v1", "date": "2026-05-15", "rolled_back": false}
-{"version_id": "v3", "skill_name": "spring-boot-endpoint", "f1_mean": 0.58, "status": "quarantine", "parent_version_id": "v2", "date": "2026-05-28", "rolled_back": true}
-{"version_id": "v4", "skill_name": "spring-boot-endpoint", "f1_mean": 0.79, "status": "active", "parent_version_id": "v2", "date": "2026-06-10", "rolled_back": false}
