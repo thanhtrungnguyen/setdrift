@@ -108,6 +108,7 @@ def test_compute_drift_index_empty_window():
 
 def test_compute_drift_index_rolling_window():
     """Test 6: compute_drift_index only consumes the last N (=WINDOW_N) entries of commit_window."""
+    pytest.importorskip("sentence_transformers")
     from setdrift_eval.drift.embedder import compute_drift_index, WINDOW_N
 
     # Build a window longer than WINDOW_N: first entries identical, last entries unrelated

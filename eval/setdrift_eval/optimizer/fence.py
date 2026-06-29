@@ -29,12 +29,14 @@ class FenceViolation(RuntimeError):
 def check_allowlist(target_path: Path | str) -> None:
     """Fail fast if target_path is outside the allowlist. Called before any write.
 
-    Normalizes to a POSIX-style relative string (`as_posix()`) so Windows backslash
-    paths and `plugin\\skills\\...` inputs are checked identically to `plugin/...`.
-    Raises FenceViolation (fail-loud) on any path that does not start with an allowed
-    prefix — eval/, experiments/, and data/ are all rejected.
+    Normalizes backslashes to forward slashes before the prefix check so Windows
+    backslash paths and `plugin\\skills\\...` inputs are checked identically to
+    `plugin/...` on every platform (on Linux `\\` is a literal filename char that
+    `as_posix()` does NOT rewrite). Raises FenceViolation (fail-loud) on any path that
+    does not start with an allowed prefix — eval/, experiments/, and data/ are all
+    rejected, as is any `..` traversal or absolute path that escapes the prefix.
     """
-    p = Path(target_path).as_posix()
+    p = Path(str(target_path).replace("\\", "/")).as_posix()
     if not any(p.startswith(prefix) for prefix in ALLOWED_PREFIXES):
         raise FenceViolation(
             f"BLAST-RADIUS VIOLATION: optimizer proposed write to '{p}', "

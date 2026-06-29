@@ -9,8 +9,6 @@ References: PLAN 05-06, 05-PATTERNS.md, 05-RESEARCH.md Pitfall 4/7, D-09/D-15.
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from pathlib import Path
 
 import matplotlib
@@ -25,8 +23,71 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
-_GENEALOGY_FIXTURE = _FIXTURES_DIR / "genealogy_fixture.jsonl"
 _TRIANGULATION_FIXTURE = _FIXTURES_DIR / "triangulation_fixture.json"
+
+
+# ---------------------------------------------------------------------------
+# Genealogy fixture data (D-09 data wall: NEVER committed as a .jsonl file —
+# the CI data wall only allows experiments/audit-genealogy.jsonl). The records
+# are embedded here and written to tmp_path at test time so the suite is
+# hermetic and never depends on an untracked file existing in the checkout.
+# ---------------------------------------------------------------------------
+
+_GENEALOGY_FIXTURE_RECORDS = [
+    {
+        "version_id": "v1",
+        "skill_name": "spring-boot-endpoint",
+        "f1_mean": 0.62,
+        "status": "archived",
+        "parent_version_id": None,
+        "date": "2026-05-01",
+        "rolled_back": False,
+    },
+    {
+        "version_id": "v2",
+        "skill_name": "spring-boot-endpoint",
+        "f1_mean": 0.71,
+        "status": "archived",
+        "parent_version_id": "v1",
+        "date": "2026-05-15",
+        "rolled_back": False,
+    },
+    {
+        "version_id": "v3",
+        "skill_name": "spring-boot-endpoint",
+        "f1_mean": 0.58,
+        "status": "quarantine",
+        "parent_version_id": "v2",
+        "date": "2026-05-28",
+        "rolled_back": True,
+    },
+    {
+        "version_id": "v4",
+        "skill_name": "spring-boot-endpoint",
+        "f1_mean": 0.79,
+        "status": "active",
+        "parent_version_id": "v2",
+        "date": "2026-06-10",
+        "rolled_back": False,
+    },
+]
+
+
+@pytest.fixture
+def genealogy_fixture_path(tmp_path: Path) -> Path:
+    """Write the embedded genealogy fixture records to a tmp JSONL and return it.
+
+    This keeps the test suite hermetic without tracking any .jsonl file (D-09
+    data wall). The builder is pointed at this tmp path explicitly, so the
+    (untracked, gitignored) figures/fixtures/genealogy_fixture.jsonl on a dev
+    machine is irrelevant to test outcomes.
+    """
+    path = tmp_path / "genealogy_fixture.jsonl"
+    path.write_text(
+        "\n".join(json.dumps(r) for r in _GENEALOGY_FIXTURE_RECORDS) + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 # ===========================================================================
@@ -37,33 +98,33 @@ _TRIANGULATION_FIXTURE = _FIXTURES_DIR / "triangulation_fixture.json"
 class TestBuildGenealogyDag:
     """Tests for build_genealogy_dag (REQ-DELIV-01, T-05-22)."""
 
-    def test_dag_node_and_edge_counts_match_fixture(self):
+    def test_dag_node_and_edge_counts_match_fixture(self, genealogy_fixture_path):
         """build_genealogy_dag on fixture returns DiGraph with expected counts."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
 
         # Fixture has 4 records → 4 nodes
         assert G.number_of_nodes() == 4
         # 3 edges: v1->v2, v2->v3 (rollback), v2->v4 (promoted)
         assert G.number_of_edges() == 3
 
-    def test_dag_node_attributes(self):
+    def test_dag_node_attributes(self, genealogy_fixture_path):
         """Nodes carry skill, f1, status attributes from fixture records."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
 
         assert G.nodes["v1"]["skill"] == "spring-boot-endpoint"
         assert abs(G.nodes["v1"]["f1"] - 0.62) < 1e-6
         assert G.nodes["v1"]["status"] == "archived"
         assert G.nodes["v4"]["status"] == "active"
 
-    def test_dag_edge_relations(self):
+    def test_dag_edge_relations(self, genealogy_fixture_path):
         """Edges carry relation (promoted/rolled back) and date from fixture."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
 
         # v2->v3 is rolled_back=true → relation="rolled back"
         assert G.edges["v2", "v3"]["relation"] == "rolled back"
@@ -122,41 +183,41 @@ class TestBuildGenealogyDag:
 class TestDagToMermaid:
     """Tests for dag_to_mermaid (UI-SPEC §B.6)."""
 
-    def test_mermaid_starts_with_graph_lr(self):
+    def test_mermaid_starts_with_graph_lr(self, genealogy_fixture_path):
         """dag_to_mermaid output contains 'graph LR'."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         assert "graph LR" in result
 
-    def test_mermaid_contains_node_line_per_version(self):
+    def test_mermaid_contains_node_line_per_version(self, genealogy_fixture_path):
         """One node line per version_id in topological order."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         for version_id in ["v1", "v2", "v3", "v4"]:
             assert version_id in result
 
-    def test_mermaid_contains_classdef_color_lines(self):
+    def test_mermaid_contains_classdef_color_lines(self, genealogy_fixture_path):
         """Mermaid output contains classDef blocks for active/quarantine/archived."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         assert "classDef active" in result
         assert "classDef quarantine" in result
         assert "classDef archived" in result
 
-    def test_mermaid_fixture_watermark_prepended(self):
+    def test_mermaid_fixture_watermark_prepended(self, genealogy_fixture_path):
         """When fixture=True, the watermark note is prepended to the output."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G, fixture=True)
 
         assert "[FIXTURE DATA" in result
@@ -165,30 +226,30 @@ class TestDagToMermaid:
         graph_pos = result.index("graph LR")
         assert fixture_pos < graph_pos, "Fixture note must precede the Mermaid block"
 
-    def test_mermaid_no_watermark_when_not_fixture(self):
+    def test_mermaid_no_watermark_when_not_fixture(self, genealogy_fixture_path):
         """When fixture=False (default), no fixture watermark in output."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         assert "[FIXTURE DATA" not in result
 
-    def test_mermaid_solid_edge_for_promotion(self):
+    def test_mermaid_solid_edge_for_promotion(self, genealogy_fixture_path):
         """Promoted edges use solid --> arrow style."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         # v2->v4 is promoted (solid arrow)
         assert "-->" in result
 
-    def test_mermaid_dashed_edge_for_rollback(self):
+    def test_mermaid_dashed_edge_for_rollback(self, genealogy_fixture_path):
         """Rolled-back edges use dashed .-> arrow style."""
         from setdrift_eval.figures.genealogy import build_genealogy_dag, dag_to_mermaid
 
-        G = build_genealogy_dag(_GENEALOGY_FIXTURE)
+        G = build_genealogy_dag(genealogy_fixture_path)
         result = dag_to_mermaid(G)
 
         # v2->v3 is rolled back (dashed arrow)
