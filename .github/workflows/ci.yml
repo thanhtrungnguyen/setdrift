@@ -105,10 +105,24 @@ jobs:
         with:
           enable-caching: true
 
-      - name: Install package + dev dependencies
-        run: uv sync --extra dev
+      - name: Install package + dev + optimize dependencies
+        # --extra optimize installs dspy so the optimizer/rollback tests run for
+        # real (not silently skipped). It also pulls litellm→click, which core
+        # presidio-analyzer imports at module load. The drift extra is NOT needed:
+        # those tests gate themselves with pytest.importorskip(inspect_ai /
+        # sentence_transformers), so they skip cleanly without heavy torch.
+        run: uv sync --extra dev --extra optimize
+
+      - name: Install lightweight spacy model for the scrubber
+        # The presidio scrubber (REQ-SAFETY-01) loads a spacy NER model at import.
+        # Production defaults to en_core_web_lg (~560MB); CI uses the ~12MB sm
+        # model via SETDRIFT_SPACY_MODEL (set below) — small but still ships the
+        # PERSON/EMAIL NER pipeline the safety tests assert on.
+        run: uv run python -m spacy download en_core_web_sm
 
       - name: pytest — full offline suite
+        env:
+          SETDRIFT_SPACY_MODEL: en_core_web_sm
         run: uv run pytest tests/ setdrift_eval/ -v --tb=short -q
 
 # ---------------------------------------------------------------------------

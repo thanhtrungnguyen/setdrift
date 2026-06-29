@@ -24,10 +24,12 @@ original text.
 
 import hashlib
 import json
+import os
 import re
 from dataclasses import dataclass
 
 from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from detect_secrets.core import scan
 from detect_secrets.settings import default_settings
@@ -63,7 +65,18 @@ _PII_PATTERNS = [
 _PII_RECOGNIZER = PatternRecognizer(supported_entity="PII_SHAPE", patterns=_PII_PATTERNS)
 
 # Module-level singletons (cold start paid once per process).
-_ANALYZER = AnalyzerEngine()
+# Spacy model is configurable so CI can use the lightweight en_core_web_sm
+# (~12MB) instead of the production default en_core_web_lg (~560MB). Production
+# behaviour is unchanged unless SETDRIFT_SPACY_MODEL is set. Both models ship a
+# PERSON/EMAIL NER pipeline, which the safety tests (REQ-SAFETY-01) depend on.
+_SPACY_MODEL = os.environ.get("SETDRIFT_SPACY_MODEL", "en_core_web_lg")
+_NLP_ENGINE = NlpEngineProvider(
+    nlp_configuration={
+        "nlp_engine_name": "spacy",
+        "models": [{"lang_code": "en", "model_name": _SPACY_MODEL}],
+    }
+).create_engine()
+_ANALYZER = AnalyzerEngine(nlp_engine=_NLP_ENGINE)
 _ANALYZER.registry.add_recognizer(_SECRET_RECOGNIZER)
 _ANALYZER.registry.add_recognizer(_PII_RECOGNIZER)
 _ANONYMIZER = AnonymizerEngine()

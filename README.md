@@ -1,23 +1,14 @@
 # Setdrift
 
+[![CI](https://github.com/thanhtrungnguyen/setdrift/actions/workflows/ci.yml/badge.svg)](https://github.com/thanhtrungnguyen/setdrift/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.14%2B-blue)](https://www.python.org/)
+
 **A self-improving Claude Code plugin** that treats AI-coding-agent configuration
 (CLAUDE.md, skills, hooks, sub-agents, MCP wiring) as a continuously optimizable
 parameter — observed, diagnosed, patched, and verified in a closed loop.
 Validated on a production Java / Spring Boot microservice platform.
 
 Repo: <https://github.com/thanhtrungnguyen/setdrift>
-(the local working folder is still `repo/sica-plugin/`).
-
-> ⚠️ **Name note.** **Setdrift** is a coined control-theory term — *setpoint*
-> (the target value a feedback loop holds, here skill-trigger F1) + *drift*
-> (the codebase/model change the loop corrects) — naming this project's
-> falsifiable claim in one word. It is **not** to be confused with Robeyns
-> et al. 2025, *Self-Improving Coding Agent* (sometimes abbreviated "SICA"),
-> which targets a different layer: the agent edits its **own source code** to
-> improve itself. Setdrift optimizes *configuration*, not source code —
-> related but distinct work. A 5-axis differential against Robeyns 2025 lands
-> in dissertation Chapter 2 (background and related work). *(Previously
-> codenamed "SICA"; the Jira project key remains `SICA`.)*
 
 ## The falsifiable claim
 
@@ -178,7 +169,22 @@ GitBug-Java. See `docs/corpus.md` for the build and verification recipe.
 
 ## CI
 
-None configured yet.
+GitHub Actions runs on every push and pull request to `main`
+(`.github/workflows/ci.yml`): `lint` (ruff), `typecheck` (mypy), `test`
+(pytest, offline — no API key), `security` (detect-secrets scan), and
+`data-wall` (integrity check that nothing crosses the gitignore wall).
+
+### Running checks locally
+
+Reproduce the lint/type/test jobs from `eval/` with `uv`:
+
+```bash
+cd eval
+uv run ruff check .                       # lint
+uv run ruff format --check .              # format check
+uv run mypy setdrift_eval/                # type check
+uv run pytest tests/ setdrift_eval/       # offline test suite
+```
 
 ## License
 
