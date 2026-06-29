@@ -118,12 +118,17 @@ jobs:
         # Production defaults to en_core_web_lg (~560MB); CI uses the ~12MB sm
         # model via SETDRIFT_SPACY_MODEL (set below) — small but still ships the
         # PERSON/EMAIL NER pipeline the safety tests assert on.
-        run: uv run python -m spacy download en_core_web_sm
+        # NOTE: `spacy download` shells out to pip, which uv venvs do not have —
+        # install the model wheel directly. en_core_web_sm-3.8.0 matches the
+        # locked spacy 3.8.x line.
+        run: uv pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
 
       - name: pytest — full offline suite
         env:
           SETDRIFT_SPACY_MODEL: en_core_web_sm
-        run: uv run pytest tests/ setdrift_eval/ -v --tb=short -q
+        # --no-sync so the manually-installed spacy model (not in the lockfile)
+        # is not pruned by uv's pre-run environment sync.
+        run: uv run --no-sync pytest tests/ setdrift_eval/ -v --tb=short -q
 
 # ---------------------------------------------------------------------------
 # Job 4: Security — secret-scanner agent
