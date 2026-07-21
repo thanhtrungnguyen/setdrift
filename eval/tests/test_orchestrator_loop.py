@@ -15,7 +15,12 @@ import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pydantic
 import pytest
+
+from setdrift_eval.schemas.precision_gate_report import PrecisionGateReport
+
+_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -97,12 +102,29 @@ def experiments_dir(tmp_path):
 
 @pytest.fixture()
 def precision_gate_report(experiments_dir):
-    """Write a passed precision/kappa gate report so run_health doesn't block."""
+    """Write a passed, schema-valid precision/kappa gate report (PrecisionGateReport
+    shape — real field names, not the fabricated overall_precision/notes shape)."""
     report = {
+        "per_source": {
+            "gitbug-java": {
+                "precision": 0.92,
+                "kappa": 0.75,
+                "n": 30,
+                "label_distribution": {"none": 5, "null-check": 25},
+                "passed_precision": True,
+                "passed_kappa": True,
+            }
+        },
+        "negatives_fraction": 0.22,
+        "n_total": 30,
+        "passed_negatives": True,
         "passed": True,
-        "timestamp": "2026-06-06T00:00:00Z",
-        "overall_precision": 0.92,
-        "overall_kappa": 0.75,
+        "thresholds": {"precision": 0.85, "kappa": 0.6, "min_negatives_fraction": 0.20},
+        "provenance": {
+            "verify_csv_sha256": "a" * 64,
+            "row_count": 30,
+            "gate_run_date": "2026-06-06T00:00:00Z",
+        },
     }
     (experiments_dir / "001-mining-precision.json").write_text(json.dumps(report), encoding="utf-8")
     return experiments_dir
@@ -560,3 +582,47 @@ def test_run_loop_cycle_exported_from_optimizer_init():
     from setdrift_eval.optimizer import run_loop_cycle
 
     assert callable(run_loop_cycle)
+
+
+# ---------------------------------------------------------------------------
+# Test: PrecisionGateReport rejects the fabricated fixture (T-06-07 / T-06-08)
+# ---------------------------------------------------------------------------
+
+
+def test_precision_gate_report_rejects_fabricated_fixture():
+    """The fabricated 001-mining-precision.json (relocated to eval/tests/fixtures/ as
+    a deliberately-invalid negative-test sample) must be REJECTED by PrecisionGateReport:
+    it uses wrong field names (overall_precision, n_verified/n_correct,
+    negative_fraction) plus a notes field admitting it is a synthetic report."""
+    fixture_path = _FIXTURES_DIR / "001-mining-precision.json"
+    data = json.loads(fixture_path.read_text(encoding="utf-8"))
+    with pytest.raises(pydantic.ValidationError):
+        PrecisionGateReport.model_validate(data)
+
+
+def test_precision_gate_report_accepts_schema_valid_report():
+    """A genuine, schema-valid report (real field names, provenance block) validates."""
+    data = {
+        "per_source": {
+            "gitbug-java": {
+                "precision": 0.92,
+                "kappa": 0.81,
+                "n": 30,
+                "label_distribution": {"none": 3, "null-check": 27},
+                "passed_precision": True,
+                "passed_kappa": True,
+            }
+        },
+        "negatives_fraction": 0.22,
+        "n_total": 30,
+        "passed_negatives": True,
+        "passed": True,
+        "thresholds": {"precision": 0.85, "kappa": 0.6, "min_negatives_fraction": 0.20},
+        "provenance": {
+            "verify_csv_sha256": "b" * 64,
+            "row_count": 30,
+            "gate_run_date": "2026-06-06T00:00:00Z",
+        },
+    }
+    report = PrecisionGateReport.model_validate(data)
+    assert report.passed is True

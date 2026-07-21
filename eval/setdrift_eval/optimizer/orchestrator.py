@@ -35,6 +35,7 @@ from setdrift_eval.optimizer.gepa_wrapper import (
 from setdrift_eval.optimizer.signer import sign_config
 from setdrift_eval.optimizer.verifier import verify_candidate as _verify_candidate
 from setdrift_eval.schemas.loop_manifest import AuditRecord, scrub_for_genealogy
+from setdrift_eval.schemas.precision_gate_report import PrecisionGateReport
 
 # --- configurable paths (env-var pattern from capture_event.py) ---
 _AUDIT_PATH = Path(os.environ.get("SETDRIFT_AUDIT_PATH", "data/audit/audit.jsonl"))
@@ -121,6 +122,11 @@ def _check_precision_gate(experiments_dir: Path) -> None:
     """Raise OrchestratorError if the precision/kappa gate has not cleared.
 
     Looks for *-mining-precision.json (the file written by precision_gate_cli).
+    The report is structurally validated via PrecisionGateReport.model_validate
+    BEFORE the .passed check (T-06-07) — a spoofed/hand-typed report with the
+    wrong shape (extra fields, missing fields, out-of-range values) is rejected
+    with a pydantic.ValidationError instead of silently passing a bare dict
+    lookup.
     """
     reports = sorted(Path(experiments_dir).glob("*-mining-precision.json"))
     if not reports:
@@ -129,7 +135,14 @@ def _check_precision_gate(experiments_dir: Path) -> None:
             "The loop cycle requires a passed precision gate."
         )
     data = json.loads(reports[-1].read_text(encoding="utf-8"))
-    if data.get("passed") is not True:
+    try:
+        report = PrecisionGateReport.model_validate(data)
+    except Exception as exc:
+        raise OrchestratorError(
+            f"precision/kappa gate report at {reports[-1]} failed schema validation: {exc}. "
+            "The loop cycle requires a structurally-valid, passed precision gate report."
+        ) from exc
+    if report.passed is not True:
         raise OrchestratorError(
             f"precision/kappa gate report at {reports[-1]} has passed=False. "
             "Fix the precision gate first."
