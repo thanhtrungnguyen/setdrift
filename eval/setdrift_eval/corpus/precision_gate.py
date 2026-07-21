@@ -12,13 +12,16 @@ The committed report carries only ids/aggregates — never prompt or diff text.
 """
 
 import csv
+import hashlib
 import json
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sklearn.metrics import cohen_kappa_score
 
 from setdrift_eval.corpus.schemas import SkillLabel
+from setdrift_eval.schemas.precision_gate_report import PrecisionGateReport
 
 _VALID = {s.value for s in SkillLabel}
 _INTENTS = sorted(_VALID - {SkillLabel.NONE.value})  # positive intent space for kappa/precision
@@ -129,12 +132,47 @@ def check_gate(
     return report
 
 
-def write_report(report: dict, experiments_dir: Path) -> Path:
-    """Write experiments/{NNN}-mining-precision.json (git-tracked; ids/aggregates only)."""
+def _sha256_file(path: Path) -> str:
+    """Return sha256 hex of a file's bytes, or empty string if missing (mirrors
+    orchestrator.py::_sha256_file's convention)."""
+    p = Path(path)
+    if not p.exists():
+        return ""
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def _count_csv_rows(csv_path: Path | None) -> int:
+    if csv_path is None or not Path(csv_path).exists():
+        return 0
+    with Path(csv_path).open(encoding="utf-8", newline="") as fh:
+        return sum(1 for _ in csv.DictReader(fh))
+
+
+def write_report(report: dict, experiments_dir: Path, csv_path: Path | None = None) -> Path:
+    """Write experiments/{NNN}-mining-precision.json (git-tracked; ids/aggregates only).
+
+    Additively stamps a provenance block (D6-06) before writing: verify-CSV sha256,
+    row count, and gate-run date. When csv_path is not provided, the sha256/row_count
+    fields degrade to empty/0 (never fabricated) but gate_run_date is always real.
+    The augmented report is validated against PrecisionGateReport before writing
+    (Pitfall 2 — the writer and schema stay coupled; never loosen the schema to
+    paper over a writer bug).
+    """
     experiments_dir = Path(experiments_dir)
     experiments_dir.mkdir(parents=True, exist_ok=True)
     existing = list(experiments_dir.glob("*-mining-precision.json"))
     nnn = f"{len(existing) + 1:03d}"
     out = experiments_dir / f"{nnn}-mining-precision.json"
+
+    report = dict(report)
+    report["provenance"] = {
+        "verify_csv_sha256": _sha256_file(csv_path) if csv_path is not None else "",
+        "row_count": _count_csv_rows(csv_path),
+        "gate_run_date": datetime.now(timezone.utc).isoformat(),
+    }
+
+    # Fail-loud: the writer and schema stay coupled (Pitfall 2).
+    PrecisionGateReport.model_validate(report)
+
     out.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     return out

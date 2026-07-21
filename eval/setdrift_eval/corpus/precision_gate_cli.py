@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
         kappa_threshold=args.kappa_threshold,
         min_negatives_fraction=args.min_negatives,
     )
-    out = write_report(report, args.experiments_dir)
+    out = write_report(report, args.experiments_dir, csv_path=args.csv)
 
     for source, m in sorted(report["per_source"].items()):
         verdict = "PASS" if (m["passed_precision"] and m["passed_kappa"]) else "FAIL"
