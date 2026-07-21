@@ -1,7 +1,7 @@
 """Skill lifecycle deprecator — idle-session archive + rejection-rate quarantine (REQ-SAFETY-03).
 
 Tracks per-skill firing/rejection in data/deprecation/ (gitignored, inside the data wall).
-Reads data/telemetry/events.jsonl to count idle sessions.
+Reads the real sharded data/telemetry/*.events.jsonl contract to count idle sessions.
 
 What this module does:
   - record_firing: append per-skill firing record (offline tracking only)
@@ -135,43 +135,59 @@ def record_firing(skill_name: str, session_id: str, fired: bool, rejected: bool)
     _append_jsonl(skill_log, record)
 
 
-def count_idle_sessions(skill_name: str, events_path: Path) -> int:
-    """Count distinct session_ids in events.jsonl that occurred SINCE the skill last fired.
+def count_idle_sessions(skill_name: str, telemetry_dir: Path) -> int:
+    """Count distinct sessions in the sharded telemetry directory since the skill last fired.
 
-    A "session" is a distinct value of the `session` field in events.jsonl with ≥1
-    tool-use event (any tool — the session was active).
+    Reads the REAL sharded telemetry contract produced by the Phase-1 writer
+    (plugin/hooks/stop_batch_scrubber.py): one shard per session at
+    `<telemetry_dir>/<session_id>.events.jsonl`. Imitates
+    `eval/setdrift_eval/telemetry/query.py`'s glob + field-name convention
+    (glob `*.events.jsonl`, fields `_session`/`tool_name`) WITHOUT importing
+    DuckDB — plain `json.loads` per line, matching this module's
+    zero-external-import style.
 
-    Returns 0 if events_path does not exist (cannot flag without data).
-    Returns the count of distinct session_ids that had ≥1 tool-use after the last
-    session where skill_name fired. If the skill never fired, returns the total count
-    of distinct active session_ids.
+    A "session" is a distinct value of the `_session` field with ≥1 tool-use
+    event (any tool — the session was active).
+
+    Returns 0 if telemetry_dir does not exist or has no shards (cannot flag
+    without data). Returns the count of distinct sessions that had ≥1
+    tool-use after the last session where skill_name fired. If the skill
+    never fired, returns the total count of distinct active sessions.
     """
-    events_path = Path(events_path)
-    if not events_path.exists():
+    telemetry_dir = Path(telemetry_dir)
+    if not telemetry_dir.exists():
         return 0
 
-    # Read all events chronologically
+    shard_paths = sorted(telemetry_dir.glob("*.events.jsonl"))
+    if not shard_paths:
+        return 0
+
+    # Read every shard, accumulating all events into one list, then
+    # merge-sort the combined list by _ts_captured before running the scan.
     events: list[dict] = []
-    with events_path.open(encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                events.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    for shard_path in shard_paths:
+        with shard_path.open(encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    events.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+
+    events.sort(key=lambda ev: ev.get("_ts_captured") or "")
 
     # Find the last session where skill_name fired
-    # The `tool` field in the event carries the tool name (can be sanitized or raw)
+    # The `tool_name` field carries the tool name (can be sanitized or raw)
     # We match both kebab-case and underscore-sanitized form
     sanitized_name = skill_name.replace("-", "_").replace(" ", "_")
 
     last_firing_session: str | None = None
     for ev in events:
-        tool = ev.get("tool", "")
-        if tool == skill_name or tool == sanitized_name:
-            last_firing_session = ev.get("session")
+        tool_name = ev.get("tool_name", "")
+        if tool_name == skill_name or tool_name == sanitized_name:
+            last_firing_session = ev.get("_session")
 
     # Collect distinct active sessions (sessions with ≥1 tool-use event of any kind)
     # that appeared AFTER the last firing session
@@ -179,7 +195,7 @@ def count_idle_sessions(skill_name: str, events_path: Path) -> int:
     found_last = last_firing_session is None  # if never fired, count all
 
     for ev in events:
-        session = ev.get("session")
+        session = ev.get("_session")
         if not session:
             continue
         # Once we've seen the last_firing_session, start counting subsequent sessions
@@ -188,7 +204,7 @@ def count_idle_sessions(skill_name: str, events_path: Path) -> int:
                 found_last = True
             continue
         # After the last firing: track sessions that have any tool activity
-        if session not in seen_sessions and ev.get("tool"):
+        if session not in seen_sessions and ev.get("tool_name"):
             seen_sessions.append(session)
 
     return len(seen_sessions)
@@ -311,12 +327,15 @@ def promote_skill(skill_name: str, skills_dir: Path) -> Decision:
     return decision
 
 
-def scan(skills_dir: Path, events_path: Path) -> list[Decision]:
+def scan(skills_dir: Path, telemetry_dir: Path) -> list[Decision]:
     """Scan all skills in skills_dir and return archive/quarantine decisions.
 
     For each SKILL.md found in skills_dir/*/SKILL.md:
     1. Count idle sessions → if >= ARCHIVE_AFTER_N, emit archive decision.
     2. Check rejection rate → if > QUARANTINE_REJECTION_RATE, emit quarantine decision.
+
+    telemetry_dir is the sharded telemetry directory (globbed for *.events.jsonl
+    by count_idle_sessions), not a single-file path.
 
     Returns a list of Decision objects. Does NOT apply the decisions (caller decides).
     Decisions are also logged via _log_decision.
@@ -335,7 +354,7 @@ def scan(skills_dir: Path, events_path: Path) -> list[Decision]:
         skill_name = skill_md.parent.name
 
         # Check 1: idle session archive
-        idle = count_idle_sessions(skill_name, events_path)
+        idle = count_idle_sessions(skill_name, telemetry_dir)
         if idle >= archive_n:
             d = Decision(
                 skill_name=skill_name,

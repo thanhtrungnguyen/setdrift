@@ -4,8 +4,11 @@ What this module does:
   - LogPanel: a Collapsible widget containing a RichLog that surfaces two streams:
       1. Loop-lifecycle events (observe→diagnose→patch→verify transitions).
          Shows "No loop events yet (Phase 3 pending)" until Phase 3 lands (D-09).
-      2. A follow-tail of data/telemetry/events.jsonl (single-source-of-truth, D-04).
-  - tail_telemetry(): reads last N lines of events.jsonl; OSError → warning in log.
+      2. A follow-tail of the sharded data/telemetry/*.events.jsonl contract
+         (single-source-of-truth, D-04) — one shard per session, matching
+         telemetry/query.py's glob convention.
+  - tail_telemetry(): reads last N lines merged across all shards in the
+    telemetry directory; OSError → warning in log.
   - write_loop_event(): writes one event with level-to-color mapping.
 
 What it does NOT do:
@@ -72,17 +75,26 @@ class LogPanel(Collapsible):
     # Public API
     # ------------------------------------------------------------------
 
-    def tail_telemetry(self, events_path: Path, n_lines: int = 50) -> None:
-        """Append the last n_lines of events.jsonl to the log panel.
+    def tail_telemetry(self, telemetry_dir: Path, n_lines: int = 50) -> None:
+        """Append the last n_lines merged across the sharded telemetry directory.
 
-        Single-source-of-truth (D-04): reads data/telemetry/events.jsonl directly.
+        Single-source-of-truth (D-04): reads the real sharded contract —
+        `<telemetry_dir>/*.events.jsonl` (one shard per session), matching
+        telemetry/query.py's glob convention. Lines from all shards are
+        concatenated (shard iteration order) and the last n_lines are shown.
         OSError → warning line (UI-SPEC §A.9 read-error copy).
         Never writes to the file; never exports raw content (T-05-16 guard).
         """
         log = self.query_one("#log-panel", RichLog)
         try:
-            text = events_path.read_text(encoding="utf-8")
-            lines = [ln for ln in text.splitlines() if ln.strip()]
+            telemetry_dir = Path(telemetry_dir)
+            if not telemetry_dir.is_dir():
+                raise OSError(f"telemetry directory not found: {telemetry_dir}")
+            shard_paths = sorted(telemetry_dir.glob("*.events.jsonl"))
+            lines: list[str] = []
+            for shard_path in shard_paths:
+                text = shard_path.read_text(encoding="utf-8")
+                lines.extend(ln for ln in text.splitlines() if ln.strip())
             if not lines:
                 log.write("[dim]No telemetry events yet — run a Setdrift session[/dim]")
                 return

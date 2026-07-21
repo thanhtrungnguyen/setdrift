@@ -170,17 +170,18 @@ def test_health_json_skills_is_list(tmp_path):
 
 
 def test_log_tail_telemetry_reads_last_n_lines(tmp_path):
-    """tail_telemetry reads the last n_lines of events.jsonl (single-source-of-truth)."""
+    """tail_telemetry reads the last n_lines merged across sharded *.events.jsonl (D-04)."""
     import pytest
 
     pytest.importorskip("textual")
 
-    events_file = tmp_path / "events.jsonl"
+    telemetry_dir = tmp_path / "telemetry"
+    telemetry_dir.mkdir()
     lines = [
-        json.dumps({"ts": f"2026-06-15T{i:02d}:00:00Z", "tool": "read", "ok": True})
+        json.dumps({"_ts_captured": f"2026-06-15T{i:02d}:00:00Z", "tool_name": "read", "_session": "s1"})
         for i in range(100)
     ]
-    events_file.write_text("\n".join(lines), encoding="utf-8")
+    (telemetry_dir / "s1.events.jsonl").write_text("\n".join(lines), encoding="utf-8")
 
     # We test the logic without running the full Textual app by mocking the RichLog
     from unittest.mock import MagicMock, patch
@@ -194,20 +195,20 @@ def test_log_tail_telemetry_reads_last_n_lines(tmp_path):
     panel._loop_events_written = False
     panel.query_one = mock_query  # type: ignore[method-assign]
 
-    panel.tail_telemetry(events_file, n_lines=10)
+    panel.tail_telemetry(telemetry_dir, n_lines=10)
 
     # Should have written exactly 10 lines (last 10 of 100)
     assert mock_log.write.call_count == 10
 
 
 def test_log_tail_telemetry_empty_file(tmp_path):
-    """tail_telemetry on an empty file writes the no-data copy (UI-SPEC §A.9)."""
+    """tail_telemetry on an empty telemetry dir (no shards) writes the no-data copy (UI-SPEC §A.9)."""
     import pytest
 
     pytest.importorskip("textual")
 
-    events_file = tmp_path / "events.jsonl"
-    events_file.write_text("", encoding="utf-8")
+    telemetry_dir = tmp_path / "telemetry"
+    telemetry_dir.mkdir()
 
     from unittest.mock import MagicMock
     from setdrift_eval.dashboard import log_panel as lp
@@ -217,7 +218,7 @@ def test_log_tail_telemetry_empty_file(tmp_path):
     panel._loop_events_written = False
     panel.query_one = MagicMock(return_value=mock_log)  # type: ignore[method-assign]
 
-    panel.tail_telemetry(events_file, n_lines=50)
+    panel.tail_telemetry(telemetry_dir, n_lines=50)
 
     call_args = [str(c) for c in mock_log.write.call_args_list]
     assert any("No telemetry events yet" in a for a in call_args), (
@@ -226,12 +227,12 @@ def test_log_tail_telemetry_empty_file(tmp_path):
 
 
 def test_log_tail_telemetry_missing_file(tmp_path):
-    """tail_telemetry with missing file writes the ⚠ warning copy (UI-SPEC §A.9)."""
+    """tail_telemetry with missing telemetry dir writes the ⚠ warning copy (UI-SPEC §A.9)."""
     import pytest
 
     pytest.importorskip("textual")
 
-    missing = tmp_path / "nonexistent.jsonl"
+    missing = tmp_path / "nonexistent_telemetry_dir"
 
     from unittest.mock import MagicMock
     from setdrift_eval.dashboard import log_panel as lp

@@ -27,6 +27,7 @@ or:
 
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,9 +43,11 @@ from setdrift_eval.dashboard.log_panel import LogPanel
 from setdrift_eval.dashboard.widgets import MetricWidget, SkillTable
 
 # ---------------------------------------------------------------------------
-# Default telemetry events path (overridable via SETDRIFT_EVENTS_PATH env var)
+# Default telemetry directory (sharded *.events.jsonl contract — matches
+# telemetry/query.py's TELEMETRY_DIR convention). Overridable via
+# SETDRIFT_TELEMETRY_DIR env var.
 # ---------------------------------------------------------------------------
-_DEFAULT_EVENTS_PATH = Path("data/telemetry/events.jsonl")
+_DEFAULT_TELEMETRY_DIR = Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry"))
 
 # Stale threshold: if last successful poll was more than this many seconds ago,
 # show the ⚠ STALE indicator on #last-refresh (UI-SPEC §A.6).
@@ -139,7 +142,7 @@ class SetdriftDashboard(App):
         map_path: Path | str = Path("eval/setdrift_eval/corpus/intent_skill_map.yaml"),
         skills_dir: Path | str = Path("plugin/skills"),
         experiments_dir: Path | str = Path("experiments"),
-        events_path: Path | str | None = None,
+        telemetry_dir: Path | str | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -149,7 +152,7 @@ class SetdriftDashboard(App):
         self._map_path = Path(map_path)
         self._skills_dir = Path(skills_dir)
         self._experiments_dir = Path(experiments_dir)
-        self._events_path = Path(events_path) if events_path else _DEFAULT_EVENTS_PATH
+        self._telemetry_dir = Path(telemetry_dir) if telemetry_dir else _DEFAULT_TELEMETRY_DIR
         self._last_poll_epoch: float = 0.0
         self._skill_table_helper: SkillTable | None = None
         self._table_populated = False
@@ -266,7 +269,7 @@ class SetdriftDashboard(App):
         # Tail the telemetry log
         try:
             log_panel = self.query_one("#log-collapsible", LogPanel)
-            log_panel.tail_telemetry(self._events_path, n_lines=50)
+            log_panel.tail_telemetry(self._telemetry_dir, n_lines=50)
         except Exception:
             pass
 

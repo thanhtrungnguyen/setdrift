@@ -1,9 +1,15 @@
-"""Deprecator unit tests (Plan 03-05, REQ-SAFETY-03). Offline, no API, no live data.
+"""Deprecator unit tests (Plan 03-05, REQ-SAFETY-03; sharded contract fix, Plan 06-02).
 
-All tests use tmp_path fixtures — never the live data/telemetry/events.jsonl wall.
+All tests use tmp_path fixtures — never the live data/telemetry wall.
+
+Fixtures build the REAL sharded telemetry contract (one shard per session at
+`<telemetry_dir>/<session>.events.jsonl`, fields `_ts_captured`/`_session`/
+`tool_name`) matching `plugin/hooks/stop_batch_scrubber.py`'s output and
+`eval/setdrift_eval/telemetry/query.py`'s glob convention. `count_idle_sessions`
+and `scan` take the telemetry DIRECTORY, not a single-file path.
 
 Covers:
-- archive-after-N-idle: skill with ≥N distinct session_ids and zero firings is flagged archive
+- archive-after-N-idle: skill with >=N distinct sessions and zero firings is flagged archive
 - quarantine->80%: skill with >80% rejection over last QUARANTINE_WINDOW firing-sessions
 - quarantine moves SKILL.md outside the */SKILL.md load glob
 - promote_skill restores the skill back to load_skill_tools
@@ -46,12 +52,37 @@ def _make_skill_dir(skills_dir: Path, skill_name: str, description: str = "A tes
     return skill_dir
 
 
-def _make_events_jsonl(events_path: Path, events: list[dict]) -> None:
-    """Write a list of event dicts to an events.jsonl file."""
-    events_path.parent.mkdir(parents=True, exist_ok=True)
-    with events_path.open("w", encoding="utf-8") as fh:
+def _scrubbed_event(session: str, tool_name: str | None, ts: str) -> dict:
+    """Build a realistic scrubbed per-session event record.
+
+    Field shape matches hot_path_capture.py's raw record (preserved verbatim
+    by scrub_event, which only mutates string VALUES, never field NAMES):
+    _ts_captured, _hook_event, _session, _cwd, _transcript, tool_name,
+    tool_input, tool_result, prompt, message_preview, _hook_runtime_ms.
+    """
+    return {
+        "_ts_captured": ts,
+        "_hook_event": "PostToolUse",
+        "_session": session,
+        "_cwd": "/repo",
+        "_transcript": None,
+        "tool_name": tool_name,
+        "tool_input": "{}",
+        "tool_result": "ok",
+        "prompt": None,
+        "message_preview": None,
+        "_hook_runtime_ms": 1.23,
+    }
+
+
+def _write_shard(telemetry_dir: Path, session: str, events: list[dict]) -> Path:
+    """Write one per-session shard: <telemetry_dir>/<session>.events.jsonl."""
+    telemetry_dir.mkdir(parents=True, exist_ok=True)
+    shard_path = telemetry_dir / f"{session}.events.jsonl"
+    with shard_path.open("w", encoding="utf-8") as fh:
         for ev in events:
             fh.write(json.dumps(ev) + "\n")
+    return shard_path
 
 
 # ---------------------------------------------------------------------------
@@ -73,99 +104,94 @@ def test_env_constants_have_correct_defaults():
 
 
 def test_count_idle_sessions_below_N(tmp_path):
-    """Skill with fewer distinct session_ids than N returns the count below N."""
-    events_path = tmp_path / "events.jsonl"
+    """Skill with fewer distinct sessions than N returns the count below N."""
+    telemetry_dir = tmp_path / "telemetry"
     # 5 sessions, the skill never fired in any of them (only other tools fired)
-    events = [
-        {
-            "ts": "2026-01-01T00:00:00Z",
-            "tool": "other_tool",
-            "ok": True,
-            "session": f"sess-{i}",
-            "cwd": "/x",
-        }
-        for i in range(5)
-    ]
-    _make_events_jsonl(events_path, events)
-    result = count_idle_sessions("my_skill", events_path)
+    for i in range(5):
+        _write_shard(
+            telemetry_dir,
+            f"sess-{i}",
+            [_scrubbed_event(f"sess-{i}", "other_tool", f"2026-01-01T00:0{i}:00Z")],
+        )
+    result = count_idle_sessions("my_skill", telemetry_dir)
     # 5 sessions total, 0 firing sessions for this skill → 5 idle
     assert result == 5
     assert result < ARCHIVE_AFTER_N
 
 
 def test_count_idle_sessions_at_N(tmp_path, monkeypatch):
-    """Skill with exactly N distinct session_ids and no firing is flagged (count == N)."""
+    """Skill with exactly N distinct sessions and no firing is flagged (count == N)."""
     monkeypatch.setenv("SETDRIFT_ARCHIVE_AFTER_N", "3")
     from importlib import reload
     import setdrift_eval.optimizer.deprecator as dep_mod
 
     reload(dep_mod)
 
-    events_path = tmp_path / "events.jsonl"
+    telemetry_dir = tmp_path / "telemetry"
     # 3 sessions, skill never fired
-    events = [
-        {
-            "ts": "2026-01-01T00:00:00Z",
-            "tool": "other_tool",
-            "ok": True,
-            "session": f"s{i}",
-            "cwd": "/x",
-        }
-        for i in range(3)
-    ]
-    _make_events_jsonl(events_path, events)
-    result = dep_mod.count_idle_sessions("absent_skill", events_path)
+    for i in range(3):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "other_tool", f"2026-01-01T00:0{i}:00Z")],
+        )
+    result = dep_mod.count_idle_sessions("absent_skill", telemetry_dir)
     assert result == 3  # exactly N idle sessions
 
 
 def test_count_idle_sessions_skill_fired_resets_idle(tmp_path):
     """If the skill fired in some session, idle count is sessions SINCE the last firing."""
-    events_path = tmp_path / "events.jsonl"
+    telemetry_dir = tmp_path / "telemetry"
     # sessions 0-4: other tool fires
     # session 5: my_skill fires
     # sessions 6-9: other tool fires again (4 idle sessions after the last firing)
-    events = (
-        [
-            {
-                "ts": "2026-01-01T00:00:00Z",
-                "tool": "other_tool",
-                "ok": True,
-                "session": f"s{i}",
-                "cwd": "/x",
-            }
-            for i in range(5)
-        ]
-        + [
-            {
-                "ts": "2026-01-02T00:00:00Z",
-                "tool": "my_skill",
-                "ok": True,
-                "session": "s5",
-                "cwd": "/x",
-            }
-        ]
-        + [
-            {
-                "ts": "2026-01-03T00:00:00Z",
-                "tool": "other_tool",
-                "ok": True,
-                "session": f"s{i}",
-                "cwd": "/x",
-            }
-            for i in range(6, 10)
-        ]
+    for i in range(5):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "other_tool", f"2026-01-01T00:0{i}:00Z")],
+        )
+    _write_shard(
+        telemetry_dir,
+        "s5",
+        [_scrubbed_event("s5", "my_skill", "2026-01-02T00:00:00Z")],
     )
-    _make_events_jsonl(events_path, events)
-    result = count_idle_sessions("my_skill", events_path)
+    for i in range(6, 10):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "other_tool", f"2026-01-03T00:0{i}:00Z")],
+        )
+    result = count_idle_sessions("my_skill", telemetry_dir)
     # 4 sessions (s6-s9) occurred after the skill last fired in s5
     assert result == 4
 
 
 def test_count_idle_sessions_missing_events_file(tmp_path):
-    """Missing events.jsonl returns 0 idle sessions (skill cannot be flagged without data)."""
-    events_path = tmp_path / "nonexistent.jsonl"
-    result = count_idle_sessions("my_skill", events_path)
+    """Missing telemetry directory returns 0 idle sessions (skill cannot be flagged without data)."""
+    telemetry_dir = tmp_path / "nonexistent"
+    result = count_idle_sessions("my_skill", telemetry_dir)
     assert result == 0
+
+
+def test_count_idle_sessions_empty_directory_returns_zero(tmp_path):
+    """An existing but empty telemetry directory (no shards) returns 0."""
+    telemetry_dir = tmp_path / "telemetry"
+    telemetry_dir.mkdir()
+    result = count_idle_sessions("my_skill", telemetry_dir)
+    assert result == 0
+
+
+def test_count_idle_sessions_skips_malformed_shard_line(tmp_path):
+    """A shard line with malformed JSON is skipped, not fatal."""
+    telemetry_dir = tmp_path / "telemetry"
+    telemetry_dir.mkdir()
+    shard_path = telemetry_dir / "s0.events.jsonl"
+    with shard_path.open("w", encoding="utf-8") as fh:
+        fh.write(json.dumps(_scrubbed_event("s0", "other_tool", "2026-01-01T00:00:00Z")) + "\n")
+        fh.write("{not valid json\n")
+    result = count_idle_sessions("my_skill", telemetry_dir)
+    assert result == 1
 
 
 # ---------------------------------------------------------------------------
@@ -527,25 +553,20 @@ def test_scan_flags_idle_skill_for_archive(tmp_path, monkeypatch):
     skills_dir.mkdir()
     _make_skill_dir(skills_dir, "idle-skill")
 
-    events_path = tmp_path / "events.jsonl"
+    telemetry_dir = tmp_path / "telemetry"
     # 3 sessions with other tools; idle-skill never fires
-    events = [
-        {
-            "ts": "2026-01-01T00:00:00Z",
-            "tool": "other_tool",
-            "ok": True,
-            "session": f"s{i}",
-            "cwd": "/x",
-        }
-        for i in range(3)
-    ]
-    _make_events_jsonl(events_path, events)
+    for i in range(3):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "other_tool", f"2026-01-01T00:0{i}:00Z")],
+        )
 
     dep_dir = tmp_path / "deprecation"
     monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     reload(dep_mod)
 
-    decisions = dep_mod.scan(skills_dir, events_path)
+    decisions = dep_mod.scan(skills_dir, telemetry_dir)
     archive_decisions = [d for d in decisions if d.decision == "archive"]
     assert len(archive_decisions) >= 1
     idle_decision = next((d for d in archive_decisions if d.skill_name == "idle-skill"), None)
@@ -565,25 +586,20 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
     skills_dir.mkdir()
     _make_skill_dir(skills_dir, "active-skill")
 
-    events_path = tmp_path / "events.jsonl"
+    telemetry_dir = tmp_path / "telemetry"
     # 2 sessions, skill fires in both → 0 idle sessions (below threshold of 3)
-    events = [
-        {
-            "ts": "2026-01-01T00:00:00Z",
-            "tool": "active_skill",
-            "ok": True,
-            "session": f"s{i}",
-            "cwd": "/x",
-        }
-        for i in range(2)
-    ]
-    _make_events_jsonl(events_path, events)
+    for i in range(2):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "active_skill", f"2026-01-01T00:0{i}:00Z")],
+        )
 
     dep_dir = tmp_path / "deprecation"
     monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     reload(dep_mod)
 
-    decisions = dep_mod.scan(skills_dir, events_path)
+    decisions = dep_mod.scan(skills_dir, telemetry_dir)
     archive_for_active = [
         d for d in decisions if d.skill_name == "active-skill" and d.decision == "archive"
     ]
@@ -614,20 +630,13 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
         for r in records:
             fh.write(json.dumps(r) + "\n")
 
-    events_path = tmp_path / "events.jsonl"
-    _make_events_jsonl(
-        events_path,
-        [
-            {
-                "ts": "2026-01-01T00:00:00Z",
-                "tool": "rejected_skill",
-                "ok": True,
-                "session": f"s{i}",
-                "cwd": "/x",
-            }
-            for i in range(10)
-        ],
-    )
+    telemetry_dir = tmp_path / "telemetry"
+    for i in range(10):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "rejected_skill", f"2026-01-01T00:0{i}:00Z")],
+        )
 
     monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))
     from importlib import reload
@@ -635,7 +644,7 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
 
     reload(dep_mod)
 
-    decisions = dep_mod.scan(skills_dir, events_path)
+    decisions = dep_mod.scan(skills_dir, telemetry_dir)
     quarantine_decisions = [
         d for d in decisions if d.decision == "quarantine" and d.skill_name == "rejected-skill"
     ]

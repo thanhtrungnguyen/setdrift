@@ -1,6 +1,7 @@
 """CLI entrypoint for the setdrift-eval harness."""
 
 import argparse
+import os
 from pathlib import Path
 
 from setdrift_eval.corpus.builder import build_corpus
@@ -317,10 +318,13 @@ def main() -> int:
         help="path to the skills directory (default: plugin/skills)",
     )
     deprecate_scan_p.add_argument(
-        "--events",
+        "--telemetry-dir",
         type=Path,
-        default=Path("data/telemetry/events.jsonl"),
-        help="path to events.jsonl telemetry (default: data/telemetry/events.jsonl)",
+        default=Path(os.environ.get("SETDRIFT_TELEMETRY_DIR", "data/telemetry")),
+        help=(
+            "path to the sharded telemetry directory, globbed for *.events.jsonl "
+            "(default: data/telemetry, overridable via SETDRIFT_TELEMETRY_DIR)"
+        ),
     )
 
     # --- promote-skill subcommand (REQ-SAFETY-03 manual re-promotion from quarantine) ---
@@ -440,7 +444,6 @@ def main() -> int:
 
     if args.cmd == "init-keys":
         # Lazy import (project convention)
-        import os
         from setdrift_eval.optimizer.signer import generate_key
 
         key_path = Path(os.environ.get("SETDRIFT_SIGNING_KEY", "data/keys/sica-hmac.key"))
@@ -545,8 +548,6 @@ def main() -> int:
 
     if args.cmd == "drift":
         # Lazy imports — [drift] extra not required at setdrift-eval load time
-        import os
-
         from setdrift_eval.benchmark.arm_runner import load_skill_tools
         from setdrift_eval.drift.grid_runner import _config_hash, run_grid
         from setdrift_eval.drift.paired_stats import paired_difference_report
@@ -648,7 +649,7 @@ def main() -> int:
         # Lazy import (project convention)
         from setdrift_eval.optimizer.deprecator import scan, quarantine_skill
 
-        decisions = scan(args.skills_dir, args.events)
+        decisions = scan(args.skills_dir, args.telemetry_dir)
         archived = 0
         quarantined = 0
         for decision in decisions:

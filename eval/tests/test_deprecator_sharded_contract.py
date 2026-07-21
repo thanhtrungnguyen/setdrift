@@ -1,8 +1,9 @@
-"""Pins the REQ-SAFETY-03 contract mismatch between deprecator.count_idle_sessions
-and the REAL telemetry writer (Phase 1's stop_batch_scrubber.py).
+"""Pins the REQ-SAFETY-03 telemetry contract for deprecator.count_idle_sessions
+against the REAL telemetry writer (Phase 1's stop_batch_scrubber.py).
 
-KNOWN, CONFIRMED production bug (see v1.0-MILESTONE-AUDIT Blocker 1). Do NOT fix
-deprecator.py or cli.py here — this module only documents/pins the mismatch.
+FIXED in Plan 06-02 (FIX-01): count_idle_sessions and the deprecate-scan CLI
+now read the real sharded contract. This module documents the (formerly
+broken, now correct) contract and pins it against regression.
 
 Reality, confirmed by reading source:
   - plugin/hooks/hot_path_capture.py writes RAW per-session buffers with fields
@@ -18,26 +19,19 @@ Reality, confirmed by reading source:
     already knows about both the sharded layout AND the underscore-prefixed
     field names.
   - eval/setdrift_eval/optimizer/deprecator.count_idle_sessions(skill_name,
-    events_path) instead: (a) expects ONE file at a caller-supplied path, and
-    (b) reads `ev.get("session")` / `ev.get("tool")` — plain names that never
-    appear in a real scrubbed shard.
-  - The CLI's `deprecate-scan --events` default is
-    `Path("data/telemetry/events.jsonl")` — a path that structurally never
-    exists under the real Phase-1 writer. Because count_idle_sessions()
-    returns 0 silently when the path is absent (by design, "cannot flag
-    without data"), `setdrift-eval deprecate-scan` run against real telemetry
-    with default args NEVER archives anything, even when the real per-session
-    shards clearly show N+ idle sessions.
+    telemetry_dir) now imitates the SAME contract: globs
+    `telemetry_dir/*.events.jsonl` and reads `_session`/`tool_name`.
+  - The CLI's `deprecate-scan --telemetry-dir` default is
+    `Path("data/telemetry")` (env-overridable via SETDRIFT_TELEMETRY_DIR) —
+    the real sharded directory the Phase-1 writer produces.
 
-This is a genuine requirement violation: REQ-SAFETY-03 promises idle-skill
-archival driven by real telemetry, but the archival path is silently inert
-against the telemetry the system actually produces.
+REQ-SAFETY-03 promises idle-skill archival driven by real telemetry; this
+test pins that the archival path actually operates on the telemetry the
+system produces (no longer silently inert).
 """
 
 import json
 from pathlib import Path
-
-import pytest
 
 from setdrift_eval.optimizer.deprecator import count_idle_sessions
 
@@ -82,24 +76,10 @@ def _write_shard(telemetry_dir: Path, session: str, events: list[dict]) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# 1. xfail: pins the EXPECTED post-fix behavior against a REAL sharded layout.
+# 1. Pins the FIXED behavior against a REAL sharded layout (regression pin).
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "known bug: deprecator.count_idle_sessions reads a single merged "
-        "events.jsonl file and matches plain `session`/`tool` fields; Phase 1's "
-        "stop_batch_scrubber.py writes per-session shards "
-        "(data/telemetry/<session>.events.jsonl) using `_session`/`tool_name` "
-        "fields. See v1.0-MILESTONE-AUDIT Blocker 1. Expected POST-FIX contract: "
-        "count_idle_sessions(skill_name, telemetry_dir) should glob "
-        "`telemetry_dir/*.events.jsonl` (matching query.py's convention) and "
-        "read `_session`/`tool_name`, returning the count of distinct sessions "
-        "with tool activity since the skill's last firing session."
-    ),
-)
 def test_count_idle_sessions_over_real_sharded_telemetry_layout(tmp_path):
     """count_idle_sessions must correctly count idle sessions across REAL
     per-session shards, not a single merged file that never exists in
@@ -144,45 +124,37 @@ def test_count_idle_sessions_over_real_sharded_telemetry_layout(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 2. Always-green sentinel: documents the CURRENT factual mismatch precisely.
+# 2. Positive assertion: CLI + scrubber now agree on the SAME sharded contract.
 # ---------------------------------------------------------------------------
 
 
-def test_cli_default_events_path_and_scrubber_output_naming_currently_diverge():
-    """Sentinel: pins today's factual reality so this test starts FAILING the
-    moment someone changes either side (prompting cleanup of this file and
-    the paired xfail above).
+def test_cli_telemetry_dir_and_scrubber_output_naming_now_align():
+    """Confirms the CLI's deprecate-scan default and the real scrubber output
+    now agree on the sharded per-session contract (formerly a divergence
+    sentinel pinning the mismatch; retired now that FIX-01 landed).
 
     Asserts, by reading actual source (not guessing):
-      1. `deprecate-scan --events` CLI default is the single-file path
-         Path("data/telemetry/events.jsonl").
+      1. `deprecate-scan --telemetry-dir` CLI flag exists and no longer has a
+         single-file `--events` flag.
       2. stop_batch_scrubber.py's real output naming is per-session
-         (`f"{session_id}.events.jsonl"` under TELEMETRY_DIR), i.e. NOT the
-         single merged file the CLI default assumes.
+         (`f"{session_id}.events.jsonl"` under TELEMETRY_DIR) — the same
+         shape count_idle_sessions now globs for via `*.events.jsonl`.
     """
     cli_source = _CLI_PATH.read_text(encoding="utf-8")
     scrubber_source = _SCRUBBER_PATH.read_text(encoding="utf-8")
 
-    # (1) CLI default for deprecate-scan --events is the single merged file.
-    assert '--events' in cli_source, "deprecate-scan --events flag must exist in cli.py"
-    assert 'default=Path("data/telemetry/events.jsonl")' in cli_source, (
-        "cli.py's deprecate-scan --events default must currently be the single "
-        "merged-file path data/telemetry/events.jsonl. If this assertion now "
-        "fails, the CLI default has been fixed — retire this sentinel and the "
-        "paired xfail test in this module."
+    # (1) CLI now exposes the sharded-directory flag, not the single-file one.
+    assert '--telemetry-dir' in cli_source, (
+        "deprecate-scan --telemetry-dir flag must exist in cli.py (FIX-01)"
+    )
+    assert '"--events"' not in cli_source, (
+        "cli.py's deprecate-scan --events single-file flag must be retired "
+        "(FIX-01 breaking change, no legacy retained)"
     )
 
-    # (2) The real writer emits PER-SESSION shards, not one merged file.
+    # (2) The real writer emits PER-SESSION shards, matching the glob
+    # count_idle_sessions now uses (`*.events.jsonl`).
     assert 'f"{session_id}.events.jsonl"' in scrubber_source, (
-        "stop_batch_scrubber.py must currently name its clean output "
-        "per-session (<session_id>.events.jsonl). If this assertion now "
-        "fails, the writer has been changed to a single merged file — "
-        "retire this sentinel and the paired xfail test in this module."
+        "stop_batch_scrubber.py must name its clean output per-session "
+        "(<session_id>.events.jsonl) — the shape count_idle_sessions globs for."
     )
-
-    # (3) The two contracts are therefore for DIFFERENT path shapes: a fixed
-    # single-file literal vs. a per-session-parameterized filename pattern.
-    single_file_default = "data/telemetry/events.jsonl"
-    per_session_pattern = "{session_id}.events.jsonl"
-    assert single_file_default != per_session_pattern
-    assert not single_file_default.endswith(per_session_pattern.replace("{session_id}", ""))
