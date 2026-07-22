@@ -187,6 +187,9 @@ class SetdriftDashboard(App):
 
         # 10 s cadence (UI-SPEC §A.4)
         self.set_interval(10, self._start_poll_worker)
+        # Stale-poll indicator check (UI-SPEC §A.6) — WR-02: without this
+        # interval the ⚠ STALE state was dead code that could never fire.
+        self.set_interval(15, self._check_stale)
         # First load before first interval fires
         self.call_after_refresh(self._start_poll_worker)
 
