@@ -5,23 +5,22 @@ experiments/audit-genealogy.jsonl is the optimizer AuditRecord log
 (cycle_id/step/ts/config_hash/parent_hash/f1_delta/decision/reason/model/seed) —
 NOT the version-promotion genealogy schema
 (version_id/skill_name/f1_mean/status/parent_version_id/date/rolled_back) that
-build_genealogy_dag requires. No adapter/transform exists between the two. The
-existing test suite (test_phase3_figures.py) only ever exercises a
-hand-embedded synthetic fixture and therefore never notices this divergence.
+the STRICT, path-based build_genealogy_dag requires.
 
-Intent: this is a SENTINEL, not a spec for the fix. It asserts the CURRENT
-broken state (real file present, but structurally unusable by
-build_genealogy_dag) so the real-data path's brokenness is visible in CI
-instead of silently masked by --allow-fixtures. The moment an adapter or a
-schema change makes the real audit-genealogy.jsonl consumable by
-build_genealogy_dag, this test's third assertion (FigureDataError is raised)
-will FAIL — that failure is a deliberate tripwire. Whoever ships the fix must
-retire or rewrite this test, not weaken it. Do NOT convert this to an xfail:
-the adapter design (transform-on-read vs. a second genealogy-schema writer)
-is undecided, and pre-committing to a shape here would presume a design that
-hasn't been made.
+FIX-02 (06-04-PLAN.md) resolved Blocker 2 with a transform-on-read adapter
+(figures/genealogy_adapter.py + build_genealogy_dag_from_records) that joins
+the real AuditRecord log with sibling {NNN}-loop-manifest.json files at read
+time. That adapter path is exercised by test_genealogy_adapter.py, not here.
 
-References: v1.0-MILESTONE-AUDIT Blocker 2, REQ-DELIV-01, D-09, T-05-22.
+This module remains a narrower sentinel: it asserts the STRICT, path-based
+build_genealogy_dag(path) still REJECTS a raw AuditRecord file as its direct
+input — i.e. the strict schema guard was never weakened to accommodate the
+real audit log's shape. The strict function is intentionally left
+byte-unchanged by FIX-02; any real-data rendering happens exclusively through
+the adapter + build_genealogy_dag_from_records, never through
+build_genealogy_dag(real_audit_path) directly.
+
+References: v1.0-MILESTONE-AUDIT Blocker 2, REQ-DELIV-01, D-09, D6-05, T-05-22.
 """
 
 from __future__ import annotations
@@ -54,7 +53,7 @@ _REAL_AUDIT_RECORD_FIELDS = {
 _GENEALOGY_REQUIRED_FIELDS = {"version_id", "skill_name", "f1_mean", "status"}
 
 # Fields that must be ABSENT from a genuine AuditRecord line (proves it's the
-# wrong schema for the genealogy figure, not a coincidental superset).
+# wrong schema for the STRICT genealogy function, not a coincidental superset).
 _GENEALOGY_ONLY_FIELDS = {"version_id", "skill_name", "f1_mean"}
 
 
@@ -70,7 +69,7 @@ def _skip_if_absent() -> Path:
 
 
 class TestRealGenealogySchemaContract:
-    """REQ-DELIV-01 sentinel: real audit log schema vs. genealogy figure input contract."""
+    """REQ-DELIV-01 sentinel: real audit log schema vs. the STRICT figure input contract."""
 
     def test_real_audit_file_is_nonempty_auditrecord_schema(self):
         """The real committed file exists, is non-empty, and matches AuditRecord (not genealogy)."""
@@ -98,19 +97,21 @@ class TestRealGenealogySchemaContract:
         overlap = _GENEALOGY_ONLY_FIELDS & found_fields
         assert not overlap, (
             f"Real audit-genealogy.jsonl unexpectedly carries genealogy-schema fields "
-            f"{overlap!r} — REQ-DELIV-01 schema divergence may have been resolved; "
-            f"if so, this sentinel (and the fixture-only figure path) should be retired."
+            f"{overlap!r} — the AuditRecord schema may have changed; if so this sentinel "
+            "should be revisited."
         )
 
-    def test_build_genealogy_dag_rejects_real_audit_file(self):
-        """build_genealogy_dag raises FigureDataError on the REAL committed file (current brokenness).
+    def test_strict_build_genealogy_dag_still_rejects_real_audit_file(self):
+        """The STRICT, path-based build_genealogy_dag still raises on the raw AuditRecord file.
 
-        This is the sentinel assertion for v1.0-MILESTONE-AUDIT Blocker 2: no
-        adapter exists, so the CLI's real-data path (`--genealogy` without
-        `--allow-fixtures`) is structurally unable to consume the actual
-        Phase-3 optimizer output. If this stops raising, an adapter/schema
-        change has landed and this test (plus the fixture-only figure path
-        it documents) must be deliberately retired — not silently adjusted.
+        FIX-02 (06-04-PLAN.md) adds a PARALLEL real-data path
+        (figures.genealogy_adapter.adapt_audit_records +
+        build_genealogy_dag_from_records) that DOES successfully consume this
+        exact file — see test_genealogy_adapter.py. This assertion is narrower:
+        it proves the STRICT build_genealogy_dag(path) function was never
+        weakened to also accept the AuditRecord shape directly. If this stops
+        raising, someone has changed the strict schema guard — that would be a
+        deliberate, reviewed decision, not a silent regression.
         """
         audit_path = _skip_if_absent()
 

@@ -101,22 +101,34 @@ def main(args: argparse.Namespace) -> int:
     if args.all_figures or getattr(args, "genealogy", False):
         from setdrift_eval.figures.genealogy import (  # lazy import
             build_genealogy_dag,
+            build_genealogy_dag_from_records,
             dag_to_mermaid,
             FigureDataError as _GenealogyDataError,
         )
+        from setdrift_eval.figures.genealogy_adapter import adapt_audit_records  # lazy import
 
         audit_path = experiments_dir / "audit-genealogy.jsonl"
         fixture_mode = False
 
-        try:
-            dag = build_genealogy_dag(audit_path)
-        except _GenealogyDataError:
-            if not allow_fixtures:
-                raise
+        if audit_path.exists():
+            # Real-data path (FIX-02): transform-on-read adapter joins the committed
+            # AuditRecord log with sibling {NNN}-loop-manifest.json files and bypasses
+            # the strict path-based build_genealogy_dag entirely. A join miss raises
+            # FigureDataError naming the orphan cycle_id and is NEVER caught here —
+            # never skip-and-render a partial graph (D6-05).
+            records = adapt_audit_records(audit_path, experiments_dir)
+            dag = build_genealogy_dag_from_records(records)
+        elif allow_fixtures:
             # --allow-fixtures: load the committed genealogy fixture (D-09 watermark applied)
             fixture_path = Path(__file__).parent / "fixtures" / "genealogy_fixture.jsonl"
             dag = build_genealogy_dag(fixture_path)
             fixture_mode = True
+        else:
+            raise _GenealogyDataError(
+                f"Genealogy audit source not found: {audit_path}. "
+                "Pass --allow-fixtures to run against fixture data (watermark applied). "
+                "Do NOT include fixture figures in the dissertation (D-09)."
+            )
 
         mermaid_src = dag_to_mermaid(dag, fixture=fixture_mode)
         genealogy_out = output_dir / "skill-genealogy.md"

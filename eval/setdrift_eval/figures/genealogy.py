@@ -138,6 +138,56 @@ def build_genealogy_dag(audit_path: Path) -> nx.DiGraph:
     return G
 
 
+def build_genealogy_dag_from_records(records: list[dict]) -> nx.DiGraph:
+    """Build a validated DiGraph from ALREADY-ADAPTED genealogy-schema records.
+
+    Parallel to build_genealogy_dag (FIX-02, D6-05): reuses the exact same
+    node/edge/cycle-assert body, but takes records produced by
+    figures.genealogy_adapter.adapt_audit_records instead of reading raw JSONL
+    from a path. This is the real-data path for `figures --genealogy` — it
+    bypasses the strict schema guard in build_genealogy_dag entirely, because
+    the adapter has already transformed the real AuditRecord + loop-manifest
+    join into this function's expected shape.
+
+    build_genealogy_dag itself is left byte-unchanged (Anti-Pattern: do not
+    weaken the strict schema check there).
+
+    Args:
+        records: list[dict] each with fields version_id, skill_name, f1_mean,
+            status, parent_version_id (or None for roots), date, rolled_back.
+
+    Returns:
+        nx.DiGraph with node attrs {skill, f1, status} and edge attrs
+        {relation, date} where relation in {"promoted", "rolled back"}.
+
+    Raises:
+        AssertionError: If the constructed graph contains a cycle (data
+            integrity error — fail loud per T-05-22).
+    """
+    G: nx.DiGraph = nx.DiGraph()
+    for r in records:
+        G.add_node(
+            r["version_id"],
+            skill=r["skill_name"],
+            f1=float(r["f1_mean"]),
+            status=r["status"],
+        )
+        if r.get("parent_version_id"):
+            relation = "rolled back" if r.get("rolled_back") else "promoted"
+            G.add_edge(
+                r["parent_version_id"],
+                r["version_id"],
+                relation=relation,
+                date=r["date"],
+            )
+
+    assert nx.is_directed_acyclic_graph(G), (
+        "Promotion graph has a cycle — data integrity error (T-05-22). "
+        "Check audit-genealogy.jsonl for circular version references."
+    )
+    return G
+
+
 # ---------------------------------------------------------------------------
 # Mermaid serialiser (UI-SPEC §B.6)
 # ---------------------------------------------------------------------------
