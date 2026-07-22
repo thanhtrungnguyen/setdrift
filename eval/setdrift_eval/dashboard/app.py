@@ -209,11 +209,13 @@ class SetdriftDashboard(App):
         Runs in a background thread (via run_worker).  Updates reactive attrs
         and DataTable cells from the worker thread using call_from_thread.
         """
-        # Lazy import: FROZEN RULER — import only, never recompute (D-04)
-        from setdrift_eval.telemetry.scorer import ScorerError  # noqa: F401
-
+        # Lazy import: FROZEN RULER — import only, never recompute (D-04).
+        # WR-03: BOTH names are imported inside the SAME guard — a previously
+        # unguarded `import ScorerError` line raised before the guarded
+        # run_health import, so the ImportError path (and the ScorerError
+        # reference in the except clause below) was unreachable/NameError.
         try:
-            from setdrift_eval.telemetry.scorer import run_health
+            from setdrift_eval.telemetry.scorer import ScorerError, run_health
         except ImportError as exc:
             self.call_from_thread(self._apply_error_state, f"ImportError: {exc}")
             return
