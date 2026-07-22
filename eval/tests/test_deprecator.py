@@ -52,7 +52,9 @@ def _make_skill_dir(skills_dir: Path, skill_name: str, description: str = "A tes
     return skill_dir
 
 
-def _scrubbed_event(session: str, tool_name: str | None, ts: str) -> dict:
+def _scrubbed_event(
+    session: str, tool_name: str | None, ts: str, tool_input: str | None = "{}"
+) -> dict:
     """Build a realistic scrubbed per-session event record.
 
     Field shape matches hot_path_capture.py's raw record (preserved verbatim
@@ -67,12 +69,23 @@ def _scrubbed_event(session: str, tool_name: str | None, ts: str) -> dict:
         "_cwd": "/repo",
         "_transcript": None,
         "tool_name": tool_name,
-        "tool_input": "{}",
+        "tool_input": tool_input,
         "tool_result": "ok",
         "prompt": None,
         "message_preview": None,
         "_hook_runtime_ms": 1.23,
     }
+
+
+def _skill_firing_event(session: str, skill: str, ts: str) -> dict:
+    """Build a REAL skill-firing event as the Phase-1 writer records it (CR-01).
+
+    Verified against real data/telemetry/*.events.jsonl shards: a skill firing
+    is `tool_name == "Skill"` with the skill name inside the tool_input JSON
+    string, e.g. '{"skill": "paperclip"}' — the skill's own name NEVER appears
+    in the tool_name field.
+    """
+    return _scrubbed_event(session, "Skill", ts, tool_input=json.dumps({"skill": skill}))
 
 
 def _write_shard(telemetry_dir: Path, session: str, events: list[dict]) -> Path:
@@ -154,7 +167,7 @@ def test_count_idle_sessions_skill_fired_resets_idle(tmp_path):
     _write_shard(
         telemetry_dir,
         "s5",
-        [_scrubbed_event("s5", "my_skill", "2026-01-02T00:00:00Z")],
+        [_skill_firing_event("s5", "my_skill", "2026-01-02T00:00:00Z")],
     )
     for i in range(6, 10):
         _write_shard(
@@ -592,7 +605,7 @@ def test_scan_does_not_flag_active_skill(tmp_path, monkeypatch):
         _write_shard(
             telemetry_dir,
             f"s{i}",
-            [_scrubbed_event(f"s{i}", "active_skill", f"2026-01-01T00:0{i}:00Z")],
+            [_skill_firing_event(f"s{i}", "active-skill", f"2026-01-01T00:0{i}:00Z")],
         )
 
     dep_dir = tmp_path / "deprecation"
@@ -635,7 +648,7 @@ def test_scan_flags_high_rejection_for_quarantine(tmp_path, monkeypatch):
         _write_shard(
             telemetry_dir,
             f"s{i}",
-            [_scrubbed_event(f"s{i}", "rejected_skill", f"2026-01-01T00:0{i}:00Z")],
+            [_skill_firing_event(f"s{i}", "rejected-skill", f"2026-01-01T00:0{i}:00Z")],
         )
 
     monkeypatch.setenv("SETDRIFT_DEPRECATION_DIR", str(dep_dir))

@@ -98,6 +98,30 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _is_firing_event(ev: dict, skill_name: str) -> bool:
+    """True if this scrubbed telemetry event is a firing of skill_name.
+
+    Real contract (verified against data/telemetry/*.events.jsonl shards):
+    skill invocations are recorded as `tool_name == "Skill"` with the skill
+    identity inside the `tool_input` JSON string, e.g.
+    `{"skill": "paperclip"}` or namespaced `{"skill": "setdrift:spring-boot-endpoint"}`.
+    A skill's own name NEVER appears in `tool_name` (that field only carries
+    Claude Code tool names: Bash, Read, Skill, ...).
+    """
+    if ev.get("tool_name") != "Skill":
+        return False
+    raw = ev.get("tool_input")
+    try:
+        payload = json.loads(raw) if isinstance(raw, str) else (raw or {})
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    # "skill" value may be namespaced, e.g. "setdrift:spring-boot-endpoint"
+    skill = str(payload.get("skill", ""))
+    return skill == skill_name or skill.endswith(f":{skill_name}")
+
+
 def _append_jsonl(path: Path, record: dict) -> None:
     """Append one JSONL record (append-only pattern from capture_event.py)."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -178,15 +202,12 @@ def count_idle_sessions(skill_name: str, telemetry_dir: Path) -> int:
 
     events.sort(key=lambda ev: ev.get("_ts_captured") or "")
 
-    # Find the last session where skill_name fired
-    # The `tool_name` field carries the tool name (can be sanitized or raw)
-    # We match both kebab-case and underscore-sanitized form
-    sanitized_name = skill_name.replace("-", "_").replace(" ", "_")
-
+    # Find the last session where skill_name fired.
+    # Real contract (CR-01): a skill firing is `tool_name == "Skill"` with the
+    # skill name inside the tool_input JSON payload — see _is_firing_event.
     last_firing_session: str | None = None
     for ev in events:
-        tool_name = ev.get("tool_name", "")
-        if tool_name == skill_name or tool_name == sanitized_name:
+        if _is_firing_event(ev, skill_name):
             last_firing_session = ev.get("_session")
 
     # Collect distinct active sessions (sessions with ≥1 tool-use event of any kind)

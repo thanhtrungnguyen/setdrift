@@ -42,7 +42,9 @@ _SCRUBBER_PATH = _REPO_ROOT / "plugin" / "hooks" / "stop_batch_scrubber.py"
 _HOT_PATH_CAPTURE = _REPO_ROOT / "plugin" / "hooks" / "hot_path_capture.py"
 
 
-def _scrubbed_event(session: str, tool_name: str | None, ts: str) -> dict:
+def _scrubbed_event(
+    session: str, tool_name: str | None, ts: str, tool_input: str | None = "{}"
+) -> dict:
     """Build a realistic scrubbed per-session event record.
 
     Field shape matches hot_path_capture.py's raw record (preserved verbatim
@@ -57,12 +59,25 @@ def _scrubbed_event(session: str, tool_name: str | None, ts: str) -> dict:
         "_cwd": "/repo",
         "_transcript": None,
         "tool_name": tool_name,
-        "tool_input": "{}",
+        "tool_input": tool_input,
         "tool_result": "ok",
         "prompt": None,
         "message_preview": None,
         "_hook_runtime_ms": 1.23,
     }
+
+
+def _skill_firing_event(session: str, skill: str, ts: str) -> dict:
+    """Build a REAL skill-firing event as the Phase-1 writer records it (CR-01).
+
+    Verified against real data/telemetry/*.events.jsonl shards: a skill firing
+    is `tool_name == "Skill"` with the skill name inside the tool_input JSON
+    string, e.g. '{"skill": "paperclip"}' or namespaced
+    '{"skill": "superpowers:brainstorming"}'. The skill's own name NEVER
+    appears in the tool_name field — that field only carries Claude Code tool
+    names (Bash, Read, Skill, ...).
+    """
+    return _scrubbed_event(session, "Skill", ts, tool_input=json.dumps({"skill": skill}))
 
 
 def _write_shard(telemetry_dir: Path, session: str, events: list[dict]) -> Path:
@@ -86,7 +101,8 @@ def test_count_idle_sessions_over_real_sharded_telemetry_layout(tmp_path):
     production.
 
     Scenario: 3 sessions in chronological order.
-      - session-a: skill "my-skill" fires (tool_name == "my-skill")
+      - session-a: skill "my-skill" fires (tool_name == "Skill",
+        tool_input == '{"skill": "my-skill"}' — the REAL writer shape, CR-01)
       - session-b: only an unrelated tool fires (idle, after last firing)
       - session-c: only an unrelated tool fires (idle, after last firing)
     Expected idle count (post-fix): 2 (session-b, session-c).
@@ -96,7 +112,7 @@ def test_count_idle_sessions_over_real_sharded_telemetry_layout(tmp_path):
     _write_shard(
         telemetry_dir,
         "session-a",
-        [_scrubbed_event("session-a", "my-skill", "2026-01-01T00:00:00Z")],
+        [_skill_firing_event("session-a", "my-skill", "2026-01-01T00:00:00Z")],
     )
     _write_shard(
         telemetry_dir,
@@ -120,6 +136,72 @@ def test_count_idle_sessions_over_real_sharded_telemetry_layout(tmp_path):
         "either silently returns 0 (directory has no file at the literal path) "
         "or errors trying to .open() a directory as a file — both confirm the "
         "contract mismatch."
+    )
+
+
+# ---------------------------------------------------------------------------
+# 1b. Field-level contract (CR-01): firing detection matches the REAL writer
+#     shape (tool_name == "Skill" + skill name in tool_input), never the
+#     fabricated tool_name == "<skill-name>" shape the writer never emits.
+# ---------------------------------------------------------------------------
+
+
+def test_firing_detection_uses_real_skill_tool_shape_not_tool_name(tmp_path):
+    """A firing recorded the way the REAL writer records it (tool_name="Skill",
+    tool_input='{"skill": "my-skill"}') must reset the idle count; an event
+    with tool_name == "my-skill" (a shape the writer structurally never
+    produces) must NOT count as a firing.
+    """
+    telemetry_dir = tmp_path / "telemetry"
+
+    # Fabricated legacy shape — must be treated as an ordinary (non-firing) tool event.
+    _write_shard(
+        telemetry_dir,
+        "session-a",
+        [_scrubbed_event("session-a", "my-skill", "2026-01-01T00:00:00Z")],
+    )
+    # Real firing shape.
+    _write_shard(
+        telemetry_dir,
+        "session-b",
+        [_skill_firing_event("session-b", "my-skill", "2026-01-02T00:00:00Z")],
+    )
+    _write_shard(
+        telemetry_dir,
+        "session-c",
+        [_scrubbed_event("session-c", "other_tool", "2026-01-03T00:00:00Z")],
+    )
+
+    idle = count_idle_sessions("my-skill", telemetry_dir)
+    assert idle == 1, (
+        "Last firing must be the REAL-shape event in session-b (so only "
+        f"session-c is idle), got {idle}. If this is 2, the real Skill/"
+        "tool_input shape was not detected; if 0, the fabricated "
+        "tool_name=='my-skill' shape was wrongly counted as the last firing."
+    )
+
+
+def test_firing_detection_matches_namespaced_skill_payload(tmp_path):
+    """Real payloads may be namespaced (e.g. '{"skill": "setdrift:my-skill"}',
+    as observed in live shards: 'superpowers:brainstorming') — the namespaced
+    form must count as a firing of 'my-skill'."""
+    telemetry_dir = tmp_path / "telemetry"
+
+    _write_shard(
+        telemetry_dir,
+        "session-a",
+        [_skill_firing_event("session-a", "setdrift:my-skill", "2026-01-01T00:00:00Z")],
+    )
+    _write_shard(
+        telemetry_dir,
+        "session-b",
+        [_scrubbed_event("session-b", "other_tool", "2026-01-02T00:00:00Z")],
+    )
+
+    idle = count_idle_sessions("my-skill", telemetry_dir)
+    assert idle == 1, (
+        f"Namespaced firing 'setdrift:my-skill' must count as a firing of "
+        f"'my-skill' (expected 1 idle session, got {idle})."
     )
 
 
