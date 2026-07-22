@@ -194,3 +194,14 @@ Prior Change Log entries (e.g. the 2026-06-10 transport entry) retain their orig
 **(b) Behavior preserved; frozen arm intact.** Pure identifier rename, no logic change. The Goodhart firewall files (`scorer.py`, `experiment.py`, `arm_runner.py`) are byte-identical except for the mechanical `sica_eval`→`setdrift_eval` import token and `SICA_*`→`SETDRIFT_*` env-name token; the response-cache key, the persisted dict shape (`content`, `usage`, `stop_reason`), and all measurement semantics are unchanged. The offline test suite (incl. the D-13 byte-identity tests, plan 05-01) shows the same pre-existing pass/fail set before and after the rename.
 
 **(c) Config-hash re-pinning.** Because experiment provenance pins a config hash over file text and env-var names, the rename shifts config hashes. Pre-rename experiment records remain valid under their original hashes and identifiers; runs from 2026-06-15 onward are pinned under the new identifier map above. No experiment results are invalidated — the rename changes names, not numbers.
+
+### 2026-07-22 — REQ-DRIFT-01 cut decision recorded (D-51 rule / §8 fallback ladder)
+
+Per the pre-registered D-51 cut rule (`.planning/phases/04-drift-evaluation/04-CONTEXT.md`) and the REQ-DRIFT-01 best-effort cut-rank (D-49), this entry records the closing path for the real-drift event overlay. This entry follows the append-only discipline (D-11); no changes to §1–§8 original text or to prior Change Log entries.
+
+- **(a) Decision.** The real-drift event count is below the D-51 threshold; REQ-DRIFT-01 closes via the §8 fallback path. Synthetic-drift (REQ-DRIFT-02, delivered in Phase 4 Plan 04-02) carries the full drift story for the falsifiable claim; no real-drift F1-at-event overlay is populated.
+- **(b) Evidence cited.** `eval/setdrift_eval/drift/event_log.py::count_qualifying_events()` returns **0** qualifying events in the public log (`experiments/drift-event-log.jsonl` does not exist), evaluated against the D-51 threshold of ≥3.
+- **(c) Rule applied.** Per D-51 (`HARD_CUT_DATE = "2026-07-15"`, `eval/setdrift_eval/drift/event_log.py`): fewer than 3 qualifying events by the hard cut date selects the §8 fallback note path over the real-drift overlay path.
+- **(d) Back-reference.** This closes the REQ-DRIFT-01 best-effort slice (cut-rank #2, D-49) per `.planning/phases/04-drift-evaluation/04-CONTEXT.md` D-49/D-50/D-51 and §7 Threats to Validity row 3 ("Insufficient drift to be detectable"); the §7/§8 tables themselves are unmodified (D-11 append-only discipline).
+
+**Cross-reference:** `registrations/01-hypothesis.md` may cite this entry as the dated closing point of the REQ-DRIFT-01 best-effort slice; REQ-DRIFT-02's synthetic-drift evaluation (already delivered) is the drift-story substrate going forward.
