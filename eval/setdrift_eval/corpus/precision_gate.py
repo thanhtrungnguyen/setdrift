@@ -49,12 +49,21 @@ def load_verification(csv_path: Path, corpus_path: Path) -> dict[str, list[dict]
     with Path(csv_path).open(encoding="utf-8", newline="") as fh:
         for row in csv.DictReader(fh):
             pid = row["prompt_id"]
+            # WR-06 fail-loud join: a CSV row whose prompt_id is not in the
+            # corpus (stale CSV, wrong corpus path, typo'd id) must never be
+            # silently bucketed into a pseudo-source and gated as real data —
+            # same D6-05 rigor the genealogy adapter applies to join misses.
+            if pid not in source_by_id:
+                raise ValueError(
+                    f"verification CSV row prompt_id={pid!r} not found in corpus "
+                    f"{corpus_path} — CSV/corpus mismatch (fail-loud join)"
+                )
             entry = {
                 "prompt_id": pid,
                 "predicted": _parse_labels(row.get("predicted_skills", "")),
                 "verified": _parse_labels(row.get("verified_skills", "")),  # fail-loud
             }
-            by_source[source_by_id.get(pid, "unknown")].append(entry)
+            by_source[source_by_id[pid]].append(entry)
     return dict(by_source)
 
 
