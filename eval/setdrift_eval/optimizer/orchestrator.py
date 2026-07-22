@@ -451,9 +451,18 @@ def run_loop_cycle(
     }
 
     experiments_dir.mkdir(parents=True, exist_ok=True)
-    n = len(list(experiments_dir.glob("*-loop-manifest.json"))) + 1
+    # WR-05: max-based numbering (count+1 re-uses a number when the sequence
+    # has gaps and silently overwrites an existing manifest); "x" mode makes
+    # any residual collision raise instead of clobbering the audit trail.
+    existing_nums = [
+        int(p.name.split("-", 1)[0])
+        for p in experiments_dir.glob("*-loop-manifest.json")
+        if p.name.split("-", 1)[0].isdigit()
+    ]
+    n = max(existing_nums, default=0) + 1
     manifest_path = experiments_dir / f"{n:03d}-loop-manifest.json"
-    manifest_path.write_text(json.dumps(manifest_dict, indent=2), encoding="utf-8")
+    with manifest_path.open("x", encoding="utf-8") as fh:
+        fh.write(json.dumps(manifest_dict, indent=2))
 
     # Return as a LoopManifestResult (lightweight named object for callers)
     return _LoopManifestResult(

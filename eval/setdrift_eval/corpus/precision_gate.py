@@ -141,6 +141,21 @@ def _sha256_file(path: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def _next_report_number(existing: list[Path]) -> int:
+    """Next {NNN} = max existing numeric prefix + 1 (WR-05).
+
+    count(existing)+1 silently RE-USES a number when the sequence has gaps
+    (e.g. 001 and 003 present -> next would be 003, overwriting an existing
+    provenance artifact). Max-based numbering never collides with a survivor.
+    """
+    nums = []
+    for p in existing:
+        prefix = p.name.split("-", 1)[0]
+        if prefix.isdigit():
+            nums.append(int(prefix))
+    return max(nums, default=0) + 1
+
+
 def _count_csv_rows(csv_path: Path | None) -> int:
     if csv_path is None or not Path(csv_path).exists():
         return 0
@@ -161,7 +176,7 @@ def write_report(report: dict, experiments_dir: Path, csv_path: Path | None = No
     experiments_dir = Path(experiments_dir)
     experiments_dir.mkdir(parents=True, exist_ok=True)
     existing = list(experiments_dir.glob("*-mining-precision.json"))
-    nnn = f"{len(existing) + 1:03d}"
+    nnn = f"{_next_report_number(existing):03d}"
     out = experiments_dir / f"{nnn}-mining-precision.json"
 
     report = dict(report)
@@ -174,5 +189,8 @@ def write_report(report: dict, experiments_dir: Path, csv_path: Path | None = No
     # Fail-loud: the writer and schema stay coupled (Pitfall 2).
     PrecisionGateReport.model_validate(report)
 
-    out.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    # "x" mode (exclusive create, WR-05): a numbering collision raises instead
+    # of silently overwriting an audit-trail artifact downstream joins depend on.
+    with out.open("x", encoding="utf-8") as fh:
+        fh.write(json.dumps(report, indent=2, sort_keys=True))
     return out
