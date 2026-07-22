@@ -318,8 +318,16 @@ def run_loop_cycle(
     # LM pin (model is a loop-level setting, not an optimizer-level setting).
     import dspy as _dspy
 
-    _dspy.configure(lm=_dspy.LM(f"anthropic/{_MODEL}", temperature=0.0, max_tokens=1024))
-    proposal = _propose(skill_name, skill_path, dspy_trainset, frozen_map, cycle_id)
+    # token_cost_total (FIX-03): dspy.track_usage() is the same call layer that already
+    # tracks LM usage per-call (UsageTracker.add_usage, populated from litellm's response
+    # usage on every real dspy.LM invocation). Wrap the configure+propose call so the
+    # cycle's real input+output token total is captured without a second hand-rolled
+    # counter. Under test (propose monkeypatched to avoid real API calls) this is 0 —
+    # a real, not placeholder, value for a cycle that made no real LM calls.
+    with _dspy.track_usage() as _usage_tracker:
+        _dspy.configure(lm=_dspy.LM(f"anthropic/{_MODEL}", temperature=0.0, max_tokens=1024))
+        proposal = _propose(skill_name, skill_path, dspy_trainset, frozen_map, cycle_id)
+    token_cost_total = _sum_dspy_usage(_usage_tracker)
 
     candidate_config = {skill_name: proposal.new_content}
     candidate_hash, candidate_sig = sign_config(candidate_config)
@@ -439,6 +447,7 @@ def run_loop_cycle(
         "seed": seed,
         "intent_map_sha256": _sha256_file(map_path),
         "split_hash": _sha256_file(corpus_path.parent / "split.json"),
+        "token_cost_total": token_cost_total,
     }
 
     experiments_dir.mkdir(parents=True, exist_ok=True)
@@ -477,6 +486,22 @@ def _inject_description_to_temp(new_desc: str, skill_name: str, tmp_skills: Path
     meta["description"] = new_desc
     new_text = f"---\n{yaml.dump(meta, default_flow_style=False)}---{body}"
     skill_md.write_text(new_text, encoding="utf-8")
+
+
+def _sum_dspy_usage(tracker) -> int:
+    """Sum input+output tokens across all dspy.LM calls recorded by a dspy.track_usage() tracker.
+
+    tracker.get_total_tokens() -> {lm_name: {prompt_tokens/completion_tokens (litellm) or
+    input_tokens/output_tokens (some providers): int, ...}}. Sum both naming conventions
+    defensively (only one will be non-zero for any given provider/call).
+    """
+    total = 0
+    for _lm_name, usage in tracker.get_total_tokens().items():
+        total += int(usage.get("prompt_tokens", 0) or 0)
+        total += int(usage.get("completion_tokens", 0) or 0)
+        total += int(usage.get("input_tokens", 0) or 0)
+        total += int(usage.get("output_tokens", 0) or 0)
+    return total
 
 
 def _sha256_file(path: Path) -> str:

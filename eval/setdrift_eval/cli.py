@@ -290,6 +290,15 @@ def main() -> int:
         help="allow fixture data (watermark applied); never use for dissertation figures (D-09)",
     )
     figures_p.add_argument(
+        "--build-inputs",
+        action="store_true",
+        help=(
+            "materialize experiments/cost-tokens.json and experiments/triangulation-series.json "
+            "from real manifests, overwriting both wholesale (FIX-03 producer step; "
+            "run before --cost-delta / --triangulation so they never need --allow-fixtures)"
+        ),
+    )
+    figures_p.add_argument(
         "--genealogy", action="store_true", help="generate skill genealogy Mermaid diagram"
     )
     figures_p.add_argument(

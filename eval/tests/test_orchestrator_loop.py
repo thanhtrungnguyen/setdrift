@@ -600,6 +600,58 @@ def test_precision_gate_report_rejects_fabricated_fixture():
         PrecisionGateReport.model_validate(data)
 
 
+# ---------------------------------------------------------------------------
+# Test: loop manifest carries a populated token_cost_total (FIX-03)
+# ---------------------------------------------------------------------------
+
+
+def test_loop_manifest_has_populated_token_cost_total(
+    tmp_path, corpus_path, skills_dir, map_path, experiments_dir, hmac_key, monkeypatch
+):
+    """The written {NNN}-loop-manifest.json must carry a present, int token_cost_total
+    field matching the cycle's real (dspy.track_usage()-tracked) token usage."""
+    from setdrift_eval.optimizer.orchestrator import run_loop_cycle
+
+    audit_path = tmp_path / "data" / "audit" / "audit.jsonl"
+    monkeypatch.setenv("SETDRIFT_AUDIT_PATH", str(audit_path))
+    genealogy_path = tmp_path / "experiments" / "audit-genealogy.jsonl"
+    monkeypatch.setenv("SETDRIFT_GENEALOGY_PATH", str(genealogy_path))
+
+    _make_propose_spy(monkeypatch, "spring-boot-endpoint")
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._verify_candidate",
+        lambda *a, **k: _make_verify_result(promote=False),
+    )
+    monkeypatch.setattr(
+        "setdrift_eval.optimizer.orchestrator._check_precision_gate", lambda *a, **k: None
+    )
+
+    run_loop_cycle(
+        skill_name="spring-boot-endpoint",
+        corpus_path=corpus_path,
+        skills_dir=skills_dir,
+        map_path=map_path,
+        experiments_dir=experiments_dir,
+        seed=42,
+        dry_run=True,
+        approve=False,
+    )
+
+    manifest_files = sorted(experiments_dir.glob("*-loop-manifest.json"))
+    assert manifest_files, "run_loop_cycle must write a {NNN}-loop-manifest.json"
+    manifest = json.loads(manifest_files[-1].read_text(encoding="utf-8"))
+
+    assert "token_cost_total" in manifest, "manifest must carry token_cost_total (FIX-03)"
+    assert isinstance(manifest["token_cost_total"], int), (
+        "token_cost_total must be an int, got "
+        f"{type(manifest['token_cost_total'])!r}"
+    )
+    # propose() is monkeypatched to avoid real API calls in this test, so the real
+    # dspy.track_usage()-tracked total for this cycle is 0 — a real (not fabricated)
+    # value for a cycle that made no real LM calls, not a hardcoded placeholder.
+    assert manifest["token_cost_total"] == 0
+
+
 def test_precision_gate_report_accepts_schema_valid_report():
     """A genuine, schema-valid report (real field names, provenance block) validates."""
     data = {

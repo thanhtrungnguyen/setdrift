@@ -47,6 +47,7 @@ def main(args: argparse.Namespace) -> int:
 
     experiments_dir = Path(args.experiments_dir)
     allow_fixtures = args.allow_fixtures
+    build_inputs = getattr(args, "build_inputs", False)
     any_figure_requested = (
         args.all_figures
         or getattr(args, "cost_delta", False)
@@ -56,13 +57,29 @@ def main(args: argparse.Namespace) -> int:
         or getattr(args, "f1_curve", False)
     )
 
-    if not any_figure_requested:
+    if not any_figure_requested and not build_inputs:
         print(
             "[setdrift-eval figures] No figure flag specified. "
-            "Pass --cost-delta, --all, or another figure flag. "
+            "Pass --cost-delta, --all, --build-inputs, or another figure flag. "
             "Use --help for the full option list."
         )
         return 0
+
+    # --- --build-inputs (FIX-03 producer step; materialize-then-read, D6-10) ---
+    # A SEPARATE explicit CLI step (Open Question 2 resolution) that overwrites the two
+    # singular experiments/*.json files wholesale from real manifests. The --cost-delta
+    # / --triangulation branches below only READ these files — they never compute the
+    # aggregate inline (Anti-Pattern D).
+    if build_inputs:
+        from setdrift_eval.figures.producers import (  # lazy import
+            build_cost_tokens,
+            build_triangulation_series,
+        )
+
+        cost_out = build_cost_tokens(experiments_dir)
+        triangulation_out = build_triangulation_series(experiments_dir)
+        print(f"[setdrift-eval figures] build-inputs -> {cost_out}")
+        print(f"[setdrift-eval figures] build-inputs -> {triangulation_out}")
 
     # --- cost-delta figure (REQ-DELIV-02, D-02 survives-cut substrate) ---
     if args.all_figures or getattr(args, "cost_delta", False):
