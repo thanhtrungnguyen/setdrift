@@ -32,6 +32,7 @@ import duckdb
 
 from setdrift_eval.benchmark.arm_runner import load_skill_tools, run_arm
 from setdrift_eval.benchmark.response_cache import load_or_call
+from setdrift_eval.evidence.preflight import assert_evidence_run
 
 # FROZEN RULER — import only; never re-implement these functions.
 # Modifying scorer.py to support Phase 4 is an architectural violation.
@@ -153,6 +154,10 @@ def run_haiku_sensitivity(
     """
     corpus_path = Path(corpus_path)
     cache_dir = Path(cache_dir)
+
+    # Fail-loud precondition (D7-19): backend/model pin, checked BEFORE any live
+    # call. This arm always uses the Haiku pin, never the Sonnet default.
+    assert_evidence_run(HAIKU_MODEL)
 
     # D-59: filter to TEST partition ONLY — never val (Pitfall 6 guard)
     test_prompts = _load_test_prompts(corpus_path)

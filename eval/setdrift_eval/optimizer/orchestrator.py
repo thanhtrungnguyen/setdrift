@@ -26,6 +26,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from setdrift_eval.evidence.preflight import assert_evidence_run
 from setdrift_eval.optimizer.applier import apply_proposal as _apply_proposal
 from setdrift_eval.optimizer.applier import stage_signed_candidate as _stage_signed_candidate
 from setdrift_eval.optimizer.gepa_wrapper import propose as _propose
@@ -261,6 +262,15 @@ def run_loop_cycle(
     # Precision gate check is optional when all audit paths are env-overridden (test mode);
     # it is bypassed in tests via monkeypatching _check_precision_gate.
     _check_precision_gate(experiments_dir)
+    # Fail-loud model/backend preflight (D7-19), checked before the patch/verify
+    # steps' live calls (dspy GEPA propose + _verify_candidate's response-cache
+    # backed scoring both make live network calls under this cycle's model pin).
+    # Deliberately re-reads SETDRIFT_MODEL fresh here rather than passing the
+    # module-level `_MODEL` constant: `_MODEL` is captured ONCE, at this
+    # module's own import time — exactly the read-once-at-import landmine
+    # D7-19 exists to catch. Using a fresh read keeps the gate meaningful even
+    # if `_MODEL` was captured before a `.env` flip was neutralised.
+    assert_evidence_run(os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6"))
 
     cycle_id = str(uuid.uuid4())
     skill_path = skills_dir / skill_name / "SKILL.md"

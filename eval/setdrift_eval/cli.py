@@ -420,7 +420,13 @@ def main() -> int:
         return 0
 
     if args.cmd == "health":
+        from setdrift_eval.evidence.preflight import assert_evidence_run
         from setdrift_eval.telemetry.scorer import run_health
+
+        # Fail-loud model/backend preflight (D7-19), wired here (not in the
+        # FROZEN scorer.py) because run_health lives in the Goodhart-firewall
+        # frozen-ruler file and must not be edited.
+        assert_evidence_run(os.environ.get("SETDRIFT_MODEL", "claude-sonnet-4-6"))
 
         result = run_health(
             corpus_path=args.corpus_path,

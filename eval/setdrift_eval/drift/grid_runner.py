@@ -40,6 +40,7 @@ from pathlib import Path
 from setdrift_eval.benchmark.arm_runner import load_skill_tools, run_arm
 from setdrift_eval.drift.db import connect
 from setdrift_eval.drift.snapshot import checkout_snapshot
+from setdrift_eval.evidence.preflight import assert_evidence_run
 from setdrift_eval.schemas.drift_manifest import DriftManifest
 
 # FROZEN RULER — import only; never re-implement these functions.
@@ -171,6 +172,11 @@ def run_grid(
         GridRunnerError: If ANTHROPIC_API_KEY is unset before a live cell, or
                          if any required argument is missing.
     """
+    # --- Fail-loud precondition (D7-19): backend/model pin, checked BEFORE any
+    # live call, for every model this grid will invoke (Sonnet + Haiku). ---
+    for _model in MODELS:
+        assert_evidence_run(_model)
+
     # --- Fail-loud precondition: ANTHROPIC_API_KEY must be set before live run ---
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise GridRunnerError(
