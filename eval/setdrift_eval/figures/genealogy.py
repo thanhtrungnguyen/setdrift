@@ -40,14 +40,10 @@ from setdrift_eval.telemetry.scorer import macro_f1  # noqa: F401 — guard impo
 # Data gate error (D-09 / RESEARCH Pitfall 4)
 # ---------------------------------------------------------------------------
 
-
-class FigureDataError(RuntimeError):
-    """Raised when required Phase-3 output data is absent (D-09 gate).
-
-    Gate: if the data file does not exist and --allow-fixtures was not passed,
-    raise this error. This prevents a fixture figure from silently entering
-    the dissertation as real data.
-    """
+# Single shared class (WR-01): re-exported here so existing
+# `from setdrift_eval.figures.genealogy import FigureDataError` imports keep
+# working and refer to the SAME class figures/cli.py catches.
+from setdrift_eval.figures.errors import FigureDataError  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

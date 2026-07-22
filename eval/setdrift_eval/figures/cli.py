@@ -5,7 +5,9 @@ What this module does:
     per-figure flags --cost-delta, --genealogy, --triangulation, --kappa-matrix, --f1-curve)
   - Calls rcparams.apply() (Agg backend) BEFORE any figure function
   - Dispatches to figure generators with fixture-gate enforcement (RESEARCH Pitfall 4)
-  - Defines FigureDataError: raised when real data absent and --allow-fixtures not set
+  - Imports the SHARED FigureDataError (figures/errors.py, WR-01): raised when real
+    data is absent and --allow-fixtures not set; caught once at the top of main()
+    and converted to a printed error + non-zero exit
 
 What it does NOT do:
   - Never calls plt.show() — headless Agg only (D-10 anti-pattern)
@@ -18,25 +20,32 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-
-class FigureDataError(RuntimeError):
-    """Raised when required Phase-3 output data is absent (D-09 / RESEARCH Pitfall 4).
-
-    Gate: if the data file does not exist and --allow-fixtures was not passed,
-    raise this error. This prevents a fixture figure from silently entering the
-    dissertation as real data.
-    """
+# Shared error type (WR-01): the ONE FigureDataError every figures module
+# raises — lightweight import (no matplotlib/networkx/scorer dependencies).
+from setdrift_eval.figures.errors import FigureDataError
 
 
 def main(args: argparse.Namespace) -> int:
     """Entry point for `setdrift-eval figures` (called from top-level cli.py dispatch).
 
+    Catches FigureDataError once at this top level (WR-01) and converts it to
+    a printed error + non-zero exit code instead of a raw traceback.
+
     Args:
         args: parsed Namespace from the figures subparser in cli.py.
 
     Returns:
-        int exit code (0 = success)
+        int exit code (0 = success, 1 = missing real data / D-09 gate)
     """
+    try:
+        return _run(args)
+    except FigureDataError as exc:
+        print(f"[setdrift-eval figures] ERROR: {exc}")
+        return 1
+
+
+def _run(args: argparse.Namespace) -> int:
+    """Figure dispatch body (see main for the FigureDataError boundary)."""
     # Apply shared rcParams + Agg backend BEFORE any figure function (D-10)
     from setdrift_eval.figures.rcparams import apply as apply_rcparams  # lazy import
 
@@ -120,7 +129,6 @@ def main(args: argparse.Namespace) -> int:
             build_genealogy_dag,
             build_genealogy_dag_from_records,
             dag_to_mermaid,
-            FigureDataError as _GenealogyDataError,
         )
         from setdrift_eval.figures.genealogy_adapter import adapt_audit_records  # lazy import
 
@@ -141,7 +149,7 @@ def main(args: argparse.Namespace) -> int:
             dag = build_genealogy_dag(fixture_path)
             fixture_mode = True
         else:
-            raise _GenealogyDataError(
+            raise FigureDataError(
                 f"Genealogy audit source not found: {audit_path}. "
                 "Pass --allow-fixtures to run against fixture data (watermark applied). "
                 "Do NOT include fixture figures in the dissertation (D-09)."
