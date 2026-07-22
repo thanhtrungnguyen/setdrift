@@ -180,8 +180,13 @@ def main() -> int:
     )
     loop_p.add_argument(
         "--dry-run",
-        action="store_true",
-        help="validate the cycle without writing to live plugin/ (default behavior; D-43)",
+        # WR-10: BooleanOptionalAction with default=True so the CLI default
+        # matches both this help text and run_loop_cycle's dry_run=True
+        # signature default (D-43 two-layer defense). Opt out with --no-dry-run.
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="validate the cycle without writing to live plugin/ (default behavior; D-43). "
+        "Pass --no-dry-run (with --approve) to apply a promoted candidate live.",
     )
     loop_p.add_argument(
         "--approve",
