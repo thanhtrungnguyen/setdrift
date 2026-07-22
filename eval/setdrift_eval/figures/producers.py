@@ -52,6 +52,16 @@ DRIFT_GRID_ZERO_COST_NOTE = (
     "known fidelity gap, disclosed here rather than silently estimated (Pitfall 4, T-06-15)."
 )
 
+LOOP_MANIFEST_PROPOSE_ONLY_COST_NOTE = (
+    "loop-manifest token_cost_total covers the PROPOSE stage only: "
+    "dspy.track_usage() in optimizer/orchestrator.py wraps configure+_propose, so "
+    "verify-stage LM calls (candidate scoring on the val partition through the "
+    "response-cache/backend layer, outside dspy) contribute 0. Per-cycle cost is a "
+    "known systematic UNDERCOUNT — disclosed here (and to be cited in the cost-figure "
+    "caption path) rather than silently estimated (WR-08, T-06-15 anti-repudiation "
+    "parity with DRIFT_GRID_ZERO_COST_NOTE)."
+)
+
 
 def _iter_manifest_dicts(
     experiments_dir: Path, glob_pattern: str, exclude_suffix: str | None = None
@@ -107,10 +117,12 @@ def build_cost_tokens(experiments_dir: str | Path) -> Path:
     one source, e.g. a Phase-2 health run AND the GEPA loop cycle that promoted it):
       - *-results.json          (ExperimentManifest — run_health/verify_candidate; real cost)
       - *-drift-results.json    (DriftManifest — drift grid; token_cost_total=0, disclosed)
-      - *-loop-manifest.json    (GEPA loop cycles; real cost from dspy.track_usage(),
-                                 joined to config_hash via the cycle's terminal promote
-                                 record — only cycles that were actually promoted are
-                                 represented, matching build_version_index's promoted set)
+      - *-loop-manifest.json    (GEPA loop cycles; real PROPOSE-stage cost from
+                                 dspy.track_usage() — verify-stage LM cost is NOT metered,
+                                 see LOOP_MANIFEST_PROPOSE_ONLY_COST_NOTE; joined to
+                                 config_hash via the cycle's terminal promote record —
+                                 only cycles that were actually promoted are represented,
+                                 matching build_version_index's promoted set)
 
     Keys of the emitted dict are raw config_hash strings (D6-09) — NOT "v1"/"v2" version
     labels. build_version_index is imported (not reimplemented) to confirm the promoted

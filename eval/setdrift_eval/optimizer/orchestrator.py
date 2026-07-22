@@ -324,6 +324,11 @@ def run_loop_cycle(
     # cycle's real input+output token total is captured without a second hand-rolled
     # counter. Under test (propose monkeypatched to avoid real API calls) this is 0 —
     # a real, not placeholder, value for a cycle that made no real LM calls.
+    # DISCLOSED FIDELITY GAP (WR-08): this meters the PROPOSE stage only. The verify
+    # stage (_verify_candidate — val-partition scoring through the response-cache/
+    # backend layer, outside dspy) is NOT counted, so token_cost_total systematically
+    # understates per-cycle cost. See figures/producers.py::
+    # LOOP_MANIFEST_PROPOSE_ONLY_COST_NOTE (T-06-15 anti-repudiation parity).
     with _dspy.track_usage() as _usage_tracker:
         _dspy.configure(lm=_dspy.LM(f"anthropic/{_MODEL}", temperature=0.0, max_tokens=1024))
         proposal = _propose(skill_name, skill_path, dspy_trainset, frozen_map, cycle_id)
