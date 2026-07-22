@@ -61,6 +61,15 @@ class Decision(BaseModel):
     )
     reason: str = Field(description="Human-readable rationale (must be non-empty)")
     ts: str = Field(description="ISO-8601 UTC timestamp when the decision was made")
+    applied: bool = Field(
+        default=False,
+        description=(
+            "False = the decision was FLAGGED by scan() (analysis only); "
+            "True = the state change was actually EXECUTED (quarantine_skill/"
+            "promote_skill moved SKILL.md). Disambiguates the two records a "
+            "flag-then-apply flow writes to decisions.jsonl (WR-09, anti-repudiation)."
+        ),
+    )
 
     @field_validator("reason")
     @classmethod
@@ -308,6 +317,7 @@ def quarantine_skill(skill_name: str, skills_dir: Path) -> Decision:
             "Re-promote with: setdrift-eval promote-skill --name " + skill_name
         ),
         ts=_now_iso(),
+        applied=True,
     )
     _log_decision(decision)
     return decision
@@ -347,6 +357,7 @@ def promote_skill(skill_name: str, skills_dir: Path) -> Decision:
             "Restored to plugin/skills/ and back in load_skill_tools glob."
         ),
         ts=_now_iso(),
+        applied=True,
     )
     _log_decision(decision)
     return decision

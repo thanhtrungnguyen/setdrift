@@ -661,6 +661,7 @@ def main() -> int:
         decisions = scan(args.skills_dir, args.telemetry_dir)
         archived = 0
         quarantined = 0
+        errors = 0
         for decision in decisions:
             if decision.decision == "archive":
                 archived += 1
@@ -668,13 +669,27 @@ def main() -> int:
                     f"[setdrift-eval] deprecate-scan archive skill={decision.skill_name} reason={decision.reason!r}"
                 )
             elif decision.decision == "quarantine":
-                quarantine_skill(decision.skill_name, args.skills_dir)
+                # WR-09: a failing apply (e.g. SKILL.md already moved) must not
+                # abort the loop and swallow the remaining decisions — print the
+                # error and continue.
+                try:
+                    quarantine_skill(decision.skill_name, args.skills_dir)
+                except (FileNotFoundError, OSError) as exc:
+                    errors += 1
+                    print(
+                        f"[setdrift-eval] deprecate-scan quarantine FAILED "
+                        f"skill={decision.skill_name} error={exc}"
+                    )
+                    continue
                 quarantined += 1
                 print(
                     f"[setdrift-eval] deprecate-scan quarantine skill={decision.skill_name} reason={decision.reason!r}"
                 )
-        print(f"[setdrift-eval] deprecate-scan archived={archived} quarantined={quarantined}")
-        return 0
+        print(
+            f"[setdrift-eval] deprecate-scan archived={archived} "
+            f"quarantined={quarantined} errors={errors}"
+        )
+        return 0 if errors == 0 else 1
 
     if args.cmd == "promote-skill":
         # Lazy import (project convention)
