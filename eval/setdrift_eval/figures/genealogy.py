@@ -157,8 +157,10 @@ def build_genealogy_dag_from_records(records: list[dict]) -> nx.DiGraph:
         {relation, date} where relation in {"promoted", "rolled back"}.
 
     Raises:
-        AssertionError: If the constructed graph contains a cycle (data
-            integrity error — fail loud per T-05-22).
+        FigureDataError: If the constructed graph contains a cycle (data
+            integrity error — fail loud per T-05-22). A raise, not an assert
+            (WR-07): assertions are stripped under `python -O` /
+            PYTHONOPTIMIZE, which would silently disable this integrity gate.
     """
     G: nx.DiGraph = nx.DiGraph()
     for r in records:
@@ -177,10 +179,11 @@ def build_genealogy_dag_from_records(records: list[dict]) -> nx.DiGraph:
                 date=r["date"],
             )
 
-    assert nx.is_directed_acyclic_graph(G), (
-        "Promotion graph has a cycle — data integrity error (T-05-22). "
-        "Check audit-genealogy.jsonl for circular version references."
-    )
+    if not nx.is_directed_acyclic_graph(G):
+        raise FigureDataError(
+            "Promotion graph has a cycle — data integrity error (T-05-22). "
+            "Check audit-genealogy.jsonl for circular version references."
+        )
     return G
 
 
