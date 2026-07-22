@@ -53,10 +53,21 @@ DRIFT_GRID_ZERO_COST_NOTE = (
 )
 
 
-def _iter_manifest_dicts(experiments_dir: Path, glob_pattern: str) -> list[dict]:
-    """Read every JSON file matching glob_pattern under experiments_dir as a plain dict."""
+def _iter_manifest_dicts(
+    experiments_dir: Path, glob_pattern: str, exclude_suffix: str | None = None
+) -> list[dict]:
+    """Read every JSON file matching glob_pattern under experiments_dir as a plain dict.
+
+    exclude_suffix (CR-02): `*-results.json` also glob-matches
+    `*-drift-results.json`, so callers iterating health-run manifests MUST pass
+    exclude_suffix="-drift-results.json" — otherwise drift manifests are
+    double-processed in the cost aggregation and drift cells (hardcoded
+    coverage_pct=1.0) contaminate the triangulation series.
+    """
     out = []
     for p in sorted(Path(experiments_dir).glob(glob_pattern)):
+        if exclude_suffix is not None and p.name.endswith(exclude_suffix):
+            continue
         out.append(json.loads(p.read_text(encoding="utf-8")))
     return out
 
@@ -113,7 +124,11 @@ def build_cost_tokens(experiments_dir: str | Path) -> Path:
 
     promoted_hashes = set(build_version_index(experiments_dir).keys())
 
-    for manifest in _iter_manifest_dicts(experiments_dir, "*-results.json"):
+    # exclude_suffix: drift manifests also match *-results.json (CR-02) — they are
+    # handled ONCE by the dedicated *-drift-results.json pass below.
+    for manifest in _iter_manifest_dicts(
+        experiments_dir, "*-results.json", exclude_suffix="-drift-results.json"
+    ):
         cfg = manifest.get("config_hash")
         if cfg:
             totals[cfg] = totals.get(cfg, 0) + int(manifest.get("token_cost_total", 0) or 0)
@@ -154,9 +169,14 @@ def build_triangulation_series(experiments_dir: str | Path) -> Path:
     experiments_dir = Path(experiments_dir)
 
     version_index = build_version_index(experiments_dir)  # config_hash -> "v1"/"v2"/...
-    # config_hash -> (macro_f1_mean, coverage_pct), keeping the LAST manifest seen per hash
+    # config_hash -> (macro_f1_mean, coverage_pct), keeping the LAST manifest seen per hash.
+    # exclude_suffix: drift manifests also match *-results.json (CR-02) — a drift cell's
+    # per-cell F1 and hardcoded coverage_pct=1.0 must never replace the health run's
+    # real values in the dissertation triangulation figure.
     by_config_hash: dict[str, tuple[float, float]] = {}
-    for manifest in _iter_manifest_dicts(experiments_dir, "*-results.json"):
+    for manifest in _iter_manifest_dicts(
+        experiments_dir, "*-results.json", exclude_suffix="-drift-results.json"
+    ):
         cfg = manifest.get("config_hash")
         if cfg is None:
             continue

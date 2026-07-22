@@ -156,6 +156,34 @@ class TestBuildCostTokens:
         assert per_version == {"hashA": 42}
 
 
+    def test_drift_manifest_is_not_double_counted_by_results_glob(self, tmp_path: Path):
+        """CR-02 regression: fnmatch('001-drift-results.json', '*-results.json') is True,
+        so without the exclusion a drift manifest is processed by BOTH loops and its
+        cost is doubled the moment drift metering carries a nonzero value."""
+        from setdrift_eval.figures.producers import build_cost_tokens
+
+        experiments_dir = tmp_path
+        _write_json(
+            experiments_dir / "001-results.json",
+            config_hash="hashA",
+            token_cost_total=1000,
+        )
+        # Nonzero drift cost (future drift metering) sharing NO hash with the health run.
+        _write_json(
+            experiments_dir / "002-drift-results.json",
+            config_hash="hashD",
+            token_cost_total=300,
+        )
+
+        out_path = build_cost_tokens(experiments_dir)
+        data = json.loads(out_path.read_text(encoding="utf-8"))
+
+        assert data == {"hashA": 1000, "hashD": 300}, (
+            f"Drift manifest must be counted exactly once (got {data}); "
+            "hashD == 600 means the *-results.json loop double-processed it."
+        )
+
+
 # ---------------------------------------------------------------------------
 # build_triangulation_series
 # ---------------------------------------------------------------------------
@@ -209,6 +237,44 @@ class TestBuildTriangulationSeries:
         data = json.loads(out_path.read_text(encoding="utf-8"))
 
         assert data == {"f1_series": [], "pass_rate_series": []}
+
+    def test_drift_manifest_never_overwrites_health_run_values(self, tmp_path: Path):
+        """CR-02 regression: a drift cell sharing a promoted config_hash (arm A IS the
+        promoted config) sorts after the health manifest lexicographically — its
+        per-cell F1 and hardcoded coverage_pct=1.0 must NOT replace the health run's
+        real values in the triangulation series."""
+        from setdrift_eval.figures.producers import build_triangulation_series
+
+        experiments_dir = tmp_path
+        _write_audit_jsonl(
+            experiments_dir / "audit-genealogy.jsonl",
+            [_audit_record("cycle-1", "promote", "2026-06-01T00:00:00+00:00", "hashA")],
+        )
+        _write_json(
+            experiments_dir / "001-results.json",
+            config_hash="hashA",
+            macro_f1_mean=0.60,
+            coverage_pct=0.50,
+        )
+        # Drift cell for the SAME hash, sorting after 001-results.json.
+        _write_json(
+            experiments_dir / "002-drift-results.json",
+            config_hash="hashA",
+            macro_f1_mean=0.99,
+            coverage_pct=1.0,  # hardcoded by grid_runner.py — fabricated pass-rate
+        )
+
+        out_path = build_triangulation_series(experiments_dir)
+        data = json.loads(out_path.read_text(encoding="utf-8"))
+
+        assert data["f1_series"] == [0.60], (
+            "Triangulation must use the health run's F1, not the drift cell's "
+            f"(got {data['f1_series']})."
+        )
+        assert data["pass_rate_series"] == [0.50], (
+            "Triangulation must use the health run's coverage_pct, not the drift "
+            f"cell's fabricated 1.0 (got {data['pass_rate_series']})."
+        )
 
     def test_round_trips_through_figures_cli_triangulation_consumer_shape(self, tmp_path: Path):
         """Mirrors figures/cli.py lines 132-138's read side exactly (no --allow-fixtures)."""
