@@ -224,6 +224,10 @@ def count_idle_sessions(skill_name: str, telemetry_dir: Path) -> int:
             if session == last_firing_session:
                 found_last = True
             continue
+        # CR-03: real sessions are multi-event — later events belonging to the
+        # firing session itself must never count it as idle.
+        if session == last_firing_session:
+            continue  # the firing session is never idle
         # After the last firing: track sessions that have any tool activity
         if session not in seen_sessions and ev.get("tool_name"):
             seen_sessions.append(session)

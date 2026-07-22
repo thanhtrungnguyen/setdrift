@@ -180,6 +180,38 @@ def test_count_idle_sessions_skill_fired_resets_idle(tmp_path):
     assert result == 4
 
 
+def test_count_idle_sessions_firing_session_with_trailing_events_not_idle(tmp_path):
+    """CR-03 regression: the firing session itself must NEVER count as idle,
+    even when it contains more events AFTER the firing event (real sessions
+    are always multi-event — the old loop flipped found_last on the FIRST
+    event of the firing session, then counted its own later events as an
+    idle session, inflating the count by 1 on every scan)."""
+    telemetry_dir = tmp_path / "telemetry"
+    # Firing session s0: firing event followed by ordinary tool events.
+    _write_shard(
+        telemetry_dir,
+        "s0",
+        [
+            _skill_firing_event("s0", "my_skill", "2026-01-01T00:00:00Z"),
+            _scrubbed_event("s0", "Bash", "2026-01-01T00:01:00Z"),
+            _scrubbed_event("s0", "Read", "2026-01-01T00:02:00Z"),
+        ],
+    )
+    # Two genuinely idle sessions afterwards.
+    for i in (1, 2):
+        _write_shard(
+            telemetry_dir,
+            f"s{i}",
+            [_scrubbed_event(f"s{i}", "other_tool", f"2026-01-02T00:0{i}:00Z")],
+        )
+    result = count_idle_sessions("my_skill", telemetry_dir)
+    assert result == 2, (
+        f"Expected 2 idle sessions (s1, s2); got {result}. A result of 3 means "
+        "the firing session s0 was wrongly counted as idle via its own "
+        "post-firing events (CR-03 off-by-one)."
+    )
+
+
 def test_count_idle_sessions_missing_events_file(tmp_path):
     """Missing telemetry directory returns 0 idle sessions (skill cannot be flagged without data)."""
     telemetry_dir = tmp_path / "nonexistent"
