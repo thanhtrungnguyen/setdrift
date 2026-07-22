@@ -19,6 +19,7 @@ What it does NOT do:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -76,12 +77,15 @@ class LogPanel(Collapsible):
     # ------------------------------------------------------------------
 
     def tail_telemetry(self, telemetry_dir: Path, n_lines: int = 50) -> None:
-        """Append the last n_lines merged across the sharded telemetry directory.
+        """Append the last n_lines (by event time) merged across the sharded directory.
 
         Single-source-of-truth (D-04): reads the real sharded contract —
         `<telemetry_dir>/*.events.jsonl` (one shard per session), matching
-        telemetry/query.py's glob convention. Lines from all shards are
-        concatenated (shard iteration order) and the last n_lines are shown.
+        telemetry/query.py's glob convention. Lines from all shards are merged
+        and ordered by each event's `_ts_captured` (WR-04: shard filenames are
+        session UUIDs, so filename order is NOT chronological — a week-old
+        session whose UUID sorts last must not dominate the tail over today's
+        events). Lines without a parseable timestamp sort oldest (stable).
         OSError → warning line (UI-SPEC §A.9 read-error copy).
         Never writes to the file; never exports raw content (T-05-16 guard).
         """
@@ -91,14 +95,22 @@ class LogPanel(Collapsible):
             if not telemetry_dir.is_dir():
                 raise OSError(f"telemetry directory not found: {telemetry_dir}")
             shard_paths = sorted(telemetry_dir.glob("*.events.jsonl"))
-            lines: list[str] = []
+            stamped: list[tuple[str, str]] = []
             for shard_path in shard_paths:
                 text = shard_path.read_text(encoding="utf-8")
-                lines.extend(ln for ln in text.splitlines() if ln.strip())
-            if not lines:
+                for ln in text.splitlines():
+                    if not ln.strip():
+                        continue
+                    try:
+                        ts = str(json.loads(ln).get("_ts_captured") or "")
+                    except (ValueError, AttributeError):
+                        ts = ""
+                    stamped.append((ts, ln))
+            if not stamped:
                 log.write("[dim]No telemetry events yet — run a Setdrift session[/dim]")
                 return
-            for line in lines[-n_lines:]:
+            stamped.sort(key=lambda pair: pair[0])  # stable: ties keep shard order
+            for _, line in stamped[-n_lines:]:
                 log.write(f"[dim]{line}[/dim]")
         except OSError:
             log.write("[$warning]⚠ log source unreadable — check data/telemetry/[/$warning]")
