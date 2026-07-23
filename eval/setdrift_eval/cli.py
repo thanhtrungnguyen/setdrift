@@ -78,6 +78,12 @@ def main() -> int:
     verify_p.add_argument("--corpus", type=Path, required=True)
     verify_p.add_argument("--output", type=Path, default=Path("data/corpus/verify.csv"))
     verify_p.add_argument("--seed", type=int, default=42)
+    verify_p.add_argument(
+        "--min-per-source",
+        type=int,
+        default=20,
+        help="floor on rows sampled per source (D-35 Pitfall 6, default: 20)",
+    )
 
     # --- ablate subcommand (REQ-LOOP-03 leave-one-out failure attribution) ---
     ablate_p = sub.add_parser(
@@ -385,7 +391,18 @@ def main() -> int:
     if args.cmd == "corpus" and args.corpus_cmd == "verify":
         from setdrift_eval.corpus.sampler import emit_verification_csv
 
-        emit_verification_csv(corpus_path=args.corpus, output_path=args.output, seed=args.seed)
+        # D-35: stratify by source.dataset so every source is proportionally
+        # represented (with a min_per_source floor) — required for the
+        # precision_gate's per-source >=20%-negatives criterion (07-05 Task 1
+        # gap: CLI previously never wired stratify_by_source, defeating the
+        # sampler's tested D-35 behavior).
+        emit_verification_csv(
+            corpus_path=args.corpus,
+            output_path=args.output,
+            seed=args.seed,
+            stratify_by_source=True,
+            min_per_source=args.min_per_source,
+        )
         print(f"[setdrift-eval] verification CSV written -> {args.output}")
         return 0
 
