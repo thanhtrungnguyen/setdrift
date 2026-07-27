@@ -1,0 +1,13 @@
+# LaTeX build intermediates for docs/paper/ — keep main.pdf and figures/ tracked.
+*.aux
+*.log
+*.out
+*.bbl
+*.bbl-SAVE-ERROR
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.toc
+*.nav
+*.snm

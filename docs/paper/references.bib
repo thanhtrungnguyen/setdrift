@@ -1,0 +1,44 @@
+% .planning/dissertation/references.bib
+%
+% STOPGAP / MANUALLY-MAINTAINED FILE — NOT YET ZOTERO/BETTER-BIBTEX MANAGED.
+%
+% Per Trung's explicit 2026-07-27 instruction ("zotero later, we i need i will
+% told you"), the Zotero + Better BibTeX auto-export wiring described in
+% 08-02-PLAN.md Task 2 is DEFERRED. This file is a hand-authored placeholder
+% so downstream compile steps (WRITE-02 acmart stub paper, WRITE-02/03
+% dissertation Pandoc build) are not blocked on the GUI-driven Zotero setup.
+%
+% When Zotero + Better BibTeX is wired later:
+%   1. Install the Better BibTeX .xpi from
+%      https://github.com/retorque/zotero-better-bibtex/releases (official
+%      releases page only).
+%   2. Add all real references to the Zotero library (including the entry
+%      below, re-entered as a proper Zotero item, not copy-pasted).
+%   3. Register Better BibTeX's "Export Library" with format "Better BibTeX"
+%      and "Keep updated" checked, targeting this exact path:
+%      .planning/dissertation/references.bib
+%   4. Confirm no entries were lost in the transition (diff the manually
+%      maintained keys below against the new Zotero-exported file before
+%      deleting this stopgap comment block).
+%   5. Never register a second Zotero auto-export target (e.g. pointing at
+%      the public repo's docs/paper/references.bib copy) — that copy stays a
+%      one-way, manually/scripted mirror per D8-17 / 08-RESEARCH.md.
+
+@misc{robeyns2025selfimproving,
+  title         = {A Self-Improving Coding Agent},
+  author        = {Robeyns, Maxime and Szummer, Martin and Aitchison, Laurence},
+  year          = {2025},
+  eprint        = {2504.15228},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  note          = {Live-verified 2026-07-27 via WebSearch (arxiv.org/pdf/2504.15228,
+                   huggingface.co/papers/2504.15228, and the paper's own GitHub repo
+                   github.com/MaximeRobeyns/self_improving_coding_agent) — arXiv ID,
+                   author list, and 2025-04-21 publication date confirmed correct.
+                   Presented at the ICLR 2025 Workshop on Scaling Self-Improving
+                   Foundation Models. This is the Robeyns et al. 2025
+                   "Self-Improving Coding Agent" reference cited in
+                   .planning/codebase/dissertation-abstract-name-note.md as the
+                   name-collision differentiator for this dissertation's Chapter 2
+                   five-axis differential.}
+}
