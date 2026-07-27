@@ -25,7 +25,7 @@
 | Aider | NO | NO | NO | NO | [Tier 2](#5-aider) |
 | Cline | NO | NO† | NO† | NO | [Tier 2](#6-cline-formerly-claude-dev) |
 | Devin | NO | NO† | NO† | NO | [Tier 2](#7-devin-cognition) |
-| Copilot Coding Agent‡ | NO | NO | NO | NO | [Tier 2](#8-github-copilot-coding-agent) |
+| Copilot cloud agent‡ | NO | NO | NO | NO | [Tier 2](#8-github-copilot-cloud-agent) |
 
 **Footnote \*:** Partial — claude-mem uses human-in-the-loop memory writing to a
 `.learnings/` directory. Some implementations record failures and missing capabilities
@@ -41,14 +41,17 @@ target (skill-trigger label F1 against a labeled corpus). These cells are marked
 NO† to acknowledge the third-party experiment while correctly classifying the
 native product capability.
 
-**Footnote ‡:** GitHub Copilot Workspace was **discontinued 2025-05-30** as a
-research preview; its capabilities were absorbed into **Copilot Coding Agent**,
-generally available since September 2025. This row is renamed from "Copilot
-Workspace" to "Copilot Coding Agent" (2026-07-27 re-verification, D8-01) so the
-table names a product that still exists — naming a discontinued product would be
-a hard factual error in Chapter 2. Verdicts (NO/NO/NO/NO) carried over unchanged
-pending live human spot-check (see `competitor-verification-log.md`,
-2026-07-27 Re-verification section).
+**Footnote ‡:** GitHub Copilot Workspace's issue→draft-PR capability is now
+documented by GitHub itself as **"Copilot cloud agent"** (GA, all paid plans) —
+live-verified 2026-07-27 via direct fetch of GitHub's own current documentation
+and changelog (see `competitor-verification-log.md`). This row is renamed from
+"Copilot Coding Agent" to "GitHub Copilot cloud agent (formerly Copilot Workspace)"
+to match GitHub's own official terminology. Note: third-party 2026 sources commonly
+use "Copilot Coding Agent" for a separate, IDE-embedded agent-mode feature (VS
+Code/JetBrains, GA March 2026) — this naming landscape is genuinely unsettled;
+readers encountering "Copilot Coding Agent" elsewhere may be looking at a different
+GitHub product. Verdicts (NO/NO/NO/NO) confirmed unchanged after live re-verification
+and human approval (Trung, "spot-check approved", 2026-07-27).
 
 ---
 
@@ -75,7 +78,7 @@ a drift-aware monitoring signal as the loop's trigger.
 | Tier | Depth | Comparators |
 |------|-------|-------------|
 | Tier 1 | Full dated verification — source URL + access date + screenshot/commit-ref note (D-07) | obra/superpowers, claude-mem, Cursor Rules, Continue.dev |
-| Tier 2 | Prose citation — source URL + access date (D-07) | Aider, Cline, Devin, Copilot Coding Agent |
+| Tier 2 | Prose citation — source URL + access date (D-07) | Aider, Cline, Devin, Copilot cloud agent |
 
 Full evidence log with per-comparator URLs, access dates, state summaries, and
 screenshot capture notes: [`docs/competitor-verification-log.md`](competitor-verification-log.md)
@@ -83,10 +86,9 @@ screenshot capture notes: [`docs/competitor-verification-log.md`](competitor-ver
 **30-day re-verification deadline:** Original deadline 2026-07-15 was missed
 (recorded honestly, not backdated — see verification log's 2026-07-27
 Re-verification section). A targeted spot re-verification (Copilot, Devin,
-claude-mem, Cursor per D8-01) was attempted 2026-07-27; the executor had no live
-web tooling this cycle, so those four rows carry an `unverified as of 2026-07-27 —
-pending human spot-check` marker rather than a stale or fabricated claim. New
-re-verification deadline: 2026-08-26.
+claude-mem, Cursor per D8-01) was live-verified 2026-07-27 via WebSearch/WebFetch/
+`gh api`, with findings reviewed and approved by Trung directly ("spot-check
+approved"). New re-verification deadline: 2026-08-26.
 
 ---
 
@@ -109,8 +111,11 @@ screenshot needed before submission]
 Memory-augmentation plugin for Claude Code; persists session summaries via
 `.learnings/`. Some implementations record failures in real time (Partial closed-loop)
 but no automated optimize→verify loop exists. No labeled corpus, no F1, no drift index.
+Live-verified 2026-07-27 via `gh api`: latest release v13.12.4 (published 2026-07-23),
+88,717 GitHub stars.
 [Verification log: Tier 1 — mcpmarket.com; accessed 2026-06-15; ASSUMED; screenshot
-and direct URL verification needed before submission; Assumption A4 resolution pending]
+and direct URL verification needed before submission; Assumption A4 resolution pending;
+version/star count re-verified 2026-07-27 (`competitor-verification-log.md`)]
 
 ### 3. Cursor Rules (`.cursorrules` / `cursor_rules.md`)
 Hand-authored per-project configuration files for the Cursor IDE. No automated
@@ -140,20 +145,27 @@ pass-rate) is not a native product feature. No native closed-loop optimization.
 ### 7. Devin (Cognition)
 Autonomous AI software engineer; 71% on SWE-bench Verified as of 2026. Operates
 task-by-task with no skill-configuration layer; no trigger-quality measurement.
-[Verification log: Tier 2 — cognition.ai/blog/swe-bench-technical-report, accessed 2026-06-15]
+Pricing restructured 2026 into subscription tiers (Free $0 / Pro $20/mo / Max $200/mo /
+Teams $80/mo+$40/seat, consumption unit "ACU") — a ~96% cut from the original $500/mo
+entry tier, live-verified 2026-07-27.
+[Verification log: Tier 2 — cognition.ai/blog/swe-bench-technical-report, accessed 2026-06-15;
+pricing re-verified 2026-07-27 (`competitor-verification-log.md`)]
 
-### 8. GitHub Copilot Coding Agent
-Spec-to-PR planning workflow within GitHub; turns issues into pull requests.
-No per-project skill-trigger configuration layer; no configuration optimization.
-Formerly "GitHub Copilot Workspace," discontinued 2025-05-30 as a research preview;
-capabilities absorbed into Copilot Coding Agent, GA since September 2025 — renamed
-here to name a product that still exists (see Footnote ‡).
-[Verification log: Tier 2 — blink.new/blog/best-ai-coding-agents-2026, accessed 2026-06-15;
-naming succession re-verified 2026-07-21 (`.planning/research/FEATURES.md`); live
-spot-check pending 2026-07-27 re-verification (`competitor-verification-log.md`)]
+### 8. GitHub Copilot cloud agent
+Spec-to-PR async workflow within GitHub; assign an issue, it runs in a sandboxed
+GitHub Actions environment and opens a draft PR. No per-project skill-trigger
+configuration layer; no configuration optimization. GitHub's own current
+documentation (docs.github.com, fetched 2026-07-27) calls this "Copilot cloud
+agent" — no mention of "Copilot Workspace" as a former name on that page, though
+GitHub's changelog usage shifted away from "Copilot Workspace" sometime after its
+last named mention in December 2024. Third-party sources commonly use "Copilot
+Coding Agent" for a separate, IDE-embedded feature — see Footnote ‡ for the
+naming ambiguity.
+[Verification log: Tier 2 — docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent,
+live-fetched and human-approved 2026-07-27 (`competitor-verification-log.md`)]
 
 ---
 
 *Source: `docs/competitor-verification-log.md` (tiered evidence per D-07)*
-*Research date: 2026-06-15 | Original valid-until: 2026-07-15 (missed) | Re-verification attempted: 2026-07-27 | New valid-until: 2026-08-26*
+*Research date: 2026-06-15 | Original valid-until: 2026-07-15 (missed) | Re-verified and human-approved: 2026-07-27 | New valid-until: 2026-08-26*
 *Setdrift Phase 5 Plan 03 | Phase 8 Plan 03 (WRITE-01, D8-01) | REQ-DELIV-03*
