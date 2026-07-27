@@ -23,6 +23,54 @@ their live URLs to satisfy D-07 before dissertation submission.
 
 ---
 
+## 2026-07-27 Re-verification (Phase 8 / WRITE-01, D8-01)
+
+**Scope:** Per D8-01 (`.planning/phases/08-outcome-independent-writing-human-outreach/08-CONTEXT.md`), this is a TARGETED spot re-verification of exactly 4 fast-moving comparators — GitHub Copilot (Workspace→Coding Agent naming), Devin, claude-mem, Cursor — not a full 8-tool sweep. This discharges the overdue 2026-07-15 re-verification deadline set below and the deferred Phase-5 05-03 Task-3 human spot-check.
+
+**Live web access status:** The executing agent had no WebSearch/WebFetch tooling available this cycle. Per the source plan's explicit anti-fabrication fallback (do NOT carry forward a guess), the four field-tables below record the URLs to be checked and mark each comparator's state as `unverified as of 2026-07-27 — pending human spot-check`, carrying the prior 2026-06-15/2026-07-21 research findings forward for reference only, not as freshly confirmed. This resolves the file's original 2026-06-15 DEFERRAL NOTE by confirming that live verification is **still pending** the human checkpoint (Task 3 of plan 08-03) rather than performed — the deferral is not yet discharged, only re-dated and re-scoped to this cycle's checkpoint.
+
+#### Re-check 1: GitHub Copilot (Workspace → Coding Agent)
+
+| Field | Value |
+|-------|-------|
+| **Source URL** | https://github.com/orgs/community/discussions/197066 (Copilot Workspace discontinuation/succession discussion, per prior Tier-2 entry) |
+| **Access date** | 2026-07-27 (attempted; no live web tooling — see status note above) |
+| **State summary** | **unverified as of 2026-07-27 — pending human spot-check.** Prior confirmed state (2026-07-21, HIGH confidence, `.planning/research/FEATURES.md`): Copilot Workspace discontinued 2025-05-30 as a research preview; capabilities absorbed into "Copilot Coding Agent," GA since September 2025. |
+| **Verdict change** | None applied this cycle — no live source available to confirm or refute. Row renamed `Copilot Workspace` → `Copilot Coding Agent` in `competitor-diff.md` based on the prior HIGH-confidence finding, since a wrong/discontinued product name is a hard factual error regardless of re-verification status. |
+
+#### Re-check 2: Devin (Cognition)
+
+| Field | Value |
+|-------|-------|
+| **Source URL** | https://cognition.ai/blog/swe-bench-technical-report (per existing Tier-2 entry) |
+| **Access date** | 2026-07-27 (attempted; no live web tooling — see status note above) |
+| **State summary** | **unverified as of 2026-07-27 — pending human spot-check.** Prior confirmed state (2026-07-21, MEDIUM confidence, contested signal, `.planning/research/FEATURES.md`): repositioned as "collaborative engineering platform" (shared session, human-in-loop intervention); no published trigger-precision/recall/F1 methodology found; market skepticism commentary exists alongside vendor-reported wins. |
+| **Verdict change** | None applied this cycle — cannot confirm whether a trigger-F1 methodology has since been published without a live source. |
+
+#### Re-check 3: claude-mem
+
+| Field | Value |
+|-------|-------|
+| **Source URL** | https://github.com/thedotmack/claude-mem (per existing Tier-1 entry #2) |
+| **Access date** | 2026-07-27 (attempted; no live web tooling — see status note above) |
+| **State summary** | **unverified as of 2026-07-27 — pending human spot-check.** Prior confirmed state (2026-07-21, MEDIUM confidence, `.planning/research/FEATURES.md`): v13.8.0 shipped 2026-06-21; 83.9k GitHub stars, 288 releases. Version/star count churn frequently — this is exactly the row most likely to be stale by the time a human confirms it. |
+| **Verdict change** | None applied this cycle — version/star count not re-confirmed. |
+
+#### Re-check 4: Cursor Rules
+
+| Field | Value |
+|-------|-------|
+| **Source URL** | https://cursor.com/docs/rules (per existing Tier-1 entry #3) |
+| **Access date** | 2026-07-27 (attempted; no live web tooling — see status note above) |
+| **State summary** | **unverified as of 2026-07-27 — pending human spot-check.** Prior confirmed state (2026-07-21, MEDIUM confidence, `.planning/research/FEATURES.md`): 2026 guidance shifted away from "giant always-on .mdc rules" (anti-pattern) toward AGENTS.md + scoped rules + subagents + Skills + hooks. |
+| **Verdict change** | None applied this cycle — cannot confirm whether guidance shifted further since 2026-07-21. |
+
+**Not re-checked this cycle (D8-01 carry-over, stable positioning):** obra/superpowers, Continue.dev, Aider, Cline. Per D8-01 these four are explicitly scoped OUT of this targeted re-verification pass — their entries below remain unchanged from the 2026-06-15 research window.
+
+**30-day deadline resolution:** The original deadline below (`2026-07-15`) was **missed by 12 days** — this re-verification entry is dated 2026-07-27, not backdated. Per the project's own append-only/no-backdating discipline (`.planning/research/PITFALLS.md` Pitfall 1), this lateness is recorded honestly rather than concealed. A new re-verification deadline is set at **2026-08-26** (today + 30 days), tracked against the same live-URL set above. Given the four `unverified` markers above, the *effective* re-verification (the live human spot-check) is still outstanding at the time of this entry — see Task 3 of plan 08-03 for its resolution, to be appended below once complete.
+
+---
+
 ## Tier 1 — Full Dated Verification (4 Closest Comparators)
 
 These four require URL + access date + one-line state summary + screenshot/commit-ref
@@ -198,4 +246,5 @@ All four columns are still populated; evidence depth is lighter than Tier 1.
 
 *Log maintained by: Setdrift Phase 5 Plan 03 executor*
 *Log created: 2026-06-15*
-*Next required review: 2026-07-15*
+*Original required review: 2026-07-15 (MISSED — see 2026-07-27 Re-verification section above, not backdated)*
+*New required review: 2026-08-26 (2026-07-27 + 30 days)*
