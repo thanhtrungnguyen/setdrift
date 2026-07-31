@@ -212,4 +212,4 @@ def plot_triangulation(
     if fixture:
         _apply_fixture_watermark(fig)
 
-    _save_figure(fig, Path(output_path))
+    _save_figure(fig, Path(output_path), fixture=fixture)

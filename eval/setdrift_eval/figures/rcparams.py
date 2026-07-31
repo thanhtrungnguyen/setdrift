@@ -63,6 +63,20 @@ GREEN = "#029E73"
 VERMILLION = "#D55E00"
 GREY = "#949494"
 
+# Machine-readable provenance markers (D9-05, Phase 9 plan 09-01).
+#
+# The rendered `_apply_fixture_watermark()` text is NOT reliably byte-searchable:
+# in the PNG it is rasterized into pixels, and in the PDF it is font-encoded
+# inside a compressed content stream. Neither is a sound target for a scripted
+# gate. Instead, `_save_figure` stamps ONE of these two literal tokens into the
+# PNG tEXt chunk ("Comment" key) and the PDF Info dictionary ("Keywords" key) —
+# both of which matplotlib writes as uncompressed, plain strings. This is the
+# sole machine-readable contract `.planning/dissertation/scripts/check_no_watermark.py`
+# scans; the raster watermark remains purely a human visual cue.
+PROVENANCE_KEY = "Setdrift-Data-Provenance"
+PROVENANCE_FIXTURE = "setdrift-provenance=FIXTURE"
+PROVENANCE_REAL = "setdrift-provenance=REAL"
+
 
 def apply() -> None:
     """Apply SETDRIFT_RCPARAMS globally. Call once at start of figures CLI run.
@@ -73,16 +87,42 @@ def apply() -> None:
     mpl.rcParams.update(SETDRIFT_RCPARAMS)
 
 
-def _save_figure(fig, output_path: Path) -> None:
+def _save_figure(fig, output_path: Path, *, fixture: bool = False) -> None:
     """Save figure as PDF + PNG at 300 DPI; close figure.
 
     Never call plt.show() (D-10 anti-pattern).
+
+    Stamps a machine-readable FIXTURE/REAL provenance token (PROVENANCE_FIXTURE
+    or PROVENANCE_REAL) into the PNG tEXt chunk ("Comment" key, via matplotlib's
+    `metadata=` kwarg) and the PDF Info dictionary ("Keywords" key). This
+    metadata — not the rendered `_apply_fixture_watermark` pixels — is the
+    machine-readable contract that
+    `.planning/dissertation/scripts/check_no_watermark.py` scans. The rendered
+    watermark text is rasterized into pixels in the PNG and font-encoded inside
+    a compressed content stream in the PDF, so it is NOT reliably byte-searchable;
+    this metadata sidesteps that limitation entirely.
+
+    Args:
+        fig: matplotlib Figure to save.
+        output_path: path stem; .pdf and .png suffixes are appended.
+        fixture: if True, stamps PROVENANCE_FIXTURE; else PROVENANCE_REAL.
+            Defaults to False so pre-existing callers that don't pass
+            `fixture=` keep working unchanged (backward compatible).
     """
     import matplotlib.pyplot as plt  # lazy import inside figures/
 
     output_path = Path(output_path)
-    fig.savefig(output_path.with_suffix(".pdf"))
-    fig.savefig(output_path.with_suffix(".png"), dpi=300)
+    provenance_token = PROVENANCE_FIXTURE if fixture else PROVENANCE_REAL
+
+    fig.savefig(
+        output_path.with_suffix(".pdf"),
+        metadata={"Keywords": provenance_token},
+    )
+    fig.savefig(
+        output_path.with_suffix(".png"),
+        dpi=300,
+        metadata={"Software": "setdrift-eval", "Comment": provenance_token},
+    )
     plt.close(fig)
 
 

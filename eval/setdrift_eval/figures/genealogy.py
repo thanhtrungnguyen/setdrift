@@ -235,12 +235,20 @@ def dag_to_mermaid(G: nx.DiGraph, *, fixture: bool = False) -> str:
 
     mermaid_src = "\n".join(lines)
 
+    # Machine-readable provenance marker (D9-05, Phase 9 plan 09-01) — same
+    # tokens rcparams._save_figure stamps into PNG/PDF metadata. Emitted as an
+    # HTML comment so Pandoc drops it silently from the rendered Word output
+    # while a raw byte scan (check_no_watermark.py) still finds it.
+    from setdrift_eval.figures.rcparams import PROVENANCE_FIXTURE, PROVENANCE_REAL
+
     if fixture:
+        provenance_comment = f"<!-- {PROVENANCE_FIXTURE} -->\n"
         fixture_note = (
             "> [FIXTURE DATA — awaiting Phase-3 output]\n"
             "> This diagram was generated against fixture data, NOT real optimizer output.\n"
             "> DO NOT include this figure in the dissertation (D-09).\n\n"
         )
-        return fixture_note + "```mermaid\n" + mermaid_src + "\n```\n"
+        return provenance_comment + fixture_note + "```mermaid\n" + mermaid_src + "\n```\n"
 
-    return "```mermaid\n" + mermaid_src + "\n```\n"
+    provenance_comment = f"<!-- {PROVENANCE_REAL} -->\n"
+    return provenance_comment + "```mermaid\n" + mermaid_src + "\n```\n"

@@ -123,10 +123,10 @@ def test_plot_cost_delta_fixture_watermark(tmp_path):
 
     original_save = _rcparams_mod._save_figure
 
-    def _capturing_save(fig, path):
+    def _capturing_save(fig, path, *, fixture=False):
         for text_obj in fig.texts:
             captured_texts.append(text_obj.get_text())
-        original_save(fig, path)
+        original_save(fig, path, fixture=fixture)
 
     _rcparams_mod._save_figure = _capturing_save
     try:
