@@ -1,0 +1,19 @@
+{
+  "_marker": "SETDRIFT FIXTURE DATA — synthetic, obviously-fabricated numbers for --allow-fixtures dry-runs only. NEVER real evidence. Do NOT cite in the dissertation (D-09).",
+  "revisions": ["early", "mid", "late"],
+  "arms": {
+    "A": {
+      "f1_mean": [0.62, 0.7, 0.79],
+      "f1_noise_band_low": [0.58, 0.66, 0.75],
+      "f1_noise_band_high": [0.66, 0.74, 0.83],
+      "n_repeats": [5, 5, 5]
+    },
+    "B": {
+      "f1_mean": [0.6, 0.55, 0.47],
+      "f1_noise_band_low": [0.56, 0.5, 0.42],
+      "f1_noise_band_high": [0.64, 0.6, 0.52],
+      "n_repeats": [5, 5, 5]
+    }
+  },
+  "drift_index": [0.08, 0.41, 0.77]
+}

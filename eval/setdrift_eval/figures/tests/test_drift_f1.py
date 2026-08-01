@@ -171,3 +171,156 @@ class TestBuildDriftF1Series:
         out_path = build_drift_f1_series(experiments_dir)  # must not raise
         data = json.loads(out_path.read_text(encoding="utf-8"))
         assert data["arms"]["A"]["n_repeats"][0] == 1
+
+
+# ---------------------------------------------------------------------------
+# Task 2: plot_drift_f1 + compute_drift_f1_stats
+# ---------------------------------------------------------------------------
+
+_FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+_DRIFT_F1_FIXTURE = _FIXTURES_DIR / "drift_f1_fixture.json"
+
+
+def _load_fixture_series() -> dict:
+    return json.loads(_DRIFT_F1_FIXTURE.read_text(encoding="utf-8"))
+
+
+class TestComputeDriftF1Stats:
+    def test_reuses_triangulate_and_returns_all_d15_keys(self):
+        from setdrift_eval.figures.drift_f1 import compute_drift_f1_stats
+
+        series = _load_fixture_series()
+        stats = compute_drift_f1_stats(series)
+
+        required_keys = {
+            "spearman_rho",
+            "spearman_pvalue",
+            "sign_test_pvalue",
+            "n_concordant",
+            "n_pairs",
+            "null_result",
+            "n_versions",
+            "pvalue_method",
+        }
+        missing = required_keys - stats.keys()
+        assert not missing, f"compute_drift_f1_stats result missing keys: {missing}"
+
+    def test_excludes_revisions_with_missing_drift_index(self):
+        from setdrift_eval.figures.drift_f1 import compute_drift_f1_stats
+
+        series = {
+            "revisions": ["early", "mid", "late"],
+            "arms": {
+                "A": {"f1_mean": [0.6, 0.7, 0.8], "f1_noise_band_low": [0.55, 0.65, 0.75],
+                      "f1_noise_band_high": [0.65, 0.75, 0.85], "n_repeats": [5, 5, 5]},
+                "B": {"f1_mean": [0.5, 0.5, 0.5], "f1_noise_band_low": [0.45, 0.45, 0.45],
+                      "f1_noise_band_high": [0.55, 0.55, 0.55], "n_repeats": [5, 5, 5]},
+            },
+            "drift_index": [0.1, None, 0.9],
+        }
+        stats = compute_drift_f1_stats(series)
+        # Only 2 revisions have a non-null drift_index pair.
+        assert stats["n_versions"] == 2
+
+
+class TestPlotDriftF1:
+    def test_writes_pdf_and_png(self, tmp_path: Path):
+        from setdrift_eval.figures.drift_f1 import compute_drift_f1_stats, plot_drift_f1
+        from setdrift_eval.figures.rcparams import apply
+
+        apply()
+        series = _load_fixture_series()
+        stats = compute_drift_f1_stats(series)
+        output = tmp_path / "drift-f1"
+
+        plot_drift_f1(series, stats, output, fixture=True)
+
+        assert output.with_suffix(".pdf").exists(), "drift-f1.pdf not written"
+        assert output.with_suffix(".png").exists(), "drift-f1.png not written"
+
+    def test_has_two_left_axis_lines_and_one_right_axis_line(self, tmp_path: Path):
+        import matplotlib.pyplot as plt
+
+        from setdrift_eval.figures.drift_f1 import compute_drift_f1_stats, plot_drift_f1
+        from setdrift_eval.figures.rcparams import apply
+
+        apply()
+        series = _load_fixture_series()
+        stats = compute_drift_f1_stats(series)
+        output = tmp_path / "drift-f1-axes"
+
+        # Capture figure axes before it is closed by _save_figure.
+        captured: dict = {}
+        import setdrift_eval.figures.rcparams as _rcparams_mod
+
+        original_save = _rcparams_mod._save_figure
+
+        def _capturing_save(fig, path, *, fixture=False):
+            captured["axes"] = list(fig.axes)
+            original_save(fig, path, fixture=fixture)
+
+        _rcparams_mod._save_figure = _capturing_save
+        try:
+            plot_drift_f1(series, stats, output, fixture=True)
+        finally:
+            _rcparams_mod._save_figure = original_save
+
+        axes = captured["axes"]
+        assert len(axes) == 2, f"Expected exactly 2 axes (left F1 + right twinx drift), got {len(axes)}"
+        ax_f1, ax_drift = axes
+        # Left axis: 2 errorbar series (arm A, arm B); errorbar() also emits
+        # caplines/error-bar Line2D artifacts, so assert containers instead of
+        # raw get_lines() count.
+        assert len(ax_f1.containers) == 2, (
+            f"Expected 2 errorbar containers (arm A, arm B) on the left axis, "
+            f"got {len(ax_f1.containers)}"
+        )
+        # Right (twinx) axis: exactly 1 drift-index line, no error-bar containers.
+        assert len(ax_drift.get_lines()) == 1
+        assert len(ax_drift.containers) == 0
+        plt.close("all")
+
+    def test_null_result_annotated(self, tmp_path: Path):
+        from setdrift_eval.figures.drift_f1 import plot_drift_f1
+        from setdrift_eval.figures.rcparams import apply
+
+        apply()
+        series = _load_fixture_series()
+        stats = {
+            "spearman_rho": -0.2,
+            "spearman_pvalue": 0.8,
+            "sign_test_pvalue": 1.0,
+            "n_concordant": 0,
+            "n_pairs": 2,
+            "null_result": True,
+            "n_versions": 3,
+            "pvalue_method": "permutation",
+        }
+        output = tmp_path / "drift-f1-null"
+
+        plot_drift_f1(series, stats, output, fixture=True)
+
+        assert output.with_suffix(".pdf").exists()
+        assert output.with_suffix(".png").exists()
+
+    def test_fixture_true_stamps_fixture_token_fixture_false_stamps_real_token(
+        self, tmp_path: Path
+    ):
+        from setdrift_eval.figures.drift_f1 import compute_drift_f1_stats, plot_drift_f1
+        from setdrift_eval.figures.rcparams import PROVENANCE_FIXTURE, PROVENANCE_REAL, apply
+
+        apply()
+        series = _load_fixture_series()
+        stats = compute_drift_f1_stats(series)
+
+        fixture_output = tmp_path / "drift-f1-fixture"
+        plot_drift_f1(series, stats, fixture_output, fixture=True)
+        fixture_png_bytes = fixture_output.with_suffix(".png").read_bytes()
+        assert PROVENANCE_FIXTURE.encode("ascii") in fixture_png_bytes
+        assert PROVENANCE_REAL.encode("ascii") not in fixture_png_bytes
+
+        real_output = tmp_path / "drift-f1-real"
+        plot_drift_f1(series, stats, real_output, fixture=False)
+        real_png_bytes = real_output.with_suffix(".png").read_bytes()
+        assert PROVENANCE_REAL.encode("ascii") in real_png_bytes
+        assert PROVENANCE_FIXTURE.encode("ascii") not in real_png_bytes
