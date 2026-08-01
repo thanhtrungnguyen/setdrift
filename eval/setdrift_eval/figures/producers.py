@@ -1,4 +1,5 @@
-"""Materialize the cost and triangulation figure inputs from real manifests (FIX-03).
+"""Materialize the cost, triangulation, and drift-vs-F1 figure inputs from real
+manifests (FIX-03, and 09-02's RUN-05 drift-vs-F1 overlay).
 
 What this module does:
   - build_cost_tokens(experiments_dir) aggregates token_cost_total per config_hash from
@@ -6,7 +7,10 @@ What this module does:
     (rebuilt-each-run, not numbered-glob) experiments/cost-tokens.json.
   - build_triangulation_series(experiments_dir) assembles ordered F1 / pass-rate series
     per promoted version and writes the SINGULAR experiments/triangulation-series.json.
-  - Both mirror the materialize-then-read producer idiom of
+  - build_drift_f1_series(experiments_dir) aggregates the 12-cell drift grid's
+    DriftManifest files into a per-revision, per-arm F1 + drift-index series and
+    writes the SINGULAR experiments/drift-f1-series.json (Phase 9 plan 09-02, RUN-05).
+  - All three mirror the materialize-then-read producer idiom of
     corpus/precision_gate.py::write_report: a plain function, living OUTSIDE the CLI,
     that writes JSON with indent=2 and returns the Path it wrote.
 
@@ -44,7 +48,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from setdrift_eval.figures.errors import FigureDataError
 from setdrift_eval.figures.version_index import build_version_index
+
+# X-axis ordering for the drift-vs-F1 overlay (build_drift_f1_series /
+# figures/drift_f1.py). Pinned as an explicit tuple — never derived from dict or
+# filesystem iteration order — because the X axis is a codebase-time axis and a
+# silent reorder would invert the drift narrative (T-09-06).
+DRIFT_REVISION_ORDER: tuple[str, ...] = ("early", "mid", "late")
+
+DRIFT_INDEX_MISSING_NOTE = (
+    "One or more drift-grid cells report drift_index=None (not yet computed by "
+    "drift/grid_runner.py at manifest-write time). Missing cells are disclosed here "
+    "and omitted from the per-revision drift-index average — never coerced to 0.0, "
+    "which would fabricate a 'no drift' reading (T-09-07 anti-repudiation)."
+)
 
 DRIFT_GRID_ZERO_COST_NOTE = (
     "drift-grid cells (*-drift-results.json) report token_cost_total=0 by construction "
@@ -214,4 +232,122 @@ def build_triangulation_series(experiments_dir: str | Path) -> Path:
         json.dumps({"f1_series": f1_series, "pass_rate_series": pass_rate_series}, indent=2),
         encoding="utf-8",
     )
+    return out_path
+
+
+def build_drift_f1_series(experiments_dir: str | Path) -> Path:
+    """Aggregate the 12-cell drift grid into a drift-vs-F1 overlay series; write
+    experiments/drift-f1-series.json (the exact shape figures/drift_f1.py's
+    --drift-f1 branch reads).
+
+    Iterates *-drift-results.json manifests via the shared _iter_manifest_dicts
+    helper (never a hand-rolled glob — CR-02: a naive "*-results.json" glob also
+    matches "*-drift-results.json", but this function only ever globs the
+    drift-specific pattern, so no exclude_suffix is needed here).
+
+    Output shape:
+      {
+        "revisions": ["early", "mid", "late"],           # DRIFT_REVISION_ORDER, pinned
+        "arms": {
+          "A": {"f1_mean": [...], "f1_noise_band_low": [...],
+                "f1_noise_band_high": [...], "n_repeats": [...]},
+          "B": {...}
+        },
+        "drift_index": [...],   # one value per revision, shared across arms, or
+                                 # null when no cell for that revision reports one
+        "notes": [DRIFT_INDEX_MISSING_NOTE]   # present only if any cell was missing
+      }
+
+    Aggregation rules:
+      - Per (arm, revision) cell group: macro_f1_mean averaged across grid_run_idx
+        repeats; the noise band is the min of the low edges / max of the high
+        edges across those repeats; n_repeats records the repeat count.
+      - drift_index is averaged PER REVISION across cells sharing that revision,
+        regardless of arm (D9-context: "one drift-index series shared across arms
+        per revision"). Cells with drift_index=None are excluded from the average
+        and disclosed via DRIFT_INDEX_MISSING_NOTE rather than coerced to 0.0
+        (T-09-07 anti-repudiation).
+      - Any grid_revision value outside DRIFT_REVISION_ORDER raises FigureDataError
+        naming the offending value — never silently dropped (T-09-06).
+
+    Raises:
+        FigureDataError: no *-drift-results.json manifests found under
+            experiments_dir (naming the directory), or an unknown grid_revision.
+
+    Returns:
+        Path written (materialize-then-read producer idiom; overwrites wholesale
+        on every call — singular, not numbered-glob).
+    """
+    experiments_dir = Path(experiments_dir)
+
+    manifests = _iter_manifest_dicts(experiments_dir, "*-drift-results.json")
+    if not manifests:
+        raise FigureDataError(
+            f"No drift-grid manifests (*-drift-results.json) found under "
+            f"{experiments_dir}. Pass --allow-fixtures to run against fixture data "
+            "(watermark applied). Do NOT include fixture figures in the dissertation (D-09)."
+        )
+
+    by_arm_revision: dict[tuple[str, str], list[dict]] = {}
+    by_revision_drift: dict[str, list[float | None]] = {}
+    any_missing_drift = False
+
+    for manifest in manifests:
+        revision = manifest.get("grid_revision")
+        if revision not in DRIFT_REVISION_ORDER:
+            raise FigureDataError(
+                f"Unknown grid_revision {revision!r} in a drift manifest under "
+                f"{experiments_dir} — expected one of {DRIFT_REVISION_ORDER} (T-09-06)."
+            )
+        arm = manifest.get("grid_arm")
+        by_arm_revision.setdefault((arm, revision), []).append(manifest)
+
+        drift_index = manifest.get("drift_index")
+        by_revision_drift.setdefault(revision, []).append(drift_index)
+        if drift_index is None:
+            any_missing_drift = True
+
+    arms_out: dict[str, dict[str, list]] = {}
+    for arm in ("A", "B"):
+        f1_means: list[float | None] = []
+        band_los: list[float | None] = []
+        band_his: list[float | None] = []
+        n_repeats: list[int] = []
+        for revision in DRIFT_REVISION_ORDER:
+            cells = by_arm_revision.get((arm, revision), [])
+            if not cells:
+                f1_means.append(None)
+                band_los.append(None)
+                band_his.append(None)
+                n_repeats.append(0)
+                continue
+            f1_vals = [float(c["macro_f1_mean"]) for c in cells]
+            lo_vals = [float(c["macro_f1_noise_band_low"]) for c in cells]
+            hi_vals = [float(c["macro_f1_noise_band_high"]) for c in cells]
+            f1_means.append(sum(f1_vals) / len(f1_vals))
+            band_los.append(min(lo_vals))
+            band_his.append(max(hi_vals))
+            n_repeats.append(len(cells))
+        arms_out[arm] = {
+            "f1_mean": f1_means,
+            "f1_noise_band_low": band_los,
+            "f1_noise_band_high": band_his,
+            "n_repeats": n_repeats,
+        }
+
+    drift_series: list[float | None] = []
+    for revision in DRIFT_REVISION_ORDER:
+        values = [v for v in by_revision_drift.get(revision, []) if v is not None]
+        drift_series.append(sum(values) / len(values) if values else None)
+
+    out: dict = {
+        "revisions": list(DRIFT_REVISION_ORDER),
+        "arms": arms_out,
+        "drift_index": drift_series,
+    }
+    if any_missing_drift:
+        out["notes"] = [DRIFT_INDEX_MISSING_NOTE]
+
+    out_path = experiments_dir / "drift-f1-series.json"
+    out_path.write_text(json.dumps(out, indent=2), encoding="utf-8")
     return out_path
