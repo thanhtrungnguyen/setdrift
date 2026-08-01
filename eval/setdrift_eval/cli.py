@@ -322,6 +322,12 @@ def main() -> int:
         "--triangulation", action="store_true", help="generate triangulation scatter (D-15)"
     )
     figures_p.add_argument("--kappa-matrix", action="store_true", help="generate 5x3 kappa heatmap")
+    # Argparse exposes this as args.drift_f1 (RUN-05 overlay, Phase 9 plan 09-02).
+    figures_p.add_argument(
+        "--drift-f1",
+        action="store_true",
+        help="generate the drift-vs-F1 overlay figure from the 12-cell drift grid (RUN-05, D-15)",
+    )
     figures_p.add_argument(
         "--all", dest="all_figures", action="store_true", help="generate all figures"
     )

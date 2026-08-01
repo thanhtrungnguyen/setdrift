@@ -324,3 +324,97 @@ class TestPlotDriftF1:
         real_png_bytes = real_output.with_suffix(".png").read_bytes()
         assert PROVENANCE_REAL.encode("ascii") in real_png_bytes
         assert PROVENANCE_FIXTURE.encode("ascii") not in real_png_bytes
+
+
+# ---------------------------------------------------------------------------
+# Task 3: --drift-f1 three-way CLI dispatch (real / fixture / FigureDataError)
+# ---------------------------------------------------------------------------
+
+
+def _figures_namespace(experiments_dir: Path, output_dir: Path, *, allow_fixtures: bool):
+    import argparse
+
+    return argparse.Namespace(
+        experiments_dir=experiments_dir,
+        output_dir=output_dir,
+        allow_fixtures=allow_fixtures,
+        build_inputs=False,
+        all_figures=False,
+        cost_delta=False,
+        genealogy=False,
+        triangulation=False,
+        kappa_matrix=False,
+        drift_f1=True,
+        f1_curve=False,
+    )
+
+
+class TestDriftF1CliDispatch:
+    def test_real_data_path_no_watermark(self, tmp_path: Path):
+        from setdrift_eval.figures import cli as figures_cli
+
+        experiments_dir = tmp_path / "experiments"
+        experiments_dir.mkdir()
+        output_dir = tmp_path / "out"
+
+        for revision in ("early", "mid", "late"):
+            for arm in ("A", "B"):
+                idx = len(list(experiments_dir.glob("*-drift-results.json"))) + 1
+                _write_json(
+                    experiments_dir / f"{idx:03d}-drift-results.json",
+                    **_drift_manifest(arm, revision, 0, 0.7, 0.65, 0.75, 0.3),
+                )
+
+        # Materialize drift-f1-series.json first (--build-inputs step) — the
+        # --drift-f1 branch only READS the singular series file, mirroring the
+        # existing --triangulation branch's materialize-then-read contract.
+        from setdrift_eval.figures.producers import build_drift_f1_series
+
+        build_drift_f1_series(experiments_dir)
+
+        args = _figures_namespace(experiments_dir, output_dir, allow_fixtures=False)
+        exit_code = figures_cli.main(args)
+
+        assert exit_code == 0
+        assert (output_dir / "drift-f1.png").exists()
+        assert (output_dir / "drift-f1.pdf").exists()
+        assert (output_dir / "drift-f1-stats.json").exists()
+
+        from setdrift_eval.figures.rcparams import PROVENANCE_FIXTURE, PROVENANCE_REAL
+
+        png_bytes = (output_dir / "drift-f1.png").read_bytes()
+        assert PROVENANCE_REAL.encode("ascii") in png_bytes
+        assert PROVENANCE_FIXTURE.encode("ascii") not in png_bytes
+
+    def test_allow_fixtures_path_writes_watermarked_fixture_output(self, tmp_path: Path):
+        from setdrift_eval.figures import cli as figures_cli
+
+        experiments_dir = tmp_path / "experiments"
+        experiments_dir.mkdir()  # no drift manifests -> must fall through to fixture
+        output_dir = tmp_path / "out"
+
+        args = _figures_namespace(experiments_dir, output_dir, allow_fixtures=True)
+        exit_code = figures_cli.main(args)
+
+        assert exit_code == 0
+        assert (output_dir / "drift-f1.png").exists()
+        assert (output_dir / "drift-f1.pdf").exists()
+
+        from setdrift_eval.figures.rcparams import PROVENANCE_FIXTURE
+
+        png_bytes = (output_dir / "drift-f1.png").read_bytes()
+        assert PROVENANCE_FIXTURE.encode("ascii") in png_bytes
+
+    def test_no_data_no_allow_fixtures_exits_1_no_file_written(self, tmp_path: Path):
+        from setdrift_eval.figures import cli as figures_cli
+
+        experiments_dir = tmp_path / "experiments"
+        experiments_dir.mkdir()
+        output_dir = tmp_path / "out"
+
+        args = _figures_namespace(experiments_dir, output_dir, allow_fixtures=False)
+        exit_code = figures_cli.main(args)
+
+        assert exit_code == 1
+        assert not (output_dir / "drift-f1.png").exists()
+        assert not (output_dir / "drift-f1.pdf").exists()

@@ -2,7 +2,8 @@
 
 What this module does:
   - Parses figures-specific args (--experiments-dir, --output-dir, --allow-fixtures,
-    per-figure flags --cost-delta, --genealogy, --triangulation, --kappa-matrix, --f1-curve)
+    per-figure flags --cost-delta, --genealogy, --triangulation, --kappa-matrix,
+    --drift-f1, --f1-curve)
   - Calls rcparams.apply() (Agg backend) BEFORE any figure function
   - Dispatches to figure generators with fixture-gate enforcement (RESEARCH Pitfall 4)
   - Imports the SHARED FigureDataError (figures/errors.py, WR-01): raised when real
@@ -63,6 +64,7 @@ def _run(args: argparse.Namespace) -> int:
         or getattr(args, "genealogy", False)
         or getattr(args, "triangulation", False)
         or getattr(args, "kappa_matrix", False)
+        or getattr(args, "drift_f1", False)
         or getattr(args, "f1_curve", False)
     )
 
@@ -82,6 +84,7 @@ def _run(args: argparse.Namespace) -> int:
     if build_inputs:
         from setdrift_eval.figures.producers import (  # lazy import
             build_cost_tokens,
+            build_drift_f1_series,
             build_triangulation_series,
         )
 
@@ -89,6 +92,17 @@ def _run(args: argparse.Namespace) -> int:
         triangulation_out = build_triangulation_series(experiments_dir)
         print(f"[setdrift-eval figures] build-inputs -> {cost_out}")
         print(f"[setdrift-eval figures] build-inputs -> {triangulation_out}")
+
+        # build_drift_f1_series raises FigureDataError when no drift-grid manifests
+        # exist yet (RUN-05 not landed). A repo with only cost/triangulation
+        # manifests must still succeed for those two producers — guard this one
+        # call with an explicit skip line (never a silent skip; never a hard
+        # failure of the whole --build-inputs step, D-09 never-silent discipline).
+        try:
+            drift_f1_out = build_drift_f1_series(experiments_dir)
+            print(f"[setdrift-eval figures] build-inputs -> {drift_f1_out}")
+        except FigureDataError as exc:
+            print(f"[setdrift-eval figures] build-inputs -> SKIPPED drift-f1-series.json: {exc}")
 
     # --- cost-delta figure (REQ-DELIV-02, D-02 survives-cut substrate) ---
     if args.all_figures or getattr(args, "cost_delta", False):
@@ -207,6 +221,50 @@ def _run(args: argparse.Namespace) -> int:
             f"{watermark_note}{null_note}"
         )
         print(f"[setdrift-eval figures] triangulation stats -> {companion_path}")
+
+    # --- drift-f1 figure (RUN-05, the falsifiable claim's own axis) ---
+    if args.all_figures or getattr(args, "drift_f1", False):
+        import json as _json
+        from setdrift_eval.figures.drift_f1 import (  # lazy import
+            compute_drift_f1_stats,
+            plot_drift_f1,
+        )
+
+        drift_f1_data_path = experiments_dir / "drift-f1-series.json"
+        fixture_mode = False
+
+        if drift_f1_data_path.exists():
+            series = _json.loads(drift_f1_data_path.read_text(encoding="utf-8"))
+        elif allow_fixtures:
+            # --allow-fixtures: load the committed drift-f1 fixture (D-09)
+            fixture_path = Path(__file__).parent / "fixtures" / "drift_f1_fixture.json"
+            series = _json.loads(fixture_path.read_text(encoding="utf-8"))
+            fixture_mode = True
+        else:
+            raise FigureDataError(
+                f"Drift-vs-F1 series data not found: {drift_f1_data_path}. "
+                "Pass --allow-fixtures to run against fixture data (watermark applied). "
+                "Do NOT include fixture figures in the dissertation (D-09)."
+            )
+
+        stats = compute_drift_f1_stats(series)
+        drift_f1_out = output_dir / "drift-f1"
+        plot_drift_f1(series, stats, drift_f1_out, fixture=fixture_mode)
+
+        # Persist the triangulate() result dict as companion JSON (D-15: null result
+        # is recorded in text as well as pixels — same convention as triangulation).
+        drift_f1_stats_path = output_dir / "drift-f1-stats.json"
+        drift_f1_stats_path.write_text(_json.dumps(stats, indent=2), encoding="utf-8")
+
+        watermark_note = " [FIXTURE DATA — watermarked]" if fixture_mode else ""
+        null_note = (
+            " [NULL RESULT — reported per pre-registration]" if stats.get("null_result") else ""
+        )
+        print(
+            f"[setdrift-eval figures] drift-f1 -> {drift_f1_out}.pdf + .png"
+            f"{watermark_note}{null_note}"
+        )
+        print(f"[setdrift-eval figures] drift-f1 stats -> {drift_f1_stats_path}")
 
     # --- kappa-matrix figure (D-11 judge sensitivity 5×3 heatmap) ---
     if args.all_figures or getattr(args, "kappa_matrix", False):
